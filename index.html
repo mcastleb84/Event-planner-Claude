@@ -356,7 +356,7 @@ const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "";
 
 /* ---------- storage + login layer (no need to edit below) ---------- */
 window.zipCache = {};
-const TEST_MODE = CFG.TEST_MODE === true;
+const TEST_MODE = CFG.TEST_MODE !== false; // logins are OFF unless config.js says TEST_MODE: false
 const SB = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, TEST_MODE ? { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } } : undefined)
   : null;
