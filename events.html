@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Upcoming Cigar Events</title>
+<meta name="description" content="Upcoming cigar events. Find one near you or request your own.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F6F1EA; --surface:#FFFDF9; --ink:#2A1E16; --muted:#6E5D50; --line:#E3D8CB;
+  --accent:#8A4B22; --accent-ink:#FFFFFF; --accent-soft:#F2E3D5;
+  --ok:#2F6B3A; --ok-soft:#E1EFE2; --wait:#8A6100; --wait-soft:#F8EDCF; --no:#A2342A; --no-soft:#F8E3E0;
+  --display:"Fraunces", Georgia, "Times New Roman", serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16110D; --surface:#211A14; --ink:#F1E7DC; --muted:#B5A595; --line:#3A2F26;
+  --accent:#E09A62; --accent-ink:#1E120A; --accent-soft:#3A2A1D;
+  --ok:#86C98F; --ok-soft:#1F3322; --wait:#E8C063; --wait-soft:#3A3016; --no:#F09488; --no-soft:#3E201C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16110D; --surface:#211A14; --ink:#F1E7DC; --muted:#B5A595; --line:#3A2F26;
+  --accent:#E09A62; --accent-ink:#1E120A; --accent-soft:#3A2A1D;
+  --ok:#86C98F; --ok-soft:#1F3322; --wait:#E8C063; --wait-soft:#3A3016; --no:#F09488; --no-soft:#3E201C; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:calc(28px + env(safe-area-inset-top,0px)) calc(56px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin:0}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,8vw,48px);line-height:1.02;margin:6px 0 0;letter-spacing:-0.015em;text-wrap:balance}
+h2{font-family:var(--display);font-weight:500;font-size:24px;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.2;margin:0;overflow-wrap:anywhere}
+.lede{color:var(--muted);margin:10px 0 0;font-size:17px;max-width:52ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+button,a.btn,a.ghost{font:inherit;cursor:pointer;border-radius:10px;color:var(--ink)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;padding:11px 18px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.ghost{background:transparent;border:1px solid var(--line);padding:9px 14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:500}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+label{display:block;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+textarea{min-height:84px;resize:vertical}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.full{grid-column:1/-1}
+.err{color:var(--no);font-size:14px;min-height:20px}
+.note{font-size:13px;color:var(--muted)}
+.locbar{position:relative}
+.locbar svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:var(--muted);pointer-events:none}
+.locbar input{padding-left:44px;height:52px;background:var(--surface);font-size:17px}
+.list{display:flex;flex-direction:column;gap:12px}
+.ev{display:grid;grid-template-columns:64px minmax(0,1fr);gap:16px;align-items:start}
+.cal{border:1px solid var(--line);border-radius:12px;text-align:center;overflow:hidden;background:var(--bg)}
+.cal .mo{display:block;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;letter-spacing:0.1em;padding:3px 0}
+.cal .dy{display:block;font-family:var(--display);font-weight:700;font-size:26px;line-height:1.3;font-variant-numeric:tabular-nums}
+.cal .wd{display:block;font-size:11px;color:var(--muted);padding-bottom:4px;text-transform:uppercase;letter-spacing:0.08em}
+.meta{color:var(--muted);font-size:15px;margin:4px 0 0}
+.meta b{color:var(--ink);font-weight:600}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-top:8px}
+.ev .row{margin-top:12px}
+.empty{color:var(--muted);text-align:center;padding:18px 8px}
+.sec-h{font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
+.done{background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:16px;font-weight:500}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.sugg{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:25;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 10px 28px rgba(20,12,6,.14)}
+.sugg button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 12px}
+.sugg button:hover,.sugg button:focus-visible{background:var(--accent-soft);outline:none}
+.sugg button b{display:block;font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.sugg small{color:var(--muted);font-size:13px}
+.sugg-note{padding:10px 12px;font-size:13px;color:var(--muted)}
+.sugg .attr{font-size:11px;padding:6px 12px;color:var(--muted)}
+footer{color:var(--muted);font-size:12px;text-align:center}
+@media (max-width:460px){.fields{grid-template-columns:1fr}.ev{grid-template-columns:56px minmax(0,1fr);gap:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow" id="shop">Cigar Events</p>
+    <h1>Upcoming cigar events</h1>
+    <p class="lede">Pairings, rolling nights and lounge events. Find one near you, or request one of your own.</p>
+    <div class="row" style="margin-top:16px">
+      <a class="btn" href="#request">Request an event</a>
+      <button class="ghost" type="button" id="share">Share this page</button>
+      <span class="note" id="share-note" role="status"></span>
+    </div>
+  </header>
+
+  <div class="locbar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+    <input id="q" type="search" placeholder="Search by ZIP code, city, or address" aria-label="Search events by ZIP code, city, or address" autocomplete="off">
+  </div>
+
+  <section class="list" id="list" aria-live="polite"><div class="card empty">Loading events…</div></section>
+
+  <section id="request" class="card" style="display:flex;flex-direction:column;gap:16px;scroll-margin-top:16px">
+    <div><h2>Request an event</h2><p class="note" style="margin:6px 0 0;font-size:15px">Tell us what you have in mind. We'll reach out to confirm the details.</p></div>
+    <form id="req" novalidate style="display:flex;flex-direction:column;gap:14px">
+      <div class="fields">
+        <div><label for="r-type">Event type</label>
+          <select id="r-type"><option>Private party</option><option>Cigar rolling</option><option>Tasting / pairing</option><option>Corporate event</option><option>Wedding / celebration</option><option>Lounge night</option><option>Other</option></select></div>
+        <div><label for="r-guests">Guests</label><input id="r-guests" type="number" min="1" max="9999" step="1" inputmode="numeric" placeholder="20"></div>
+        <div><label for="r-date">Preferred date</label><input id="r-date" type="date"></div>
+        <div><label for="r-time">Start time</label><input id="r-time" type="time"></div>
+        <div class="full"><label for="r-place">Venue or area</label><input id="r-place" placeholder="Our lounge, a home, an office" autocomplete="off"></div>
+        <div><label for="r-city">City</label><input id="r-city" placeholder="Atlanta" autocomplete="address-level2"></div>
+        <div class="fields" style="gap:10px"><div><label for="r-state">State</label><input id="r-state" maxlength="2" placeholder="GA" autocomplete="address-level1" style="text-transform:uppercase"></div><div><label for="r-zip">ZIP</label><input id="r-zip" inputmode="numeric" maxlength="10" placeholder="30309" autocomplete="postal-code"></div></div>
+        <div class="full"><label for="r-name">Your name</label><input id="r-name" autocomplete="name" placeholder="Marcus Reed"></div>
+        <div><label for="r-phone">Phone</label><input id="r-phone" type="tel" autocomplete="tel" placeholder="(555) 214-7788"></div>
+        <div><label for="r-email">Email</label><input id="r-email" type="email" autocomplete="email" placeholder="marcus@email.com"></div>
+        <div class="full"><label for="r-handle">Instagram or Facebook (optional)</label><input id="r-handle" placeholder="@marcusreed" autocomplete="off"></div>
+        <div class="full"><label for="r-notes">Anything else</label><textarea id="r-notes" placeholder="Cigar preferences, budget, setup needs"></textarea></div>
+        <div class="hp" aria-hidden="true"><label for="r-web">Website</label><input id="r-web" tabindex="-1" autocomplete="off"></div>
+      </div>
+      <div class="err" id="r-err" role="alert"></div>
+      <div class="row"><button class="btn" type="submit" id="r-send">Send request</button></div>
+    </form>
+    <div class="done" id="r-done" hidden role="status"></div>
+  </section>
+  <footer>Address search © OpenStreetMap contributors</footer>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const C=window.CIGAR_CONFIG||{};
+const SB=(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&window.supabase)?window.supabase.createClient(C.SUPABASE_URL,C.SUPABASE_ANON_KEY):null;
+if(C.SHOP_NAME){$("shop").textContent=C.SHOP_NAME;document.title="Upcoming events · "+C.SHOP_NAME}
+const pad=n=>String(n).padStart(2,"0");
+const todayIso=(()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())})();
+$("r-date").min=todayIso;
+function fmtTime(t){if(!t)return"Time to be announced";const[h,m]=t.split(":").map(Number);const d=new Date();d.setHours(h,m||0);return d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}
+const dt=s=>new Date(s+"T00:00:00");
+function fullAddr(e){const csz=[e.city,[e.state,e.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");return[e.location,e.address,csz].filter(Boolean).join(", ")}
+function gcal(e){
+  const d=e.date.replace(/-/g,"");let dates;
+  if(e.time){const s=new Date(e.date+"T"+e.time),f=new Date(s.getTime()+7200000);const F=x=>x.getFullYear()+pad(x.getMonth()+1)+pad(x.getDate())+"T"+pad(x.getHours())+pad(x.getMinutes())+"00";dates=F(s)+"/"+F(f)}
+  else{const n=dt(e.date);n.setDate(n.getDate()+1);dates=d+"/"+n.getFullYear()+pad(n.getMonth()+1)+pad(n.getDate())}
+  return"https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(e.title)+"&dates="+dates+"&location="+encodeURIComponent(fullAddr(e))+"&details="+encodeURIComponent(e.event_type||"");
+}
+
+/* live lookup (Photon / OpenStreetMap + Zippopotam.us) */
+window.zipCache={};
+/* ---------- live address + ZIP lookup ----------
+   Address search: Photon (photon.komoot.io), data © OpenStreetMap contributors.
+   ZIP lookup: Zippopotam.us. Both are free and need no key. */
+const STATES = {Alabama:"AL",Alaska:"AK",Arizona:"AZ",Arkansas:"AR",California:"CA",Colorado:"CO",Connecticut:"CT",Delaware:"DE","District of Columbia":"DC",Florida:"FL",Georgia:"GA",Hawaii:"HI",Idaho:"ID",Illinois:"IL",Indiana:"IN",Iowa:"IA",Kansas:"KS",Kentucky:"KY",Louisiana:"LA",Maine:"ME",Maryland:"MD",Massachusetts:"MA",Michigan:"MI",Minnesota:"MN",Mississippi:"MS",Missouri:"MO",Montana:"MT",Nebraska:"NE",Nevada:"NV","New Hampshire":"NH","New Jersey":"NJ","New Mexico":"NM","New York":"NY","North Carolina":"NC","North Dakota":"ND",Ohio:"OH",Oklahoma:"OK",Oregon:"OR",Pennsylvania:"PA","Puerto Rico":"PR","Rhode Island":"RI","South Carolina":"SC","South Dakota":"SD",Tennessee:"TN",Texas:"TX",Utah:"UT",Vermont:"VT",Virginia:"VA",Washington:"WA","West Virginia":"WV",Wisconsin:"WI",Wyoming:"WY"};
+
+async function zipLookup(z){
+  if (z in window.zipCache) return window.zipCache[z];
+  try {
+    const r = await fetch("https://api.zippopotam.us/us/" + z);
+    if (!r.ok) { window.zipCache[z] = null; return null; }
+    const j = await r.json(); const p = j.places && j.places[0];
+    window.zipCache[z] = p ? { city: p["place name"], state: p["state abbreviation"] } : null;
+  } catch (e) { return undefined; }
+  return window.zipCache[z];
+}
+async function placeSearch(q){
+  const r = await fetch("https://photon.komoot.io/api/?q=" + encodeURIComponent(q) + "&limit=8&lang=en&bbox=-125,24,-66,50");
+  if (!r.ok) throw new Error("lookup failed");
+  const j = await r.json();
+  return (j.features || []).map(f => f.properties || {}).filter(p => p.countrycode === "US").map(p => {
+    const street = [p.housenumber, p.street].filter(Boolean).join(" ");
+    const city = p.city || p.town || p.village || p.district || p.county || "";
+    const state = STATES[p.state] || p.state || "";
+    const zip = String(p.postcode || "").slice(0, 5);
+    const main = street || p.name || city;
+    const sub = [main === city ? "" : city, [state, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    return { main, sub, street, venue: street && p.name && p.name !== street ? p.name : "", city, state, zip };
+  }).filter((x, i, a) => x.main && a.findIndex(y => y.main === x.main && y.sub === x.sub) === i);
+}
+
+function attachSuggest(input, fetcher, onPick){
+  const box = document.createElement("div");
+  box.className = "sugg"; box.hidden = true; box.setAttribute("role", "listbox");
+  input.parentNode.appendChild(box);
+  let timer, seq = 0, items = [];
+  const close = () => { box.hidden = true; };
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    const q = input.value.trim();
+    if (q.length < 3) { close(); return; }
+    timer = setTimeout(async () => {
+      const my = ++seq;
+      box.innerHTML = '<div class="sugg-note">Looking up…</div>'; box.hidden = false;
+      let res;
+      try { res = await fetcher(q); } catch (e) { res = null; }
+      if (my !== seq) return;
+      if (res === null) { box.innerHTML = '<div class="sugg-note">Address lookup isn\'t reachable right now. You can still type it in.</div>'; return; }
+      items = res;
+      if (!res.length) { box.innerHTML = '<div class="sugg-note">No matching places found.</div>'; return; }
+      box.innerHTML = res.map((r, i) => `<button type="button" role="option" data-i="${i}"><b>${esc(r.main)}</b><small>${esc(r.sub || "")}</small></button>`).join("")
+        + '<div class="attr">Address search © OpenStreetMap contributors</div>';
+    }, 350);
+  });
+  box.addEventListener("mousedown", e => e.preventDefault());
+  box.addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (!b) return; close(); onPick(items[+b.dataset.i]); });
+  input.addEventListener("blur", () => setTimeout(close, 150));
+  input.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+}
+
+
+
+let events=[], loaded=false;
+function locMatch(e,q){const hay=[e.location,e.address,e.city,e.state,e.zip].join(" ").toLowerCase();return q.split(/[\s,]+/).filter(Boolean).every(w=>hay.includes(w))}
+function card(e){
+  const d=dt(e.date), place=[e.location,[e.city,e.state].filter(Boolean).join(", ")].filter(Boolean).join(" · "), fa=fullAddr(e);
+  return `<article class="card ev">
+    <div class="cal" aria-hidden="true"><span class="mo">${d.toLocaleDateString(undefined,{month:"short"}).toUpperCase()}</span><span class="dy">${d.getDate()}</span><span class="wd">${d.toLocaleDateString(undefined,{weekday:"short"})}</span></div>
+    <div style="min-width:0">
+      <h3>${esc(e.title)}</h3>
+      <p class="meta"><b>${d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</b> · ${esc(fmtTime(e.time))}</p>
+      ${place?`<p class="meta">${esc(place)}</p>`:""}
+      ${e.event_type?`<span class="tag">${esc(e.event_type)}</span>`:""}
+      <div class="row">
+        ${fa?`<a class="ghost" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fa)}" target="_blank" rel="noopener">Directions</a>`:""}
+        <a class="ghost" href="${gcal(e)}" target="_blank" rel="noopener">Add to Google Calendar</a>
+      </div>
+    </div></article>`;
+}
+function render(){
+  if(!loaded)return;
+  const q=$("q").value.trim().toLowerCase();
+  if(!events.length){$("list").innerHTML='<div class="card empty">No events are posted right now. Request one below and we\'ll set it up with you.</div>';return}
+  if(!q){$("list").innerHTML=events.map(card).join("");return}
+  const zip5=/^\d{5}$/.test(q)?q:"", zc=zip5&&window.zipCache[zip5];
+  const exact=events.filter(e=>locMatch(e,q));
+  const near=zip5?events.filter(e=>!locMatch(e,q)&&((e.zip&&e.zip.slice(0,3)===zip5.slice(0,3))||(zc&&e.city&&e.city.toLowerCase()===zc.city.toLowerCase()))):[];
+  let h=exact.length?exact.map(card).join(""):`<div class="card empty">No events at that location yet.</div>`;
+  if(near.length)h+=`<p class="sec-h">Nearby${zc?" · "+esc(zc.city)+", "+esc(zc.state):""}</p>`+near.map(card).join("");
+  $("list").innerHTML=h;
+}
+$("q").addEventListener("input",render);
+
+attachSuggest($("q"),async q=>{
+  if(/^\d{5}$/.test(q)){const z=await zipLookup(q);render();if(z===undefined)return null;return z?[{main:q,sub:z.city+", "+z.state,zip:q,city:z.city,state:z.state}]:[]}
+  return placeSearch(q);
+},p=>{$("q").value=p.zip||[p.city,p.state].filter(Boolean).join(" ")||p.main;if(p.zip&&p.city&&!(p.zip in window.zipCache))window.zipCache[p.zip]={city:p.city,state:p.state};render()});
+$("r-zip").addEventListener("input",async()=>{const z=$("r-zip").value.trim();if(!/^\d{5}$/.test(z))return;const r=await zipLookup(z);if(r&&$("r-zip").value.trim()===z){if(!$("r-city").value)$("r-city").value=r.city;if(!$("r-state").value)$("r-state").value=r.state}});
+
+async function load(){
+  if(!SB){loaded=true;$("list").innerHTML='<div class="card empty">This page isn\'t connected yet. Add your Supabase settings to config.js.</div>';return}
+  const t=setTimeout(()=>{if(!loaded)$("list").innerHTML='<div class="card empty">Events are taking a while to load. Check your connection.</div>'},10000);
+  const {data,error}=await SB.rpc("get_public_cigar_events");
+  clearTimeout(t);loaded=true;
+  if(error){$("list").innerHTML='<div class="card empty">Events couldn\'t load right now. Try again in a minute.</div>';return}
+  events=data||[];render();
+}
+load();
+
+/* request form */
+const R=["type","guests","date","time","place","city","state","zip","name","phone","email","handle","notes"];
+R.forEach(f=>$("r-"+f).addEventListener("input",()=>$("r-err").textContent=""));
+$("req").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const v={};R.forEach(f=>v[f]=$("r-"+f).value.trim());
+  const err=(m,f)=>{$("r-err").textContent=m;if(f)$("r-"+f).focus()};
+  if($("r-web").value)return;
+  if(!v.date)return err("Pick a date for your event.","date");
+  if(v.date<todayIso)return err("Pick a date from today on.","date");
+  if(!v.name)return err("Enter your name.","name");
+  if(!v.phone&&!v.email)return err("Add a phone number or email so we can reach you.","phone");
+  if(v.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email))return err("That email doesn't look right.","email");
+  if(v.guests&&!/^\d{1,4}$/.test(v.guests))return err("Guests should be a whole number.","guests");
+  if(v.zip&&!/^\d{5}(-\d{4})?$/.test(v.zip))return err("ZIP code should be 5 digits.","zip");
+  if(!SB)return err("Requests aren't connected yet. Please message us on social media instead.");
+  $("r-send").disabled=true;$("r-send").textContent="Sending…";
+  const {error}=await SB.rpc("submit_cigar_event_request",{p:{
+    title:v.type+" for "+v.name.split(" ")[0],eventType:v.type,guests:v.guests,date:v.date,time:v.time,
+    location:v.place,city:v.city,state:v.state.toUpperCase(),zip:v.zip,
+    contactName:v.name,phone:v.phone,email:v.email,handle:v.handle,notes:v.notes}});
+  $("r-send").disabled=false;$("r-send").textContent="Send request";
+  if(error)return err("Your request didn't go through. Try again, or message us on social media.");
+  $("req").hidden=true;
+  $("r-done").textContent=`Thanks, ${v.name.split(" ")[0]}. We got your request for ${dt(v.date).toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})} and will reach out soon to confirm.`;
+  $("r-done").hidden=false;
+});
+
+/* share this page */
+$("share").addEventListener("click",async()=>{
+  const url=location.href.split("#")[0];
+  if(navigator.share){try{await navigator.share({title:document.title,text:"Upcoming cigar events",url});return}catch(e){if(e&&e.name==="AbortError")return}}
+  try{await navigator.clipboard.writeText(url);$("share-note").textContent="Link copied. Paste it into your post or bio."}
+  catch(e){$("share-note").textContent=url}
+});
+</script>
+</body>
+</html>
