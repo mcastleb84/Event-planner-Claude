@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Cigar Event Scheduler</title>
+<title>Events</title>
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Figtree:wght@600;700;800;900&display=swap">
 <style>
@@ -116,6 +116,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 .sugg small{color:var(--muted);font-size:13px}
 .sugg-note{padding:10px 12px;font-size:13px;color:var(--muted)}
 .sugg .attr{font-size:11px;padding:6px 12px;color:var(--muted)}
+#app-title.ph{color:var(--muted);cursor:pointer}
 @media (max-width:440px){.fields{grid-template-columns:1fr}.day{font-size:14px}}
 </style>
 
@@ -124,7 +125,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" aria-label="Menu">
   <div class="row" style="justify-content:space-between">
-    <span class="brand" style="font-size:20px">Cigar Events</span>
+    <span class="brand" style="font-size:20px" id="brand-side">Menu</span>
     <button class="iconbtn" type="button" id="drawer-close" aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div>
@@ -174,7 +175,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
   <form class="card" id="unlock-form" novalidate>
     <img id="lock-img" alt="">
     <h2 id="lock-hello">Welcome back</h2>
-    <p class="note" style="margin:0">Enter your PIN to open Cigar Events.</p>
+    <p class="note" style="margin:0">Enter your PIN to open the app.</p>
     <input id="unlock-pin" class="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="6" aria-label="PIN">
     <div class="err" id="unlock-err" role="alert"></div>
     <button class="btn" type="submit" style="width:100%">Unlock</button>
@@ -186,11 +187,20 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 <div class="wrap" id="app">
   <div class="topbar">
     <button class="iconbtn" type="button" id="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-    <span class="brand">Cigar Events</span>
+    <span class="brand" id="brand-top"></span>
     <button class="acct" type="button" id="acct-btn" aria-label="Account and quick login"><img id="acct-img" alt=""><span><span id="acct-name">Sign in</span><span class="lk" id="acct-sub" style="display:block"></span></span></button>
   </div>
   <header>
-    <h1>Cigar Event Scheduler</h1>
+    <div class="row" id="title-view" style="flex-wrap:nowrap;align-items:flex-start;gap:10px">
+      <h1 id="app-title" style="flex:1;min-width:0;overflow-wrap:anywhere">Add your title</h1>
+      <button class="iconbtn" type="button" id="title-edit" aria-label="Edit title" style="margin-top:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></button>
+    </div>
+    <form id="title-form" hidden novalidate style="display:flex;flex-direction:column;gap:8px">
+      <label for="title-input" style="margin:0">Your title</label>
+      <input id="title-input" maxlength="80" placeholder="Your business or event name" autocomplete="off" style="font-size:20px;font-weight:700">
+      <div class="err" id="title-err" role="alert"></div>
+      <div class="row"><button class="btn" type="submit">Save title</button><button class="ghost" type="button" id="title-cancel">Cancel</button></div>
+    </form>
     <div class="locbar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
       <input id="q-loc" type="search" placeholder="ZIP code, city, or address" aria-label="Search events by ZIP code, city, or address" autocomplete="off">
@@ -646,8 +656,8 @@ function shareTarget(){
   const e=(!$("detail-view").hidden&&openId)?events.find(x=>x.id===openId):null;
   if(e)return{event:e,title:e.title,text:confirmText(e)};
   const up=sorted(events.filter(x=>x.date>=todayIso&&x.status!=="cancelled"));
-  const text="Upcoming cigar events\n\n"+(up.length?up.map(x=>`${fmtDate(x.date)} · ${fmtTime(x.time)} — ${x.title}${x.location?" ("+x.location+")":""} — ${stLabel(x.status)}`).join("\n"):"No upcoming events yet.");
-  return{event:null,title:"Upcoming cigar events",text,count:up.length};
+  const text=(SITE_TITLE?SITE_TITLE+" · ":"")+"Upcoming events\n\n"+(up.length?up.map(x=>`${fmtDate(x.date)} · ${fmtTime(x.time)} — ${x.title}${x.location?" ("+x.location+")":""} — ${stLabel(x.status)}`).join("\n"):"No upcoming events yet.");
+  return{event:null,title:(SITE_TITLE?SITE_TITLE+" · ":"")+"Upcoming events",text,count:up.length};
 }
 function gcalLink(e){
   const base="https://calendar.google.com/calendar/render?action=TEMPLATE";
@@ -1109,7 +1119,8 @@ renderDetail = function(){ _renderDetailBase(); renderSubs(); };
 })();
 
 const STAFF_TOUR=[
-  {title:"Welcome to Cigar Events",text:"This tour walks you through logging requests, confirming events and sharing them. It takes about two minutes.",before:()=>{closeDrawer();showMain()}},
+  {title:"Welcome",text:"This tour walks you through logging requests, confirming events and sharing them. It takes about two minutes.",before:()=>{closeDrawer();showMain()}},
+  {target:"#title-view",title:"Your title",text:"Tap the pencil to give the app your own name, like your shop or event series. It also shows at the top of your public events page."},
   {target:"#head-create",title:"Create an event",text:"Got a request on Instagram, Facebook or by text? Tap here to log it. Add the date, location, and how to reach the person."},
   {target:".locbar",title:"Search by location",text:"Type a ZIP code, city or address to find events there. Nearby ZIP codes show up too."},
   {target:"#adv-toggle",title:"Search manually",text:"Open more filters to search by name, phone, social handle, date range, status, or where the request came from."},
@@ -1125,6 +1136,46 @@ const STAFF_TOUR=[
 ];
 $("tour-nav").addEventListener("click",()=>{closeDrawer();setTimeout(()=>startTour(STAFF_TOUR,"tour.staff.v1",()=>closeDrawer()),250)});
 setTimeout(()=>{if(!tourSeen("tour.staff.v1")&&$("lock").hidden&&!$("main-view").hidden)startTour(STAFF_TOUR,"tour.staff.v1",()=>closeDrawer())},1200);
+</script>
+
+<script>
+/* ---------- your own title ---------- */
+const TITLE_KEY="cigar.siteTitle";
+let SITE_TITLE="";
+function applyTitle(t){
+  SITE_TITLE=(t||"").trim();
+  const h=$("app-title");
+  h.textContent=SITE_TITLE||"Add your title";
+  h.classList.toggle("ph",!SITE_TITLE);
+  $("brand-top").textContent=SITE_TITLE;
+  $("brand-side").textContent=SITE_TITLE||"Menu";
+  document.title=SITE_TITLE||"Events";
+}
+async function loadTitle(){
+  let t="";
+  try{t=localStorage.getItem(TITLE_KEY)||""}catch(e){}
+  applyTitle(t);
+  if(SB){
+    try{const {data,error}=await SB.from("cigar_site").select("title").eq("id",1).maybeSingle();if(!error&&data){applyTitle(data.title);try{localStorage.setItem(TITLE_KEY,data.title||"")}catch(e){}}}catch(e){}
+  }
+}
+function openTitleEdit(){$("title-view").hidden=true;$("title-form").hidden=false;$("title-input").value=SITE_TITLE;$("title-err").textContent="";$("title-input").focus()}
+function closeTitleEdit(){$("title-form").hidden=true;$("title-view").hidden=false}
+$("title-edit").addEventListener("click",openTitleEdit);
+$("app-title").addEventListener("click",()=>{if(!SITE_TITLE)openTitleEdit()});
+$("title-cancel").addEventListener("click",closeTitleEdit);
+$("title-input").addEventListener("input",()=>$("title-err").textContent="");
+$("title-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const t=$("title-input").value.trim().slice(0,80);
+  if(SB){
+    const {data,error}=await SB.from("cigar_site").update({title:t,updated_at:new Date().toISOString()}).eq("id",1).select("title");
+    if(error||!data||!data.length){$("title-err").textContent=error&&/relation|does not exist|schema cache/i.test(error.message)?"Run the latest supabase-setup.sql in Supabase to save your title.":"Your title didn't save. Only staff can change it.";return}
+  }
+  try{localStorage.setItem(TITLE_KEY,t)}catch(err){}
+  applyTitle(t);closeTitleEdit();
+});
+loadTitle();
 </script>
 </body>
 </html>
