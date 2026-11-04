@@ -5,45 +5,40 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Upcoming Cigar Events</title>
 <meta name="description" content="Upcoming cigar events. Find one near you or request your own.">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Figtree:wght@600;700;800;900&display=swap">
 <style>
 :root{
-  --bg:#F6F1EA; --surface:#FFFDF9; --ink:#2A1E16; --muted:#6E5D50; --line:#E3D8CB;
+  --bg:#FFFFFF; --check:#F7F7F7; --surface:#FFFFFF; --field:#F7F7F7; --ink:#2A1E16; --muted:#6B6460; --line:#E2E0DE;
   --accent:#8A4B22; --accent-ink:#FFFFFF; --accent-soft:#F2E3D5;
   --ok:#2F6B3A; --ok-soft:#E1EFE2; --wait:#8A6100; --wait-soft:#F8EDCF; --no:#A2342A; --no-soft:#F8E3E0;
   --display:"Fraunces", Georgia, "Times New Roman", serif;
   --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#16110D; --surface:#211A14; --ink:#F1E7DC; --muted:#B5A595; --line:#3A2F26;
-  --accent:#E09A62; --accent-ink:#1E120A; --accent-soft:#3A2A1D;
-  --ok:#86C98F; --ok-soft:#1F3322; --wait:#E8C063; --wait-soft:#3A3016; --no:#F09488; --no-soft:#3E201C; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#16110D; --surface:#211A14; --ink:#F1E7DC; --muted:#B5A595; --line:#3A2F26;
-  --accent:#E09A62; --accent-ink:#1E120A; --accent-soft:#3A2A1D;
-  --ok:#86C98F; --ok-soft:#1F3322; --wait:#E8C063; --wait-soft:#3A3016; --no:#F09488; --no-soft:#3E201C; color-scheme:dark}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{color-scheme:light}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+body{margin:0;background-color:var(--bg);background-image:conic-gradient(var(--check) 25%,transparent 0 50%,var(--check) 0 75%,transparent 0);background-size:36px 36px;color:var(--ink);font-family:var(--body);font-weight:600;font-size:16px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-block:calc(28px + env(safe-area-inset-top,0px)) calc(56px + env(safe-area-inset-bottom,0px))}
 .wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
-.eyebrow{font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin:0}
-h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,8vw,48px);line-height:1.02;margin:6px 0 0;letter-spacing:-0.015em;text-wrap:balance}
-h2{font-family:var(--display);font-weight:500;font-size:24px;margin:0;text-wrap:balance}
-h3{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.2;margin:0;overflow-wrap:anywhere}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin:0}
+h1{font-family:var(--display);font-weight:900;font-size:clamp(34px,8vw,48px);line-height:1.02;margin:6px 0 0;letter-spacing:-0.015em;text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:24px;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:900;font-size:20px;line-height:1.2;margin:0;overflow-wrap:anywhere}
 .lede{color:var(--muted);margin:10px 0 0;font-size:17px;max-width:52ch}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
 button,a.btn,a.ghost{font:inherit;cursor:pointer;border-radius:10px;color:var(--ink)}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.btn{background:var(--accent);color:var(--accent-ink);border:0;padding:11px 18px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.ghost{background:transparent;border:1px solid var(--line);padding:9px 14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:500}
+.btn,a.btn{background:var(--accent);color:var(--accent-ink);border:0;padding:11px 18px;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.ghost{background:var(--surface);border:1px solid var(--line);padding:9px 14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+label{display:block;font-size:12px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
 textarea{min-height:84px;resize:vertical}
+input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;display:block;min-height:44px;max-width:100%}
+input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left}
+
 .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .full{grid-column:1/-1}
 .err{color:var(--no);font-size:14px;min-height:20px}
@@ -54,32 +49,43 @@ textarea{min-height:84px;resize:vertical}
 .list{display:flex;flex-direction:column;gap:12px}
 .ev{display:grid;grid-template-columns:64px minmax(0,1fr);gap:16px;align-items:start}
 .cal{border:1px solid var(--line);border-radius:12px;text-align:center;overflow:hidden;background:var(--bg)}
-.cal .mo{display:block;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;letter-spacing:0.1em;padding:3px 0}
-.cal .dy{display:block;font-family:var(--display);font-weight:700;font-size:26px;line-height:1.3;font-variant-numeric:tabular-nums}
+.cal .mo{display:block;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:800;letter-spacing:0.1em;padding:3px 0}
+.cal .dy{display:block;font-family:var(--display);font-weight:900;font-size:26px;line-height:1.3;font-variant-numeric:tabular-nums}
 .cal .wd{display:block;font-size:11px;color:var(--muted);padding-bottom:4px;text-transform:uppercase;letter-spacing:0.08em}
 .meta{color:var(--muted);font-size:15px;margin:4px 0 0}
-.meta b{color:var(--ink);font-weight:600}
-.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-top:8px}
+.meta b{color:var(--ink);font-weight:800}
+.tag{display:inline-block;font-size:12px;font-weight:800;padding:2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-top:8px}
 .ev .row{margin-top:12px}
 .empty{color:var(--muted);text-align:center;padding:18px 8px}
-.sec-h{font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
-.done{background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:16px;font-weight:500}
+.sec-h{font-size:12px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
+.done{background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:16px;font-weight:700}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .sugg{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:25;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 10px 28px rgba(20,12,6,.14)}
 .sugg button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 12px}
 .sugg button:hover,.sugg button:focus-visible{background:var(--accent-soft);outline:none}
-.sugg button b{display:block;font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.sugg button b{display:block;font-weight:800;font-size:15px;overflow-wrap:anywhere}
 .sugg small{color:var(--muted);font-size:13px}
 .sugg-note{padding:10px 12px;font-size:13px;color:var(--muted)}
 .sugg .attr{font-size:11px;padding:6px 12px;color:var(--muted)}
 footer{color:var(--muted);font-size:12px;text-align:center}
+.check{display:flex;gap:10px;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:15px;font-weight:700;color:var(--ink);margin:0}
+.check input{width:22px;height:22px;flex:none;margin-top:1px}
+.tabs{display:flex;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px}
+.tabs button{flex:1;border:0;background:transparent;padding:9px 10px;font-weight:800;font-size:14px;color:var(--muted)}
+.tabs button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(20,12,6,.12)}
+.srow{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.srow:last-child{border-bottom:0}
+.srow .go{flex:1;min-width:0;text-align:left;background:none;border:0;padding:4px 0;font-weight:800;overflow-wrap:anywhere;color:var(--ink)}
+.ok{color:var(--ok);font-size:14px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.acct-btn{border-radius:999px;padding:7px 14px}
 @media (max-width:460px){.fields{grid-template-columns:1fr}.ev{grid-template-columns:56px minmax(0,1fr);gap:12px}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow" id="shop">Cigar Events</p>
+    <div class="top"><p class="eyebrow" id="shop">Cigar Events</p><button class="ghost acct-btn" type="button" id="acct-open" aria-controls="acct">Sign in</button></div>
     <h1>Upcoming cigar events</h1>
     <p class="lede">Pairings, rolling nights and lounge events. Find one near you, or request one of your own.</p>
     <div class="row" style="margin-top:16px">
@@ -89,10 +95,48 @@ footer{color:var(--muted);font-size:12px;text-align:center}
     </div>
   </header>
 
+  <section class="card" id="acct" hidden style="scroll-margin-top:16px">
+    <div id="acct-out" style="display:flex;flex-direction:column;gap:14px">
+      <div class="top"><h2 id="acct-h">Create your free profile</h2><button class="ghost" type="button" id="acct-close">Close</button></div>
+      <p class="note" style="margin:0;font-size:15px">Save your searches and choose to get emails when new events come up near you. You don't need a profile to browse events.</p>
+      <div class="tabs"><button type="button" id="tab-new" aria-pressed="true">Create profile</button><button type="button" id="tab-in" aria-pressed="false">Sign in</button></div>
+      <form id="acct-form" novalidate class="fields">
+        <div class="full" id="a-name-wrap"><label for="a-name">Name</label><input id="a-name" autocomplete="name" placeholder="Marcus Reed"></div>
+        <div class="full"><label for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" placeholder="marcus@email.com"></div>
+        <div class="full"><label for="a-pass">Password</label><input id="a-pass" type="password" autocomplete="new-password" placeholder="At least 8 characters"></div>
+        <label class="full check" id="a-opt-wrap"><input id="a-opt" type="checkbox"> Email me when new events come up that match my saved searches</label>
+        <div class="err full" id="a-err" role="alert"></div>
+        <div class="full"><button class="btn" type="submit" id="a-submit" style="width:100%">Create profile</button></div>
+      </form>
+    </div>
+    <div id="acct-in" hidden style="display:flex;flex-direction:column;gap:14px">
+      <div class="top"><h2>Your profile</h2><button class="ghost" type="button" id="acct-close2">Close</button></div>
+      <form id="prof-form" novalidate class="fields">
+        <div class="full"><label for="p-name">Name</label><input id="p-name" autocomplete="name"></div>
+        <div class="full"><span class="note">Signed in as <b id="p-email" style="color:var(--ink)"></b></span></div>
+        <label class="full check"><input id="p-opt" type="checkbox"> Email me when new events come up that match my saved searches</label>
+        <div class="full row"><button class="btn" type="submit">Save profile</button><span class="ok" id="p-note" role="status"></span></div>
+      </form>
+      <div><h3 style="font-size:18px">Saved searches</h3><div id="saved"></div></div>
+      <div class="row" style="border-top:1px solid var(--line);padding-top:14px">
+        <button class="ghost" type="button" id="a-logout">Log out</button>
+        <button class="ghost" type="button" id="a-remove" style="color:var(--no);margin-left:auto">Remove my profile</button>
+      </div>
+      <div class="row" id="rm-confirm" hidden style="background:var(--no-soft);color:var(--no);border-radius:10px;padding:10px 12px;font-size:14px">
+        <span style="flex:1;min-width:160px">Remove your profile and saved searches?</span>
+        <button class="ghost" type="button" id="rm-yes" style="color:var(--no);background:var(--surface)">Remove</button>
+        <button class="ghost" type="button" id="rm-no">Keep it</button>
+      </div>
+      <div class="err" id="p-err" role="alert"></div>
+    </div>
+  </section>
+
   <div class="locbar">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
     <input id="q" type="search" placeholder="Search by ZIP code, city, or address" aria-label="Search events by ZIP code, city, or address" autocomplete="off">
   </div>
+
+  <div class="row" id="save-row" hidden style="margin-top:-10px"><button class="ghost" type="button" id="save-search">Save this search</button><span class="note" id="save-note" role="status"></span></div>
 
   <section class="list" id="list" aria-live="polite"><div class="card empty">Loading events…</div></section>
 
@@ -129,7 +173,8 @@ footer{color:var(--muted);font-size:12px;text-align:center}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const C=window.CIGAR_CONFIG||{};
-const SB=(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&window.supabase)?window.supabase.createClient(C.SUPABASE_URL,C.SUPABASE_ANON_KEY):null;
+const TEST_MODE=C.TEST_MODE===true;
+const SB=(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&window.supabase)?window.supabase.createClient(C.SUPABASE_URL,C.SUPABASE_ANON_KEY,TEST_MODE?{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}:undefined):null;
 if(C.SHOP_NAME){$("shop").textContent=C.SHOP_NAME;document.title="Upcoming events · "+C.SHOP_NAME}
 const pad=n=>String(n).padStart(2,"0");
 const todayIso=(()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())})();
@@ -281,6 +326,132 @@ $("req").addEventListener("submit",async e=>{
   $("r-done").textContent=`Thanks, ${v.name.split(" ")[0]}. We got your request for ${dt(v.date).toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})} and will reach out soon to confirm.`;
   $("r-done").hidden=false;
 });
+
+
+/* ---------- optional customer profiles ---------- */
+let USER=null, CUST=null, SAVED=[], mode="new";
+function openAcct(m){if(m&&!USER)setMode(m);$("acct").hidden=false;$("acct").scrollIntoView({block:"start",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})}
+function closeAcct(){$("acct").hidden=true}
+function setMode(m){
+  mode=m;$("tab-new").setAttribute("aria-pressed",String(m==="new"));$("tab-in").setAttribute("aria-pressed",String(m==="in"));
+  $("a-name-wrap").hidden=m!=="new";$("a-opt-wrap").hidden=m!=="new";
+  $("a-submit").textContent=m==="new"?"Create profile":"Sign in";
+  $("acct-h").textContent=m==="new"?"Create your free profile":"Sign in to your profile";
+  $("a-pass").autocomplete=m==="new"?"new-password":"current-password";
+  $("a-pass").placeholder=m==="new"?"At least 8 characters":"";
+  $("a-err").textContent="";
+}
+$("tab-new").addEventListener("click",()=>setMode("new"));
+$("tab-in").addEventListener("click",()=>setMode("in"));
+$("acct-open").addEventListener("click",()=>$("acct").hidden?openAcct():closeAcct());
+$("acct-close").addEventListener("click",closeAcct);$("acct-close2").addEventListener("click",closeAcct);
+["a-name","a-email","a-pass"].forEach(id=>$(id).addEventListener("input",()=>$("a-err").textContent=""));
+
+function renderAcct(){
+  const first=CUST&&CUST.name?CUST.name.split(" ")[0]:"";
+  $("acct-open").textContent=USER?(first?"Hi, "+first:"Your profile"):"Sign in";
+  $("acct-out").hidden=!!USER;$("acct-in").hidden=!USER;
+  if(USER){
+    $("p-name").value=CUST?CUST.name:"";$("p-email").textContent=USER.email||"";$("p-opt").checked=!!(CUST&&CUST.email_updates);
+    $("saved").innerHTML=SAVED.length?SAVED.map(x=>`<div class="srow"><button type="button" class="go" data-run="${esc(x.query)}">${esc(x.query)}</button><button type="button" class="ghost" data-del="${esc(x.id)}" aria-label="Remove saved search ${esc(x.query)}">Remove</button></div>`).join("")
+      :'<p class="note" style="margin:6px 0 0">No saved searches yet. Search for a ZIP code or city, then tap Save this search.</p>';
+  }
+  updateSaveRow();
+}
+function updateSaveRow(){
+  const q=$("q").value.trim();
+  $("save-row").hidden=!q||TEST_MODE;
+  const already=SAVED.some(x=>x.query.toLowerCase()===q.toLowerCase());
+  $("save-search").textContent=already?"Saved":"Save this search";$("save-search").disabled=already;
+}
+$("q").addEventListener("input",()=>{$("save-note").textContent="";updateSaveRow()});
+
+async function loadProfile(){
+  if(!SB||!USER)return;
+  try{
+    let {data,error}=await SB.from("cigar_customers").select("*").eq("user_id",USER.id).maybeSingle();
+    if(error)throw error;
+    if(!data){
+      const md=USER.user_metadata||{};
+      const r=await SB.from("cigar_customers").upsert({user_id:USER.id,name:String(md.name||"").slice(0,120),email:USER.email||"",email_updates:md.email_updates===true}).select().single();
+      if(r.error)throw r.error;data=r.data;
+    }
+    CUST=data;
+    const s=await SB.from("cigar_saved_searches").select("id,query,created_at").eq("user_id",USER.id).order("created_at",{ascending:false});
+    SAVED=s.data||[];
+  }catch(e){$("p-err").textContent="Your profile couldn't load. Try again in a minute."}
+  renderAcct();
+}
+
+$("acct-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const name=$("a-name").value.trim(),email=$("a-email").value.trim(),password=$("a-pass").value,opt=$("a-opt").checked;
+  const err=(m,f)=>{$("a-err").textContent=m;if(f)$(f).focus()};
+  if(!SB)return err("Profiles aren't connected yet.");
+  if(mode==="new"&&!name)return err("Enter your name.","a-name");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return err("Enter a valid email.","a-email");
+  if(mode==="new"&&password.length<8)return err("Use at least 8 characters for your password.","a-pass");
+  if(!password)return err("Enter your password.","a-pass");
+  $("a-submit").disabled=true;
+  try{
+    if(mode==="new"){
+      const {data,error}=await SB.auth.signUp({email,password,options:{data:{name,email_updates:opt},emailRedirectTo:location.href.split("#")[0].split("?")[0]}});
+      if(error)return err(/registered|exists/i.test(error.message)?"That email already has a profile. Tap Sign in instead.":"Your profile couldn't be created. Try again.");
+      if(!data.session){$("a-err").textContent="";$("acct-out").querySelector(".note").textContent="Almost done. Check your email for a confirmation link, then come back and sign in.";setMode("in");$("a-email").value=email;return}
+    }else{
+      const {error}=await SB.auth.signInWithPassword({email,password});
+      if(error)return err(/confirm/i.test(error.message)?"Confirm your email first. Check your inbox for the link.":"That email and password don't match. Try again.");
+    }
+    $("a-pass").value="";
+  }finally{$("a-submit").disabled=false}
+});
+
+$("prof-form").addEventListener("submit",async e=>{
+  e.preventDefault();$("p-note").textContent="";$("p-err").textContent="";
+  const name=$("p-name").value.trim();
+  if(!name){$("p-err").textContent="Enter your name.";return}
+  const {error}=await SB.from("cigar_customers").update({name:name.slice(0,120),email_updates:$("p-opt").checked}).eq("user_id",USER.id);
+  if(error){$("p-err").textContent="Your changes didn't save. Try again.";return}
+  CUST={...CUST,name,email_updates:$("p-opt").checked};renderAcct();$("p-note").textContent="Saved";
+});
+$("saved").addEventListener("click",async e=>{
+  const run=e.target.closest("[data-run]");
+  if(run){$("q").value=run.dataset.run;render();updateSaveRow();$("list").scrollIntoView({block:"start",behavior:"smooth"});return}
+  const del=e.target.closest("[data-del]");if(!del)return;
+  const {error}=await SB.from("cigar_saved_searches").delete().eq("id",del.dataset.del);
+  if(error){$("p-err").textContent="That didn't remove. Try again.";return}
+  SAVED=SAVED.filter(x=>x.id!==del.dataset.del);renderAcct();
+});
+$("save-search").addEventListener("click",async()=>{
+  const q=$("q").value.trim();if(!q)return;
+  if(!SB){$("save-note").textContent="Profiles aren't connected yet.";return}
+  if(!USER){$("save-note").textContent="Create a free profile to save searches.";openAcct("new");return}
+  const {data,error}=await SB.from("cigar_saved_searches").insert({user_id:USER.id,query:q.slice(0,120)}).select("id,query,created_at").single();
+  if(error){$("save-note").textContent="That search didn't save. Try again.";return}
+  SAVED.unshift(data);renderAcct();
+  $("save-note").textContent=CUST&&CUST.email_updates?"Saved. We'll email you about new events here.":"Saved. Turn on emails in your profile to hear about new events here.";
+});
+$("a-logout").addEventListener("click",async()=>{try{await SB.auth.signOut()}catch(e){}closeAcct()});
+$("a-remove").addEventListener("click",()=>$("rm-confirm").hidden=false);
+$("rm-no").addEventListener("click",()=>$("rm-confirm").hidden=true);
+$("rm-yes").addEventListener("click",async()=>{
+  const a=await SB.from("cigar_saved_searches").delete().eq("user_id",USER.id);
+  const b=await SB.from("cigar_customers").delete().eq("user_id",USER.id);
+  if(a.error||b.error){$("p-err").textContent="Your profile couldn't be removed. Try again.";return}
+  CUST=null;SAVED=[];$("rm-confirm").hidden=true;
+  try{await SB.auth.signOut()}catch(e){}
+  $("save-note").textContent="Your profile and saved searches were removed.";closeAcct();
+});
+if(SB){
+  SB.auth.onAuthStateChange((ev,session)=>{
+    const u=session?session.user:null;
+    if((u&&u.id)===(USER&&USER.id))return;
+    USER=u;CUST=null;SAVED=[];
+    if(USER)setTimeout(loadProfile,0);else renderAcct();
+  });
+}
+renderAcct();
+if(TEST_MODE){$("acct-open").hidden=true;$("acct").hidden=true}
 
 /* share this page */
 $("share").addEventListener("click",async()=>{
