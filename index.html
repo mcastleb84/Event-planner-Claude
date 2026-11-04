@@ -117,6 +117,12 @@ textarea{min-height:110px;resize:vertical}
 .rv{display:flex;flex-direction:column;gap:12px}
 .rv ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
 footer{color:var(--muted);font-size:12px;text-align:center}
+.sharebox{display:flex;flex-direction:column;gap:12px;border:1.5px solid var(--accent);border-radius:12px;padding:16px;background:var(--accent-soft)}
+.sharebox.quiet{border:1px solid var(--line);background:var(--field)}
+.sharegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.sharegrid a,.sharegrid button{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);text-decoration:none;font:inherit;font-weight:800;font-size:14px;text-align:left;min-width:0;cursor:pointer}
+.sharegrid a:hover,.sharegrid button:hover{border-color:var(--accent)}
+.sharegrid .dot{width:28px;height:28px;border-radius:8px;flex:none;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:900}
 @media (max-width:460px){.fields{grid-template-columns:1fr}.ev{grid-template-columns:56px minmax(0,1fr);gap:12px}}
 </style>
 </head>
@@ -454,7 +460,45 @@ async function copyText(t){ try { await navigator.clipboard.writeText(t); return
    STATE
    ============================================================ */
 let USER = null, PROFILE = null, IS_ADMIN = false, SAVES = new Set(), SEARCHES = [], EVENTS = [], LOADED = false, SITE_TITLE = "";
-let formFiles = [], uploading = 0, editingId = null;
+let formFiles = [], uploading = 0, editingId = null, JUST_POSTED = null;
+
+/* ---------- share an event to social media ---------- */
+function shareText(e){ return `${e.title} · ${longDate(e.date)}, ${fmtTime(e.time)}${placeLine(e) ? " · " + placeLine(e) : ""}`; }
+function shareTargets(e){
+  const url = eventLink(e), text = shareText(e), u = encodeURIComponent(url), both = encodeURIComponent(text + " " + url);
+  return [
+    { n: "Facebook", c: "#1877F2", l: "f", href: "https://www.facebook.com/sharer/sharer.php?u=" + u },
+    { n: "X (Twitter)", c: "#111111", l: "X", href: "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text) + "&url=" + u },
+    { n: "WhatsApp", c: "#25D366", l: "W", href: "https://wa.me/?text=" + both },
+    { n: "Threads", c: "#111111", l: "@", href: "https://www.threads.net/intent/post?text=" + both },
+    { n: "LinkedIn", c: "#0A66C2", l: "in", href: "https://www.linkedin.com/sharing/share-offsite/?url=" + u },
+    { n: "Instagram", c: "#D6247A", l: "IG", href: "https://www.instagram.com/", copy: true },
+    { n: "TikTok", c: "#111111", l: "T", href: "https://www.tiktok.com/", copy: true },
+    { n: "Text message", c: "#2F6B3A", l: "✉", href: "sms:?&body=" + both },
+    { n: "Email", c: "#8A4B22", l: "@", href: "mailto:?subject=" + encodeURIComponent(e.title) + "&body=" + encodeURIComponent(text + "\n\n" + url) }
+  ];
+}
+function shareBox(e, fresh){
+  return `<div class="sharebox ${fresh ? "" : "quiet"}">
+    ${fresh ? '<h3>Your event is live</h3><p style="font-size:15px">Now share it so people can find it. Tap where you want to post it.</p>' : '<h3 style="font-size:18px">Share this event</h3>'}
+    <div class="sharegrid">${shareTargets(e).map((t, i) => `<a href="${esc(t.href)}" ${/^https:/.test(t.href) ? 'target="_blank" rel="noopener"' : ""} data-share-i="${i}"><span class="dot" style="background:${t.c}" aria-hidden="true">${esc(t.l)}</span>${esc(t.n)}</a>`).join("")}
+      <button type="button" data-share-copy><span class="dot" style="background:var(--muted)" aria-hidden="true">⧉</span>Copy link</button></div>
+    <div class="row">${navigator.share ? '<button type="button" class="ghost" data-share-more>More apps…</button>' : ""}${fresh ? '<button type="button" class="ghost" data-share-done>Done</button>' : ""}</div>
+    <p class="note" data-share-note role="status">${fresh ? "Instagram and TikTok don't allow posting from websites, so we copy your caption and link for you to paste." : ""}</p></div>`;
+}
+function wireShareBox(box, e){
+  const note = box.querySelector("[data-share-note]"), url = eventLink(e), targets = shareTargets(e);
+  box.querySelectorAll("[data-share-i]").forEach(a => a.addEventListener("click", async () => {
+    const t = targets[+a.dataset.shareI];
+    if (t.copy) note.textContent = (await copyText(shareText(e) + " " + url)) ? `Caption and link copied. Paste them into your ${t.n} post, story or bio.` : `Copy this into ${t.n}: ${url}`;
+    else if (!/^https:/.test(t.href)) note.textContent = "If nothing opened, tap Copy link and paste it into your app.";
+  }));
+  box.querySelector("[data-share-copy]").addEventListener("click", async () => { note.textContent = (await copyText(url)) ? "Link copied. Paste it anywhere." : url; });
+  const more = box.querySelector("[data-share-more]");
+  if (more) more.addEventListener("click", async () => { try { await navigator.share({ title: e.title, text: shareText(e), url }); } catch (err) {} });
+  const done = box.querySelector("[data-share-done]");
+  if (done) done.addEventListener("click", () => { box.hidden = true; $("ev-share").setAttribute("aria-expanded", "false"); box.innerHTML = shareBox(e, false); wireShareBox(box, e); });
+}
 
 /* ============================================================
    ROUTING (#event-<id>, #post, #edit-<id>, #mine, #review)
@@ -561,9 +605,9 @@ async function renderDetail(id){
       <button type="button" class="${saved ? "ghost saved" : "btn"}" data-save="${esc(e.id)}" aria-pressed="${saved}">${HEART(saved)}${saved ? "Saved" : "Save"}</button>
       ${fa ? `<a class="ghost" href="${navUrl(e)}" target="_blank" rel="noopener">${NAV_SVG}Navigate</a>` : ""}
       <a class="ghost" href="${gcal(e)}" target="_blank" rel="noopener">Add to calendar</a>
-      <button type="button" class="ghost" id="ev-share">Share</button>
+      <button type="button" class="ghost" id="ev-share" aria-expanded="false" aria-controls="ev-sharebox">Share</button>
     </div>
-    <span class="note" id="ev-share-note" role="status"></span>
+    <div id="ev-sharebox" ${JUST_POSTED === e.id ? "" : "hidden"}>${shareBox(e, JUST_POSTED === e.id)}</div>
     ${imgs.length ? `<div class="gallery">${imgs.map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener"><img src="${esc(f.url)}" alt="${esc(f.name || "Event photo")}" loading="lazy"></a>`).join("")}</div>` : ""}
     ${e.description ? `<p class="desc">${esc(e.description)}</p>` : ""}
     <dl class="kv">
@@ -576,11 +620,9 @@ async function renderDetail(id){
       <label style="margin:0">${mine ? "Your event" : "Owner tools"}</label>
       <div class="row"><button type="button" class="ghost" data-go="edit-${esc(e.id)}">Edit event</button><button type="button" class="ghost" id="ev-email">Email people who saved it</button></div>
       <p class="note" id="ev-email-note"></p></div>` : ""}`;
-  $("ev-share").addEventListener("click", async () => {
-    const url = eventLink(e);
-    if (navigator.share) { try { await navigator.share({ title: e.title, text: e.title + " · " + longDate(e.date), url }); return; } catch (err) { if (err && err.name === "AbortError") return; } }
-    $("ev-share-note").textContent = (await copyText(url)) ? "Link copied. Paste it anywhere." : url;
-  });
+  $("ev-share").addEventListener("click", () => { const box = $("ev-sharebox"); box.hidden = !box.hidden; $("ev-share").setAttribute("aria-expanded", String(!box.hidden)); });
+  wireShareBox($("ev-sharebox"), e);
+  if (JUST_POSTED === e.id) { JUST_POSTED = null; $("ev-share").setAttribute("aria-expanded", "true"); }
   if ($("ev-email")) $("ev-email").addEventListener("click", () => emailSavers(e, $("ev-email-note")));
 }
 
@@ -645,6 +687,7 @@ $("ev-form").addEventListener("submit", async ev => {
   $("f-save").disabled = true;
   try {
     const saved = editingId ? await api.updateEvent(editingId, v) : await api.createEvent(v);
+    if (!editingId) JUST_POSTED = saved.id;
     await loadEvents(); go("event-" + saved.id);
   } catch (e2) {
     const m = String(e2 && e2.message || "");
@@ -1107,7 +1150,7 @@ const TOUR=[
   {target:"#list a[href*='maps/dir']",title:"Navigate",text:"Opens Google Maps with directions to the event. Add to calendar puts it in your Google Calendar."},
   {target:"#acct-open",title:"Your free profile",text:"Sign in or create a profile to save events and searches, choose to get emails about new events near you, and post your own."},
   {target:"#post-btn",title:"Post your own event",text:"Anyone with a profile can post an event, with photos, flyers and documents. It goes live right away, and you can edit it or email the people who saved it from My events."},
-  {target:"#share-site",title:"Spread the word",text:"Share this page on social media or with friends. Each event also has its own Share button."},
+  {target:"#share-site",title:"Spread the word",text:"Share this page on social media or with friends. Each event has its own Share button with Facebook, X, WhatsApp, Instagram, TikTok and more."},
   {title:"You're all set",text:"Replay this tour anytime with the How it works button."}
 ];
 $("tour-btn").addEventListener("click",()=>startTour(TOUR,"tour.site.v1"));
