@@ -176,7 +176,7 @@ footer{color:var(--muted);font-size:12px;text-align:center}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const C=window.CIGAR_CONFIG||{};
-const TEST_MODE=C.TEST_MODE===true;
+const TEST_MODE=C.TEST_MODE!==false;
 const SB=(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&window.supabase)?window.supabase.createClient(C.SUPABASE_URL,C.SUPABASE_ANON_KEY,TEST_MODE?{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}:undefined):null;
 const pad=n=>String(n).padStart(2,"0");
 const todayIso=(()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())})();
