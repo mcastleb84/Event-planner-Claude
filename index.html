@@ -174,6 +174,11 @@ footer{color:var(--muted);font-size:12px;text-align:center}
 
   <!-- HOME -->
   <section id="v-home" style="display:flex;flex-direction:column;gap:18px">
+    <div class="locbar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+      <input id="q" type="search" placeholder="ZIP code, city, address or event" aria-label="Search events" autocomplete="off">
+    </div>
+    <div class="row" id="save-row" hidden style="margin-top:-8px"><button class="ghost" type="button" id="save-search">Save this search</button><span class="note" id="save-note" role="status"></span></div>
     <div class="row" id="title-view" style="flex-wrap:nowrap;align-items:flex-start">
       <h1 id="site-title" style="flex:1;min-width:0">Event name</h1>
       <button class="iconbtn" type="button" id="title-edit" hidden aria-label="Edit event name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></button>
@@ -191,11 +196,6 @@ footer{color:var(--muted);font-size:12px;text-align:center}
       <button class="ghost" type="button" id="tour-btn">How it works</button>
       <span class="note" id="share-note" role="status"></span>
     </div>
-    <div class="locbar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
-      <input id="q" type="search" placeholder="Search by ZIP code, city, address or event" aria-label="Search events" autocomplete="off">
-    </div>
-    <div class="row" id="save-row" hidden style="margin-top:-8px"><button class="ghost" type="button" id="save-search">Save this search</button><span class="note" id="save-note" role="status"></span></div>
     <section class="list" id="list" aria-live="polite"><div class="card empty">Loading events…</div></section>
   </section>
 
@@ -341,7 +341,8 @@ const sbApi = {
 };
 
 /* Demo mode: a pretend server in this browser, so the site works before Supabase is connected. */
-const DKEY = "ce.demo.v1";
+const PREVIEW = /[?&]preview\b/.test(location.search);
+const DKEY = PREVIEW ? "ce.preview.v1" : "ce.demo.v1";
 const dLoad = () => { try { return JSON.parse(localStorage.getItem(DKEY)) || null; } catch (e) { return null; } };
 const dSave = d => { try { localStorage.setItem(DKEY, JSON.stringify(d)); } catch (e) { throw new Error("This browser won't let the site save. Turn off private browsing."); } };
 function dDb(){ return dLoad() || { users: [], session: null, profiles: {}, events: [], saves: [], searches: [], admins: [], site: { title: "" } }; }
@@ -402,7 +403,27 @@ const demoApi = {
   async removeFile(){},
   subscribe(cb){ addEventListener("storage", e => { if (e.key === DKEY) cb(); }); }
 };
-const api = SB ? sbApi : demoApi;
+const api = (SB && !PREVIEW) ? sbApi : demoApi;
+if (PREVIEW && !dLoad()) {
+  const day = n => { const d = new Date(); d.setDate(d.getDate() + n); return isoOf(d); };
+  const svgFlyer = (bg, fg, a, b) => "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="600" height="800" fill="${bg}"/><rect x="40" y="40" width="520" height="720" fill="none" stroke="${fg}" stroke-width="6"/><text x="300" y="360" font-family="Georgia,serif" font-size="64" font-weight="700" fill="${fg}" text-anchor="middle">${a}</text><text x="300" y="450" font-family="Georgia,serif" font-size="40" fill="${fg}" text-anchor="middle">${b}</text></svg>`);
+  const now = new Date().toISOString();
+  const base = { status: "live", admin_hidden: false, created_at: now, updated_at: now, contact: "", price: "" };
+  dSave({
+    users: [{ id: "me", email: "you@example.com", password: "preview123", name: "Alex Morgan" }, { id: "jo", email: "jordan@example.com", password: "x", name: "Jordan Blake" }],
+    session: "me",
+    profiles: { me: { user_id: "me", name: "Alex Morgan", email: "you@example.com", email_updates: true }, jo: { user_id: "jo", name: "Jordan Blake", email: "jordan@example.com", email_updates: false } },
+    admins: ["me"],
+    site: { title: "" },
+    events: [
+      { ...base, id: "pv1", host_id: "me", host_name: "Alex Morgan", title: "Cigar and Bourbon Pairing Night", event_type: "Tasting / pairing", date: day(5), time: "19:30", price: "$40", description: "Four cigar and bourbon pairings with live jazz.\nDress code: smart casual. 21 and over.", location: "Smoke and Oak Lounge", address: "1450 Peachtree St NE", city: "Atlanta", state: "GA", zip: "30309", contact: "@smokeandoak", reviewed: true, files: [{ name: "flyer.svg", type: "image/svg+xml", size: 2000, url: svgFlyer("#8A4B22", "#FFFFFF", "Pairing Night", "Bourbon + Cigars"), path: "" }] },
+      { ...base, id: "pv2", host_id: "jo", host_name: "Jordan Blake", title: "Beginner Cigar Rolling Class", event_type: "Class / workshop", date: day(12), time: "14:00", price: "$25", description: "Learn to roll your own cigar with a master roller. All materials included.", location: "Decatur Square Hall", address: "220 Ponce de Leon Ave", city: "Decatur", state: "GA", zip: "30030", contact: "jordan@example.com", reviewed: false, files: [{ name: "class.svg", type: "image/svg+xml", size: 2000, url: svgFlyer("#2F6B3A", "#FFFFFF", "Rolling Class", "Saturday 2 PM"), path: "" }] },
+      { ...base, id: "pv3", host_id: "jo", host_name: "Jordan Blake", title: "Rooftop Lounge Night", event_type: "Lounge night", date: day(20), time: "20:00", price: "Free", description: "Relaxed night on the roof. Bring your own cigars.", location: "Midtown Rooftop", address: "", city: "Atlanta", state: "GA", zip: "30308", reviewed: true, files: [] }
+    ],
+    saves: [{ user_id: "me", event_id: "pv2" }, { user_id: "jo", event_id: "pv1" }],
+    searches: [{ id: "s1", user_id: "me", query: "30309" }]
+  });
+}
 
 /* ============================================================
    HELPERS
@@ -876,6 +897,11 @@ $("share-site").addEventListener("click", async () => {
    ============================================================ */
 (async () => {
   $("demo-note").hidden = !api.demo;
+  if (PREVIEW) {
+    $("demo-note").innerHTML = 'Preview: you\'re signed in with a sample profile and sample events, saved on this device only. Nothing here is real or shared. <a href="?preview" id="pv-reset">Start over</a> · <a href="./">Exit preview</a>';
+    $("pv-reset").addEventListener("click", e => { e.preventDefault(); try { localStorage.removeItem(DKEY); } catch (err) {} location.href = "?preview"; });
+    try { localStorage.setItem("tour.site.v1", "1"); } catch (e) {}
+  }
   try { applyTitle(await api.getTitle()); } catch (e) { applyTitle(""); }
   api.onAuth(u => onUser(u));
   await loadEvents();
