@@ -1,3 +1,5 @@
+https://qbyqkngwhpemrgzvykdd.supabase.com
+sb_publishable_tClv93an0Iyq7RjtG4JCFw_7DfAXqp4
 <!doctype html>
 <html lang="en">
 <head>
@@ -358,16 +360,16 @@ const localBackend = {
 
 /* Supabase storage (shared by every logged-in staff member) */
 const sbBackend = {
-  async listEvents(){ const { data, error } = await SB.from("events").select("id,data").order("created_at"); if (error) throw error; return data.map(r => [r.id, r.data]); },
-  async addEvent(v){ const { data, error } = await SB.from("events").insert({ data: v }).select("id").single(); if (error) throw error; return data.id; },
+  async listEvents(){ const { data, error } = await SB.from("cigar_events").select("id,data").order("created_at"); if (error) throw error; return data.map(r => [r.id, r.data]); },
+  async addEvent(v){ const { data, error } = await SB.from("cigar_events").insert({ data: v }).select("id").single(); if (error) throw error; return data.id; },
   async updateEvent(id, p){
-    const cur = await SB.from("events").select("data").eq("id", id).single(); if (cur.error) throw cur.error;
-    const { error } = await SB.from("events").update({ data: { ...cur.data.data, ...p } }).eq("id", id); if (error) throw error;
+    const cur = await SB.from("cigar_events").select("data").eq("id", id).single(); if (cur.error) throw cur.error;
+    const { error } = await SB.from("cigar_events").update({ data: { ...cur.data.data, ...p } }).eq("id", id); if (error) throw error;
   },
-  async deleteEvent(id){ const { error } = await SB.from("events").delete().eq("id", id); if (error) throw error; },
-  async getSettings(uid){ const { data, error } = await SB.from("user_settings").select("pin_hash").eq("user_id", uid).maybeSingle(); if (error) throw error; return data && data.pin_hash ? { pinHash: data.pin_hash } : null; },
-  async setSettings(uid, d){ const { error } = await SB.from("user_settings").upsert({ user_id: uid, pin_hash: d.pinHash, updated_at: new Date().toISOString() }); if (error) throw error; },
-  async deleteSettings(uid){ const { error } = await SB.from("user_settings").delete().eq("user_id", uid); if (error) throw error; }
+  async deleteEvent(id){ const { error } = await SB.from("cigar_events").delete().eq("id", id); if (error) throw error; },
+  async getSettings(uid){ const { data, error } = await SB.from("cigar_user_settings").select("pin_hash").eq("user_id", uid).maybeSingle(); if (error) throw error; return data && data.pin_hash ? { pinHash: data.pin_hash } : null; },
+  async setSettings(uid, d){ const { error } = await SB.from("cigar_user_settings").upsert({ user_id: uid, pin_hash: d.pinHash, updated_at: new Date().toISOString() }); if (error) throw error; },
+  async deleteSettings(uid){ const { error } = await SB.from("cigar_user_settings").delete().eq("user_id", uid); if (error) throw error; }
 };
 const backend = SB ? sbBackend : localBackend;
 
@@ -401,7 +403,7 @@ const dbShim = {
   }
 };
 if (SB) {
-  try { SB.channel("events-live").on("postgres_changes", { event: "*", schema: "public", table: "events" }, () => emit("events")).subscribe(); } catch (e) {}
+  try { SB.channel("events-live").on("postgres_changes", { event: "*", schema: "public", table: "cigar_events" }, () => emit("events")).subscribe(); } catch (e) {}
 } else {
   window.addEventListener("storage", e => { if (e.key === LS_KEY) { emit("events"); emit("settings"); } });
 }
