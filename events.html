@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Upcoming Cigar Events</title>
-<meta name="description" content="Upcoming cigar events. Find one near you or request your own.">
+<title>Upcoming events</title>
+<meta name="description" content="Upcoming events. Find one near you or request your own.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Figtree:wght@600;700;800;900&display=swap">
 <style>
 :root{
@@ -85,8 +85,8 @@ footer{color:var(--muted);font-size:12px;text-align:center}
 <body>
 <div class="wrap">
   <header>
-    <div class="top"><p class="eyebrow" id="shop">Cigar Events</p><button class="ghost acct-btn" type="button" id="acct-open" aria-controls="acct">Sign in</button></div>
-    <h1>Upcoming cigar events</h1>
+    <div class="top" style="justify-content:flex-end"><button class="ghost acct-btn" type="button" id="acct-open" aria-controls="acct">Sign in</button></div>
+    <h1 id="site-title">Upcoming events</h1>
     <p class="lede">Pairings, rolling nights and lounge events. Find one near you, or request one of your own.</p>
     <div class="row" style="margin-top:16px">
       <a class="btn" href="#request">Request an event</a>
@@ -176,7 +176,6 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const C=window.CIGAR_CONFIG||{};
 const TEST_MODE=C.TEST_MODE===true;
 const SB=(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&window.supabase)?window.supabase.createClient(C.SUPABASE_URL,C.SUPABASE_ANON_KEY,TEST_MODE?{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}:undefined):null;
-if(C.SHOP_NAME){$("shop").textContent=C.SHOP_NAME;document.title="Upcoming events · "+C.SHOP_NAME}
 const pad=n=>String(n).padStart(2,"0");
 const todayIso=(()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())})();
 $("r-date").min=todayIso;
@@ -457,7 +456,7 @@ if(TEST_MODE){$("acct-open").hidden=true;$("acct").hidden=true}
 /* share this page */
 $("share").addEventListener("click",async()=>{
   const url=location.href.split("#")[0];
-  if(navigator.share){try{await navigator.share({title:document.title,text:"Upcoming cigar events",url});return}catch(e){if(e&&e.name==="AbortError")return}}
+  if(navigator.share){try{await navigator.share({title:document.title,text:"Upcoming events",url});return}catch(e){if(e&&e.name==="AbortError")return}}
   try{await navigator.clipboard.writeText(url);$("share-note").textContent="Link copied. Paste it into your post or bio."}
   catch(e){$("share-note").textContent=url}
 });
@@ -585,6 +584,15 @@ const PUBLIC_TOUR=[
 ];
 $("tour-btn").addEventListener("click",()=>startTour(PUBLIC_TOUR,"tour.public.v1"));
 setTimeout(()=>{if(!tourSeen("tour.public.v1"))startTour(PUBLIC_TOUR,"tour.public.v1")},900);
+</script>
+
+<script>
+/* ---------- title set in the staff app ---------- */
+(async()=>{
+  const show=t=>{t=(t||"").trim();$("site-title").textContent=t||"Upcoming events";document.title=t?t+" · Events":"Upcoming events"};
+  try{show(localStorage.getItem("cigar.siteTitle")||"")}catch(e){}
+  if(SB){try{const {data,error}=await SB.from("cigar_site").select("title").eq("id",1).maybeSingle();if(!error&&data)show(data.title)}catch(e){}}
+})();
 </script>
 </body>
 </html>
