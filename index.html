@@ -5,36 +5,28 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Cigar Event Scheduler</title>
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Figtree:wght@600;700;800;900&display=swap">
 <style>
 /* Layout: one column — month calendar on top, the selected day's events below, add-request form, and a detail card with confirmation message */
 :root{
-  --bg:#F6F1EA; --surface:#FFFDF9; --ink:#2A1E16; --muted:#6E5D50; --line:#E3D8CB;
+  --bg:#FFFFFF; --check:#F7F7F7; --surface:#FFFFFF; --field:#F7F7F7; --ink:#2A1E16; --muted:#6B6460; --line:#E2E0DE;
   --accent:#8A4B22; --accent-ink:#FFFFFF; --accent-soft:#F2E3D5;
   --ok:#2F6B3A; --ok-soft:#E1EFE2; --wait:#8A6100; --wait-soft:#F8EDCF; --no:#A2342A; --no-soft:#F8E3E0;
   --display:"Fraunces", Georgia, "Times New Roman", serif;
   --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#16110D; --surface:#211A14; --ink:#F1E7DC; --muted:#B5A595; --line:#3A2F26;
-  --accent:#E09A62; --accent-ink:#1E120A; --accent-soft:#3A2A1D;
-  --ok:#86C98F; --ok-soft:#1F3322; --wait:#E8C063; --wait-soft:#3A3016; --no:#F09488; --no-soft:#3E201C; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#16110D; --surface:#211A14; --ink:#F1E7DC; --muted:#B5A595; --line:#3A2F26;
-  --accent:#E09A62; --accent-ink:#1E120A; --accent-soft:#3A2A1D;
-  --ok:#86C98F; --ok-soft:#1F3322; --wait:#E8C063; --wait-soft:#3A3016; --no:#F09488; --no-soft:#3E201C; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+body{background-color:var(--bg);background-image:conic-gradient(var(--check) 25%,transparent 0 50%,var(--check) 0 75%,transparent 0);background-size:36px 36px;color:var(--ink);font-family:var(--body);font-weight:600;font-size:16px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
-.iconbtn{width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line);flex:none}
+.iconbtn{width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);flex:none}
 .iconbtn svg{width:20px;height:20px}
-.brand{font-family:var(--display);font-weight:700;font-size:18px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand{font-family:var(--display);font-weight:900;font-size:18px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .acct{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 4px;max-width:55%;min-width:0}
 .acct img{width:32px;height:32px;border-radius:50%;flex:none;background:var(--accent-soft)}
-.acct span{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.acct .lk{font-size:12px;color:var(--muted);font-weight:500}
+.acct span{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct .lk{font-size:12px;color:var(--muted);font-weight:700}
 .scrim{position:fixed;inset:0;z-index:30;background:rgba(20,12,6,.45)}
 .drawer{position:fixed;top:0;bottom:0;left:0;z-index:31;width:min(310px,86vw);background:var(--surface);border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;gap:20px;
   padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px));transform:translateX(-102%);visibility:hidden;transition:transform .2s ease,visibility .2s}
@@ -43,10 +35,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .who img{width:48px;height:48px;border-radius:50%;flex:none;background:var(--accent-soft)}
 .who b{display:block;font-size:16px;overflow-wrap:anywhere}
 .nav{display:flex;flex-direction:column;gap:4px}
-.nav button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:transparent;border:0;padding:11px 10px;font-weight:500}
+.nav button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:transparent;border:0;padding:11px 10px;font-weight:700}
 .nav button:hover{background:var(--accent-soft)}
 .nav svg{width:20px;height:20px;color:var(--accent);flex:none}
-.side-h{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.side-h{font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
 .lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;
   padding:calc(24px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .lock .card{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px;text-align:center;align-items:center}
@@ -55,21 +47,21 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .linkbtn{background:none;border:0;color:var(--accent);text-decoration:underline;padding:4px;font-size:14px}
 @media (prefers-reduced-motion:reduce){.drawer{transition:none}}
 .sharegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.sharegrid a,.sharegrid button{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);text-decoration:none;font-weight:500;font-size:14px;text-align:left;min-width:0}
+.sharegrid a,.sharegrid button{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);text-decoration:none;font-weight:700;font-size:14px;text-align:left;min-width:0}
 .sharegrid svg{width:18px;height:18px;flex:none;color:var(--accent)}
 .sharegrid a:hover,.sharegrid button:hover{border-color:var(--accent)}
 .wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
-h1{font-family:var(--display);font-weight:700;font-size:34px;line-height:1.05;margin:0;letter-spacing:-0.01em;text-wrap:balance}
-h2{font-family:var(--display);font-weight:500;font-size:22px;margin:0;text-wrap:balance}
+h1{font-family:var(--display);font-weight:900;font-size:34px;line-height:1.05;margin:0;letter-spacing:-0.01em;text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:22px;margin:0;text-wrap:balance}
 .sub{color:var(--muted);margin:4px 0 0;font-size:15px}
 .counts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
 button{font:inherit;cursor:pointer;border-radius:10px;color:var(--ink)}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.btn{background:var(--accent);color:var(--accent-ink);border:0;padding:10px 16px;font-weight:600}
-.ghost{background:transparent;border:1px solid var(--line);padding:9px 14px}
-.danger{background:transparent;border:1px solid var(--line);color:var(--no);padding:9px 14px}
-.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:0.03em;padding:3px 10px;border-radius:999px}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;padding:10px 16px;font-weight:800}
+.ghost{background:var(--surface);border:1px solid var(--line);padding:9px 14px}
+.danger{background:var(--surface);border:1px solid var(--line);color:var(--no);padding:9px 14px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:0.03em;padding:3px 10px;border-radius:999px}
 .pill.pending{background:var(--wait-soft);color:var(--wait)}
 .pill.confirmed{background:var(--ok-soft);color:var(--ok)}
 .pill.cancelled{background:var(--no-soft);color:var(--no)}
@@ -77,7 +69,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .calhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
 .calhead button{width:40px;height:40px;background:transparent;border:1px solid var(--line);font-size:18px}
 .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
-.dow{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding-bottom:4px}
+.dow{font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding-bottom:4px}
 .day{aspect-ratio:1/1;max-width:100%;border:1px solid transparent;background:transparent;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-variant-numeric:tabular-nums;font-size:15px;padding:0}
 .day.other{color:var(--muted);opacity:.45}
 .day.today{border-color:var(--line)}
@@ -90,14 +82,17 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .ev{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line);width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;border-radius:0}
 .ev:last-child{border-bottom:0}
-.ev .t{font-variant-numeric:tabular-nums;font-weight:600;min-width:64px;color:var(--accent)}
+.ev .t{font-variant-numeric:tabular-nums;font-weight:800;min-width:64px;color:var(--accent)}
 .ev .m{flex:1;min-width:0}
-.ev .m b{display:block;font-weight:600;overflow-wrap:anywhere}
+.ev .m b{display:block;font-weight:800;overflow-wrap:anywhere}
 .ev .m small{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
 .empty{color:var(--muted);padding:12px 0}
-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+label{display:block;font-size:12px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
 textarea{min-height:76px;resize:vertical}
+input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;display:block;min-height:44px;max-width:100%}
+input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left}
+
 .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .full{grid-column:1/-1}
 .section-label{grid-column:1/-1;font-family:var(--display);font-size:17px;margin-top:4px;padding-top:12px;border-top:1px solid var(--line)}
@@ -117,7 +112,7 @@ textarea{min-height:76px;resize:vertical}
 .sugg{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:25;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 10px 28px rgba(20,12,6,.14)}
 .sugg button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 12px}
 .sugg button:hover,.sugg button:focus-visible{background:var(--accent-soft);outline:none}
-.sugg button b{display:block;font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.sugg button b{display:block;font-weight:800;font-size:15px;overflow-wrap:anywhere}
 .sugg small{color:var(--muted);font-size:13px}
 .sugg-note{padding:10px 12px;font-size:13px;color:var(--muted)}
 .sugg .attr{font-size:11px;padding:6px 12px;color:var(--muted)}
@@ -138,14 +133,14 @@ textarea{min-height:76px;resize:vertical}
     <button class="ghost" type="button" id="auth-btn" hidden style="margin-top:10px">Log out</button>
   </div>
   <button class="btn" type="button" id="side-create" style="width:100%;padding:12px 16px">+ Create an event</button>
-  <a class="ghost" href="events.html" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;color:var(--ink);border-radius:10px;font-weight:500">Open public events page</a>
+  <a class="ghost" href="events.html" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;color:var(--ink);border-radius:10px;font-weight:700">Open public events page</a>
   <nav class="nav" aria-label="Sections">
     <button type="button" data-nav="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendar</button>
     <button type="button" data-nav="pending"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Waiting for confirmation</button>
     <button type="button" data-nav="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search events</button>
   </nav>
   <div id="share-sec">
-    <button class="ghost" type="button" id="share-toggle" aria-expanded="false" aria-controls="share-panel" style="width:100%;display:flex;align-items:center;gap:10px;padding:11px 12px;font-weight:600"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)" aria-hidden="true"><path d="M12 3v13M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg><span style="flex:1;text-align:left">Share</span><span id="share-caret" aria-hidden="true">▾</span></button>
+    <button class="ghost" type="button" id="share-toggle" aria-expanded="false" aria-controls="share-panel" style="width:100%;display:flex;align-items:center;gap:10px;padding:11px 12px;font-weight:800"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)" aria-hidden="true"><path d="M12 3v13M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg><span style="flex:1;text-align:left">Share</span><span id="share-caret" aria-hidden="true">▾</span></button>
     <div id="share-panel" hidden style="margin-top:10px">
     <p class="note" id="share-what" style="margin:0 0 10px"></p>
     <div class="sharegrid">
@@ -270,7 +265,7 @@ textarea{min-height:76px;resize:vertical}
           <select id="f-source"><option>Instagram</option><option>Facebook</option><option>TikTok</option><option>X / Twitter</option><option>Text message</option><option>Phone call</option><option>Walk-in</option><option>Public page</option><option>Other</option></select></div>
         <div class="full"><label for="f-handle">Social handle</label><input id="f-handle" placeholder="@marcusreed" autocomplete="off"></div>
         <div class="full"><label for="f-notes">Notes</label><textarea id="f-notes" placeholder="Cigar preferences, deposit, setup needs"></textarea></div>
-        <div class="full"><label style="display:flex;gap:10px;align-items:center;text-transform:none;letter-spacing:0;font-size:15px;font-weight:500;color:var(--ink)"><input id="f-public" type="checkbox" style="width:22px;height:22px;flex:none"> Show on the public events page once confirmed</label><div class="note" style="margin-top:4px">Only the event name, date, time, type and location are shown. Contact info and notes stay private.</div></div>
+        <div class="full"><label style="display:flex;gap:10px;align-items:center;text-transform:none;letter-spacing:0;font-size:15px;font-weight:700;color:var(--ink)"><input id="f-public" type="checkbox" style="width:22px;height:22px;flex:none"> Show on the public events page once confirmed</label><div class="note" style="margin-top:4px">Only the event name, date, time, type and location are shown. Contact info and notes stay private.</div></div>
       </div>
       <div class="err" id="f-err" role="alert"></div>
       <div class="row"><button class="btn" type="submit" id="f-save">Save request</button></div>
@@ -303,6 +298,7 @@ textarea{min-height:76px;resize:vertical}
       <div class="row" id="d-actions"></div>
       <dl class="kv" id="d-info"></dl>
       <a class="ghost" id="d-map" href="https://www.google.com/maps" target="_blank" rel="noopener" hidden style="text-decoration:none;color:var(--ink);align-self:flex-start;border-radius:10px">Open in Google Maps</a>
+      <div id="d-subs" hidden style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px"></div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <label style="margin:0">Confirmation message</label>
         <div class="msg" id="d-msg"></div>
@@ -328,9 +324,12 @@ const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "";
 
 /* ---------- storage + login layer (no need to edit below) ---------- */
 window.zipCache = {};
-const SB = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const TEST_MODE = CFG.TEST_MODE === true;
+const SB = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, TEST_MODE ? { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } } : undefined)
+  : null;
 let SESSION_USER = null;
-const sessionReady = SB
+const sessionReady = (SB && !TEST_MODE)
   ? SB.auth.getSession().then(r => { SESSION_USER = r.data && r.data.session ? r.data.session.user : null; }).catch(() => {})
   : Promise.resolve();
 
@@ -370,6 +369,7 @@ const sbBackend = {
   async deleteSettings(uid){ const { error } = await SB.from("cigar_user_settings").delete().eq("user_id", uid); if (error) throw error; }
 };
 const backend = SB ? sbBackend : localBackend;
+window.__cigarBackend = backend;
 
 const listeners = { events: new Set(), settings: new Set() };
 const emit = k => listeners[k].forEach(f => f());
@@ -393,6 +393,7 @@ const dbShim = {
   },
   doc(path){
     const uid = path.split("/")[2];
+    const backend = TEST_MODE ? localBackend : window.__cigarBackend;
     return {
       async set(d){ await backend.setSettings(uid, d); emit("settings"); },
       async delete(){ await backend.deleteSettings(uid); emit("settings"); },
@@ -409,6 +410,7 @@ if (SB) {
 const userShim = {
   async me(){
     await sessionReady;
+    if (TEST_MODE) return { id: "test", name: "Test mode", avatarUrl: initialsAvatar("Test"), email: "No login needed while testing", isOwner: true, canEdit: true };
     if (SB) {
       if (!SESSION_USER) return { id: null, name: "", avatarUrl: initialsAvatar(""), email: null, isOwner: false, canEdit: false };
       const nm = (SESSION_USER.user_metadata && SESSION_USER.user_metadata.name) || (SESSION_USER.email || "").split("@")[0];
@@ -896,6 +898,7 @@ $("f-zip").addEventListener("input", async () => {
 (async () => {
   await sessionReady;
   const btn = $("auth-btn");
+  if (TEST_MODE) { $("status").textContent = "Test mode is on: no login needed. Turn it off in config.js before going live."; return; }
   if (!SB) return;
   btn.hidden = false;
   if (SESSION_USER) {
@@ -921,6 +924,76 @@ $("login-form").addEventListener("submit", async e => {
   location.reload();
 });
 
+</script>
+<script>
+/* ---------- staff check + email updates to customer subscribers ---------- */
+let IS_STAFF = !SB, SUBS = null, subsSeq = 0;
+(async () => {
+  await sessionReady;
+  if (!SB || !SESSION_USER) return;
+  try { const { data, error } = await SB.rpc("is_cigar_staff"); IS_STAFF = !error && data === true; } catch (e) { IS_STAFF = false; }
+  if (!IS_STAFF) {
+    $("status").textContent = "This account isn't on the staff list, so events stay hidden. Ask the owner to add you, or use the public events page.";
+    ["head-create", "new-btn", "side-create"].forEach(id => { const b = $(id); if (b) b.hidden = true; });
+  }
+  if (openId && !$("detail-view").hidden) renderSubs();
+})();
+async function loadSubs(){
+  if (SUBS) return SUBS;
+  const c = await SB.from("cigar_customers").select("user_id,name,email,email_updates").eq("email_updates", true);
+  if (c.error) throw c.error;
+  const q = await SB.from("cigar_saved_searches").select("user_id,query");
+  const by = {}; (q.data || []).forEach(r => (by[r.user_id] = by[r.user_id] || []).push(r.query));
+  SUBS = c.data.filter(x => x.email).map(x => ({ ...x, queries: by[x.user_id] || [] }));
+  setTimeout(() => { SUBS = null; }, 60000);
+  return SUBS;
+}
+function subMatches(e, sub){
+  return sub.queries.some(raw => {
+    const q = String(raw).toLowerCase().trim(); if (!q) return false;
+    if (/^\d{5}$/.test(q)) return !!(e.zip && String(e.zip).slice(0, 3) === q.slice(0, 3));
+    return locMatch(e, q);
+  });
+}
+function announce(e){
+  const url = new URL("events.html", location.href).href;
+  const lines = [`New cigar event: ${e.title}`, `${fmtDate(e.date, true)} · ${fmtTime(e.time)}`];
+  const fa = fullAddr(e); if (fa) lines.push(fa);
+  lines.push("", "See details, get directions, or add it to your calendar:", url, "",
+    `You're getting this because you asked for event updates. To stop, turn off emails in your profile on the events page or reply "stop".`);
+  return lines.join("\n");
+}
+async function renderSubs(){
+  const box = $("d-subs");
+  const e = events.find(x => x.id === openId);
+  if (!SB || !SESSION_USER || !IS_STAFF || !e) { box.hidden = true; return; }
+  box.hidden = false;
+  if (!(e.public && e.status === "confirmed")) { box.innerHTML = '<p class="note" style="margin:0">Confirm this event and list it on the public page to email customers who asked for updates.</p>'; return; }
+  const my = ++subsSeq;
+  box.innerHTML = '<p class="note" style="margin:0">Checking who wants updates…</p>';
+  let subs;
+  try { subs = await loadSubs(); } catch (err) { if (my === subsSeq) box.innerHTML = '<p class="note" style="margin:0">The subscriber list couldn\'t load.</p>'; return; }
+  if (my !== subsSeq) return;
+  if (!subs.length) { box.innerHTML = '<p class="note" style="margin:0">No customers have signed up for email updates yet. Share your public events page to grow the list.</p>'; return; }
+  const near = subs.filter(x => subMatches(e, x));
+  const subj = encodeURIComponent("New cigar event: " + e.title), body = encodeURIComponent(announce(e));
+  const link = list => "mailto:?bcc=" + list.map(x => encodeURIComponent(x.email)).join(",") + "&subject=" + subj + "&body=" + body;
+  box.innerHTML = `<label style="margin:0">Email updates</label>
+    <p style="margin:0;font-size:15px"><b>${near.length}</b> customer${near.length === 1 ? "" : "s"} saved a search near this event · <b>${subs.length}</b> total want updates</p>
+    <div class="row">
+      ${near.length ? `<a class="btn" href="${link(near)}" style="text-decoration:none">Email ${near.length} nearby</a>` : ""}
+      <a class="ghost" href="${link(subs)}" style="text-decoration:none;color:var(--ink);border-radius:10px">Email all ${subs.length}</a>
+      <button class="ghost" type="button" id="subs-copy">Copy emails</button>
+    </div>
+    <p class="note" id="subs-note" style="margin:0">Emails go in BCC, so customers don't see each other's addresses.</p>`;
+  $("subs-copy").addEventListener("click", async () => {
+    const list = (near.length ? near : subs).map(x => x.email).join(", ");
+    try { await navigator.clipboard.writeText(list); $("subs-note").textContent = `Copied ${near.length ? "nearby" : "all"} emails.`; }
+    catch (err) { $("subs-note").textContent = list; }
+  });
+}
+const _renderDetailBase = renderDetail;
+renderDetail = function(){ _renderDetailBase(); renderSubs(); };
 </script>
 </body>
 </html>
