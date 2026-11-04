@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cigar Event Scheduler</title>
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: one column — month calendar on top, the selected day's events below, add-request form, and a detail card with confirmation message */
+:root{
+  --bg:#F6F1EA; --surface:#FFFDF9; --ink:#2A1E16; --muted:#6E5D50; --line:#E3D8CB;
+  --accent:#8A4B22; --accent-ink:#FFFFFF; --accent-soft:#F2E3D5;
+  --ok:#2F6B3A; --ok-soft:#E1EFE2; --wait:#8A6100; --wait-soft:#F8EDCF; --no:#A2342A; --no-soft:#F8E3E0;
+  --display:"Fraunces", Georgia, "Times New Roman", serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16110D; --surface:#211A14; --ink:#F1E7DC; --muted:#B5A595; --line:#3A2F26;
+  --accent:#E09A62; --accent-ink:#1E120A; --accent-soft:#3A2A1D;
+  --ok:#86C98F; --ok-soft:#1F3322; --wait:#E8C063; --wait-soft:#3A3016; --no:#F09488; --no-soft:#3E201C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16110D; --surface:#211A14; --ink:#F1E7DC; --muted:#B5A595; --line:#3A2F26;
+  --accent:#E09A62; --accent-ink:#1E120A; --accent-soft:#3A2A1D;
+  --ok:#86C98F; --ok-soft:#1F3322; --wait:#E8C063; --wait-soft:#3A3016; --no:#F09488; --no-soft:#3E201C; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.iconbtn{width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line);flex:none}
+.iconbtn svg{width:20px;height:20px}
+.brand{font-family:var(--display);font-weight:700;font-size:18px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 4px;max-width:55%;min-width:0}
+.acct img{width:32px;height:32px;border-radius:50%;flex:none;background:var(--accent-soft)}
+.acct span{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct .lk{font-size:12px;color:var(--muted);font-weight:500}
+.scrim{position:fixed;inset:0;z-index:30;background:rgba(20,12,6,.45)}
+.drawer{position:fixed;top:0;bottom:0;left:0;z-index:31;width:min(310px,86vw);background:var(--surface);border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;gap:20px;
+  padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px));transform:translateX(-102%);visibility:hidden;transition:transform .2s ease,visibility .2s}
+.drawer.open{transform:none;visibility:visible}
+.who{display:flex;gap:12px;align-items:center}
+.who img{width:48px;height:48px;border-radius:50%;flex:none;background:var(--accent-soft)}
+.who b{display:block;font-size:16px;overflow-wrap:anywhere}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:transparent;border:0;padding:11px 10px;font-weight:500}
+.nav button:hover{background:var(--accent-soft)}
+.nav svg{width:20px;height:20px;color:var(--accent);flex:none}
+.side-h{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;
+  padding:calc(24px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.lock .card{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px;text-align:center;align-items:center}
+.lock img{width:64px;height:64px;border-radius:50%;background:var(--accent-soft)}
+.pin{font-size:24px;letter-spacing:0.5em;text-align:center;font-variant-numeric:tabular-nums}
+.linkbtn{background:none;border:0;color:var(--accent);text-decoration:underline;padding:4px;font-size:14px}
+@media (prefers-reduced-motion:reduce){.drawer{transition:none}}
+.sharegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.sharegrid a,.sharegrid button{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);text-decoration:none;font-weight:500;font-size:14px;text-align:left;min-width:0}
+.sharegrid svg{width:18px;height:18px;flex:none;color:var(--accent)}
+.sharegrid a:hover,.sharegrid button:hover{border-color:var(--accent)}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-family:var(--display);font-weight:700;font-size:34px;line-height:1.05;margin:0;letter-spacing:-0.01em;text-wrap:balance}
+h2{font-family:var(--display);font-weight:500;font-size:22px;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:4px 0 0;font-size:15px}
+.counts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+button{font:inherit;cursor:pointer;border-radius:10px;color:var(--ink)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;padding:10px 16px;font-weight:600}
+.ghost{background:transparent;border:1px solid var(--line);padding:9px 14px}
+.danger{background:transparent;border:1px solid var(--line);color:var(--no);padding:9px 14px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:0.03em;padding:3px 10px;border-radius:999px}
+.pill.pending{background:var(--wait-soft);color:var(--wait)}
+.pill.confirmed{background:var(--ok-soft);color:var(--ok)}
+.pill.cancelled{background:var(--no-soft);color:var(--no)}
+.pill.ex{background:var(--accent-soft);color:var(--accent)}
+.calhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.calhead button{width:40px;height:40px;background:transparent;border:1px solid var(--line);font-size:18px}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.dow{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding-bottom:4px}
+.day{aspect-ratio:1/1;max-width:100%;border:1px solid transparent;background:transparent;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-variant-numeric:tabular-nums;font-size:15px;padding:0}
+.day.other{color:var(--muted);opacity:.45}
+.day.today{border-color:var(--line)}
+.day.sel{background:var(--accent);color:var(--accent-ink)}
+.dots{display:flex;gap:3px;height:6px}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot.pending{background:var(--wait)}.dot.confirmed{background:var(--ok)}.dot.cancelled{background:var(--no)}
+.day.sel .dot{background:var(--accent-ink)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.ev{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line);width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;border-radius:0}
+.ev:last-child{border-bottom:0}
+.ev .t{font-variant-numeric:tabular-nums;font-weight:600;min-width:64px;color:var(--accent)}
+.ev .m{flex:1;min-width:0}
+.ev .m b{display:block;font-weight:600;overflow-wrap:anywhere}
+.ev .m small{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.empty{color:var(--muted);padding:12px 0}
+label{display:block;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+textarea{min-height:76px;resize:vertical}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.full{grid-column:1/-1}
+.section-label{grid-column:1/-1;font-family:var(--display);font-size:17px;margin-top:4px;padding-top:12px;border-top:1px solid var(--line)}
+.err{color:var(--no);font-size:13px;min-height:18px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 14px;font-size:15px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;overflow-wrap:anywhere;user-select:all}
+.msg{background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:12px;white-space:pre-wrap;font-size:14px;overflow-wrap:anywhere}
+.note{font-size:13px;color:var(--muted)}
+.locbar{position:relative;margin-top:14px}
+.locbar svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--muted);pointer-events:none}
+.locbar input{padding-left:40px;background:var(--surface);height:46px}
+#adv input,#adv select{background:var(--surface)}
+.res-loc{color:var(--accent)}
+.confirm{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--no-soft);color:var(--no);border-radius:10px;padding:10px 12px;font-size:14px}
+.sugg{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:25;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 10px 28px rgba(20,12,6,.14)}
+.sugg button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 12px}
+.sugg button:hover,.sugg button:focus-visible{background:var(--accent-soft);outline:none}
+.sugg button b{display:block;font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.sugg small{color:var(--muted);font-size:13px}
+.sugg-note{padding:10px 12px;font-size:13px;color:var(--muted)}
+.sugg .attr{font-size:11px;padding:6px 12px;color:var(--muted)}
+@media (max-width:440px){.fields{grid-template-columns:1fr}.day{font-size:14px}}
+</style>
+
+</head>
+<body>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Menu">
+  <div class="row" style="justify-content:space-between">
+    <span class="brand" style="font-size:20px">Cigar Events</span>
+    <button class="iconbtn" type="button" id="drawer-close" aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div>
+    <p class="side-h">Account</p>
+    <div class="who"><img id="side-img" alt=""><div style="min-width:0"><b id="side-name">Checking sign-in…</b><span class="note" id="side-role"></span></div></div>
+    <button class="ghost" type="button" id="auth-btn" hidden style="margin-top:10px">Log out</button>
+  </div>
+  <button class="btn" type="button" id="side-create" style="width:100%;padding:12px 16px">+ Create an event</button>
+  <nav class="nav" aria-label="Sections">
+    <button type="button" data-nav="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendar</button>
+    <button type="button" data-nav="pending"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Waiting for confirmation</button>
+    <button type="button" data-nav="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search events</button>
+  </nav>
+  <div id="share-sec">
+    <button class="ghost" type="button" id="share-toggle" aria-expanded="false" aria-controls="share-panel" style="width:100%;display:flex;align-items:center;gap:10px;padding:11px 12px;font-weight:600"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)" aria-hidden="true"><path d="M12 3v13M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg><span style="flex:1;text-align:left">Share</span><span id="share-caret" aria-hidden="true">▾</span></button>
+    <div id="share-panel" hidden style="margin-top:10px">
+    <p class="note" id="share-what" style="margin:0 0 10px"></p>
+    <div class="sharegrid">
+      <button type="button" id="sh-print"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z"/></svg>Print</button>
+      <a id="sh-email" href="mailto:"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email</a>
+      <button type="button" id="sh-save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Save</button>
+      <a id="sh-text" href="sms:"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg>Text</a>
+      <a id="sh-fb" href="https://www.facebook.com/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h-2a4 4 0 0 0-4 4v3H7v4h2v7h4v-7h3l1-4h-4V7a1 1 0 0 1 1-1h2z"/></svg>Facebook</a>
+      <a id="sh-ig" href="https://www.instagram.com/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor"/></svg>Instagram</a>
+      <a id="sh-google" href="https://calendar.google.com/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 14v4M10 16h4"/></svg>Google Calendar</a>
+      <button type="button" id="sh-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>Copy</button>
+    </div>
+    <p class="note" id="share-note" role="status" style="margin:10px 0 0"></p>
+    </div>
+  </div>
+  <div id="lock-settings">
+    <p class="side-h">Quick login PIN</p>
+    <p class="note" id="pin-status" style="margin:0 0 10px">Set a PIN to lock the app when you hand off your phone.</p>
+    <form id="pin-form" novalidate style="display:flex;flex-direction:column;gap:10px">
+      <div><label for="pin-new">New PIN (4–6 digits)</label><input id="pin-new" class="pin" type="password" inputmode="numeric" autocomplete="new-password" maxlength="6"></div>
+      <div><label for="pin-again">Enter it again</label><input id="pin-again" class="pin" type="password" inputmode="numeric" autocomplete="new-password" maxlength="6"></div>
+      <div class="err" id="pin-err" role="alert"></div>
+      <div class="row"><button class="btn" type="submit" id="pin-save">Set PIN</button></div>
+    </form>
+    <div class="row" id="pin-actions" hidden style="margin-top:10px"><button class="ghost" type="button" id="lock-now">Lock now</button><button class="danger" type="button" id="pin-remove">Remove PIN</button></div>
+  </div>
+</aside>
+
+<div class="lock" id="lock" hidden>
+  <form class="card" id="unlock-form" novalidate>
+    <img id="lock-img" alt="">
+    <h2 id="lock-hello">Welcome back</h2>
+    <p class="note" style="margin:0">Enter your PIN to open Cigar Events.</p>
+    <input id="unlock-pin" class="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="6" aria-label="PIN">
+    <div class="err" id="unlock-err" role="alert"></div>
+    <button class="btn" type="submit" style="width:100%">Unlock</button>
+    <button class="linkbtn" type="button" id="forgot">Forgot PIN?</button>
+    <div class="confirm" id="forgot-confirm" hidden style="text-align:left"><span style="flex:1;min-width:160px">Remove your PIN? You stay logged in and can set a new one.</span><button class="danger" type="button" id="forgot-yes" style="background:var(--surface)">Remove PIN</button></div>
+  </form>
+</div>
+
+<div class="wrap" id="app">
+  <div class="topbar">
+    <button class="iconbtn" type="button" id="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <span class="brand">Cigar Events</span>
+    <button class="acct" type="button" id="acct-btn" aria-label="Account and quick login"><img id="acct-img" alt=""><span><span id="acct-name">Sign in</span><span class="lk" id="acct-sub" style="display:block"></span></span></button>
+  </div>
+  <header>
+    <h1>Cigar Event Scheduler</h1>
+    <div class="locbar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+      <input id="q-loc" type="search" placeholder="ZIP code, city, or address" aria-label="Search events by ZIP code, city, or address" autocomplete="off">
+      <datalist id="loc-list"></datalist>
+    </div>
+    <div class="row" style="margin-top:10px;justify-content:flex-start"><button class="ghost" type="button" id="adv-toggle" aria-expanded="false" aria-controls="adv">Search events manually</button><button class="btn" type="button" id="head-create">+ Create an event</button></div>
+    <div class="card" id="adv" hidden style="margin-top:10px">
+      <div class="fields">
+        <div class="full"><label for="q-text">Event, contact, or handle</label><input id="q-text" type="search" placeholder="Pairing, Andre, @handle, phone" autocomplete="off"></div>
+        <div><label for="q-from">From date</label><input id="q-from" type="date"></div>
+        <div><label for="q-to">To date</label><input id="q-to" type="date"></div>
+        <div><label for="q-status">Status</label><select id="q-status"><option value="">Any status</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option></select></div>
+        <div><label for="q-source">Came from</label><select id="q-source"><option value="">Anywhere</option><option>Instagram</option><option>Facebook</option><option>TikTok</option><option>X / Twitter</option><option>Text message</option><option>Phone call</option><option>Walk-in</option><option>Other</option></select></div>
+      </div>
+      <div class="err" id="q-err" role="alert" style="margin-top:8px"></div>
+    </div>
+    <div class="row" style="margin-top:10px;justify-content:flex-start"><button class="ghost" type="button" id="cal-toggle" aria-expanded="false" aria-controls="cal-card">Show calendar</button></div>
+    <p class="sub">Log requests from Instagram, Facebook, TikTok and texts, then confirm them on the calendar.</p>
+    <div class="counts" id="counts"></div>
+  </header>
+
+  <section id="main-view" style="display:flex;flex-direction:column;gap:20px">
+    <div class="card" id="results" hidden>
+      <div class="row" style="justify-content:space-between;margin-bottom:4px"><h2 id="res-title">Search results</h2><button class="ghost" type="button" id="q-clear">Clear search</button></div>
+      <div id="res-list"></div>
+    </div>
+    <div class="card" id="cal-card" hidden>
+      <div class="calhead">
+        <button type="button" id="prev" aria-label="Previous month">‹</button>
+        <h2 id="month">Month</h2>
+        <button type="button" id="next" aria-label="Next month">›</button>
+      </div>
+      <div class="grid" id="dow"></div>
+      <div class="grid" id="cal"></div>
+      <div class="legend"><span><i class="dot pending"></i>Pending</span><span><i class="dot confirmed"></i>Confirmed</span><span><i class="dot cancelled"></i>Cancelled</span></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:4px">
+        <h2 id="day-title">Events</h2>
+        <button class="btn" type="button" id="new-btn">New request</button>
+      </div>
+      <div id="day-list"></div>
+    </div>
+
+    <div class="card" id="pending-card">
+      <h2 style="margin-bottom:4px">Waiting for confirmation</h2>
+      <div id="pending-list"></div>
+    </div>
+    <p class="note" id="status"></p>
+  </section>
+
+  <section id="form-view" hidden>
+    <form class="card" id="ev-form" novalidate style="display:flex;flex-direction:column;gap:16px">
+      <div class="row" style="justify-content:space-between"><h2 id="form-title">New event request</h2><button class="ghost" type="button" id="form-cancel">Cancel</button></div>
+      <div class="fields">
+        <div class="full"><label for="f-title">Event</label><input id="f-title" placeholder="Cigar and whiskey pairing night" autocomplete="off"></div>
+        <div><label for="f-date">Date</label><input id="f-date" type="date"></div>
+        <div><label for="f-time">Start time</label><input id="f-time" type="time"></div>
+        <div><label for="f-guests">Guests</label><input id="f-guests" type="number" min="1" step="1" inputmode="numeric" placeholder="20"></div>
+        <div><label for="f-type">Event type</label>
+          <select id="f-type"><option>Private party</option><option>Cigar rolling</option><option>Tasting / pairing</option><option>Corporate event</option><option>Wedding / celebration</option><option>Lounge night</option><option>Other</option></select></div>
+        <div class="section-label">Location</div>
+        <div class="full"><label for="f-place">Venue name</label><input id="f-place" placeholder="Main lounge" autocomplete="off" list="venue-list"><datalist id="venue-list"></datalist><div class="note" style="margin-top:4px">Pick a venue you've used before to fill in its address.</div></div>
+        <div class="full" style="position:relative"><label for="f-addr">Street address</label><input id="f-addr" placeholder="1450 Peachtree St NE" autocomplete="off"></div>
+        <div><label for="f-city">City</label><input id="f-city" placeholder="Atlanta" autocomplete="off"></div>
+        <div class="fields" style="gap:10px"><div><label for="f-state">State</label><input id="f-state" placeholder="GA" maxlength="2" autocomplete="off" style="text-transform:uppercase"></div><div><label for="f-zip">ZIP</label><input id="f-zip" placeholder="30309" inputmode="numeric" maxlength="10" autocomplete="off"></div></div>
+        <div class="section-label">Contact</div>
+        <div><label for="f-name">Name</label><input id="f-name" placeholder="Marcus Reed" autocomplete="off"></div>
+        <div><label for="f-phone">Phone</label><input id="f-phone" type="tel" placeholder="(555) 214-7788" autocomplete="off"></div>
+        <div><label for="f-email">Email</label><input id="f-email" type="email" placeholder="marcus@email.com" autocomplete="off"></div>
+        <div><label for="f-source">Came from</label>
+          <select id="f-source"><option>Instagram</option><option>Facebook</option><option>TikTok</option><option>X / Twitter</option><option>Text message</option><option>Phone call</option><option>Walk-in</option><option>Other</option></select></div>
+        <div class="full"><label for="f-handle">Social handle</label><input id="f-handle" placeholder="@marcusreed" autocomplete="off"></div>
+        <div class="full"><label for="f-notes">Notes</label><textarea id="f-notes" placeholder="Cigar preferences, deposit, setup needs"></textarea></div>
+      </div>
+      <div class="err" id="f-err" role="alert"></div>
+      <div class="row"><button class="btn" type="submit" id="f-save">Save request</button></div>
+    </form>
+  </section>
+
+  <section id="login-view" hidden>
+    <div class="card" style="display:flex;flex-direction:column;gap:14px;max-width:420px;margin:24px auto 0;text-align:center;align-items:center">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      <h2>Log in</h2>
+      <p class="note" style="margin:0;font-size:15px">Log in with your staff account to create and confirm events.</p>
+      <form id="login-form" novalidate style="display:flex;flex-direction:column;gap:12px;width:100%;text-align:left">
+        <div><label for="login-email">Email</label><input id="login-email" type="email" autocomplete="username" placeholder="you@yourshop.com"></div>
+        <div><label for="login-pass">Password</label><input id="login-pass" type="password" autocomplete="current-password"></div>
+        <div class="err" id="login-err" role="alert"></div>
+        <button class="btn" type="submit" id="login-submit" style="width:100%">Log in</button>
+      </form>
+      <button type="button" id="login-retry" hidden>Reload</button>
+      <button class="linkbtn" type="button" id="login-back">Back to calendar</button>
+    </div>
+  </section>
+
+  <section id="detail-view" hidden style="display:flex;flex-direction:column;gap:16px">
+    <div><button class="ghost" type="button" id="back">← Calendar</button></div>
+    <div class="card" style="display:flex;flex-direction:column;gap:16px">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div style="min-width:0;flex:1"><h2 id="d-title" style="overflow-wrap:anywhere">Event</h2><div class="note" id="d-when"></div></div>
+        <span id="d-status"></span>
+      </div>
+      <div class="row" id="d-actions"></div>
+      <dl class="kv" id="d-info"></dl>
+      <a class="ghost" id="d-map" href="https://www.google.com/maps" target="_blank" rel="noopener" hidden style="text-decoration:none;color:var(--ink);align-self:flex-start;border-radius:10px">Open in Google Maps</a>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="margin:0">Confirmation message</label>
+        <div class="msg" id="d-msg"></div>
+        <div class="row"><button class="ghost" type="button" id="copy">Copy message</button><button class="ghost" type="button" id="d-share">Share</button><span class="note" id="copy-note">Paste it into their DM, text, or email.</span></div>
+      </div>
+      <div class="row" style="border-top:1px solid var(--line);padding-top:14px">
+        <button class="ghost" type="button" id="edit">Edit details</button>
+        <button class="danger" type="button" id="del" style="margin-left:auto">Delete</button>
+      </div>
+      <div class="confirm" id="del-confirm" hidden><span style="flex:1;min-width:160px">Delete this event for good?</span><button class="danger" type="button" id="del-yes" style="background:var(--surface)">Delete</button><button class="ghost" type="button" id="del-no">Keep it</button></div>
+      <div class="err" id="d-err" role="alert"></div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ============================================================
+   SETTINGS — fill these in to turn on staff logins and shared data.
+   Leave them blank and the app saves events on this device only.
+   Supabase dashboard → Project Settings → API.
+   ============================================================ */
+const SUPABASE_URL = "";      // e.g. "https://abcd1234.supabase.co"
+const SUPABASE_ANON_KEY = ""; // the "anon public" key (safe to put here)
+
+/* ---------- storage + login layer (no need to edit below) ---------- */
+window.zipCache = {};
+const SB = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+let SESSION_USER = null;
+const sessionReady = SB
+  ? SB.auth.getSession().then(r => { SESSION_USER = r.data && r.data.session ? r.data.session.user : null; }).catch(() => {})
+  : Promise.resolve();
+
+function initialsAvatar(name){
+  const i = (name || "").trim().split(/\s+/).map(w => w[0] || "").join("").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 2) || "•";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="32" fill="#8A4B22"/><text x="32" y="41" font-family="Arial,sans-serif" font-size="24" fill="#fff" text-anchor="middle">${i}</text></svg>`;
+  return "data:image/svg+xml," + encodeURIComponent(svg);
+}
+const docSnap = (id, data) => ({ id, exists: data != null, data: () => (data == null ? undefined : data), metadata: { fromCache: false, hasPendingWrites: false } });
+const qSnap = list => ({ docs: list.map(([id, d]) => docSnap(id, d)), size: list.length, empty: !list.length, docChanges: () => [], metadata: { fromCache: false, hasPendingWrites: false } });
+
+/* Device-only storage */
+const LS_KEY = "cigarEvents.v1";
+function lsLoad(){ try { return JSON.parse(localStorage.getItem(LS_KEY)) || { events: {}, settings: {} }; } catch (e) { return { events: {}, settings: {} }; } }
+function lsSave(s){ try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch (e) { throw new Error("This browser won't let the app save. Turn off private browsing."); } }
+const localBackend = {
+  async listEvents(){ const s = lsLoad(); return Object.entries(s.events).sort((a, b) => (a[1].createdAt || 0) - (b[1].createdAt || 0)); },
+  async addEvent(v){ const s = lsLoad(); const id = "e" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); s.events[id] = v; lsSave(s); return id; },
+  async updateEvent(id, p){ const s = lsLoad(); if (!s.events[id]) throw new Error("missing"); s.events[id] = { ...s.events[id], ...p }; lsSave(s); },
+  async deleteEvent(id){ const s = lsLoad(); delete s.events[id]; lsSave(s); },
+  async getSettings(uid){ return lsLoad().settings[uid] || null; },
+  async setSettings(uid, d){ const s = lsLoad(); s.settings[uid] = d; lsSave(s); },
+  async deleteSettings(uid){ const s = lsLoad(); delete s.settings[uid]; lsSave(s); }
+};
+
+/* Supabase storage (shared by every logged-in staff member) */
+const sbBackend = {
+  async listEvents(){ const { data, error } = await SB.from("events").select("id,data").order("created_at"); if (error) throw error; return data.map(r => [r.id, r.data]); },
+  async addEvent(v){ const { data, error } = await SB.from("events").insert({ data: v }).select("id").single(); if (error) throw error; return data.id; },
+  async updateEvent(id, p){
+    const cur = await SB.from("events").select("data").eq("id", id).single(); if (cur.error) throw cur.error;
+    const { error } = await SB.from("events").update({ data: { ...cur.data.data, ...p } }).eq("id", id); if (error) throw error;
+  },
+  async deleteEvent(id){ const { error } = await SB.from("events").delete().eq("id", id); if (error) throw error; },
+  async getSettings(uid){ const { data, error } = await SB.from("user_settings").select("pin_hash").eq("user_id", uid).maybeSingle(); if (error) throw error; return data && data.pin_hash ? { pinHash: data.pin_hash } : null; },
+  async setSettings(uid, d){ const { error } = await SB.from("user_settings").upsert({ user_id: uid, pin_hash: d.pinHash, updated_at: new Date().toISOString() }); if (error) throw error; },
+  async deleteSettings(uid){ const { error } = await SB.from("user_settings").delete().eq("user_id", uid); if (error) throw error; }
+};
+const backend = SB ? sbBackend : localBackend;
+
+const listeners = { events: new Set(), settings: new Set() };
+const emit = k => listeners[k].forEach(f => f());
+function watch(kind, load, next, err){
+  let alive = true;
+  const run = async () => { try { const v = await load(); if (alive) next(v); } catch (e) { if (alive && err) err({ code: "unavailable", message: String(e && e.message || e) }); } };
+  listeners[kind].add(run); run();
+  return () => { alive = false; listeners[kind].delete(run); };
+}
+const dbShim = {
+  collection(path){
+    const col = {
+      async add(v){ const id = await backend.addEvent(v); emit("events"); return { id }; },
+      doc: id => ({ id,
+        async update(p){ await backend.updateEvent(id, p); emit("events"); },
+        async delete(){ await backend.deleteEvent(id); emit("events"); } }),
+      orderBy: () => col, where: () => col, limit: () => col,
+      onSnapshot: (next, err) => watch("events", async () => qSnap(await backend.listEvents()), next, err)
+    };
+    return col;
+  },
+  doc(path){
+    const uid = path.split("/")[2];
+    return {
+      async set(d){ await backend.setSettings(uid, d); emit("settings"); },
+      async delete(){ await backend.deleteSettings(uid); emit("settings"); },
+      onSnapshot: (next, err) => watch("settings", async () => docSnap("settings", await backend.getSettings(uid)), next, err)
+    };
+  }
+};
+if (SB) {
+  try { SB.channel("events-live").on("postgres_changes", { event: "*", schema: "public", table: "events" }, () => emit("events")).subscribe(); } catch (e) {}
+} else {
+  window.addEventListener("storage", e => { if (e.key === LS_KEY) { emit("events"); emit("settings"); } });
+}
+
+const userShim = {
+  async me(){
+    await sessionReady;
+    if (SB) {
+      if (!SESSION_USER) return { id: null, name: "", avatarUrl: initialsAvatar(""), email: null, isOwner: false, canEdit: false };
+      const nm = (SESSION_USER.user_metadata && SESSION_USER.user_metadata.name) || (SESSION_USER.email || "").split("@")[0];
+      return { id: SESSION_USER.id, name: nm, avatarUrl: initialsAvatar(nm), email: SESSION_USER.email || null, isOwner: true, canEdit: true };
+    }
+    return { id: "local", name: "", avatarUrl: initialsAvatar("Me"), email: null, isOwner: true, canEdit: true };
+  }
+};
+const downloadsShim = {
+  async save({ filename, data }){
+    const url = URL.createObjectURL(new Blob([data], { type: filename.endsWith(".html") ? "text/html" : "text/plain" }));
+    const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    return { status: "saved" };
+  }
+};
+window.claude = { use: async name => ({ db: dbShim, user: userShim, downloads: downloadsShim })[name] || null };
+
+</script>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const todayIso=iso(new Date());
+let db=null, events=[], view=new Date(), sel=todayIso, openId=null, editId=null;
+view.setDate(1);
+
+function fmtTime(t){if(!t)return"Time TBD";const[h,m]=t.split(":").map(Number);const d=new Date();d.setHours(h,m||0);return d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}
+function fmtDate(s,long){if(!s)return"";const d=new Date(s+"T00:00:00");return d.toLocaleDateString(undefined,long?{weekday:"long",month:"long",day:"numeric",year:"numeric"}:{month:"short",day:"numeric"})}
+function pill(st){const l={pending:"Pending",confirmed:"Confirmed",cancelled:"Cancelled"}[st]||"Pending";return `<span class="pill ${st||"pending"}">${l}</span>`}
+const sorted=a=>a.slice().sort((x,y)=>(x.date+(x.time||"99")).localeCompare(y.date+(y.time||"99")));
+
+function renderCounts(){
+  const up=events.filter(e=>e.date>=todayIso);
+  const p=up.filter(e=>(e.status||"pending")==="pending").length, c=up.filter(e=>e.status==="confirmed").length;
+  $("counts").innerHTML=`<span class="pill pending">${p} pending</span><span class="pill confirmed">${c} confirmed upcoming</span>`;
+}
+
+function renderCal(){
+  $("month").textContent=view.toLocaleDateString(undefined,{month:"long",year:"numeric"});
+  $("dow").innerHTML=["S","M","T","W","T","F","S"].map(d=>`<div class="dow">${d}</div>`).join("");
+  const start=new Date(view);start.setDate(1-start.getDay());
+  let h="";
+  for(let i=0;i<42;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);const k=iso(d);
+    const evs=events.filter(e=>e.date===k);
+    const cls=["day",d.getMonth()!==view.getMonth()?"other":"",k===todayIso?"today":"",k===sel?"sel":""].join(" ");
+    const dots=evs.slice(0,3).map(e=>`<i class="dot ${e.status||"pending"}"></i>`).join("");
+    h+=`<button type="button" class="${cls}" data-day="${k}" aria-label="${fmtDate(k,true)}, ${evs.length} events"><span>${d.getDate()}</span><span class="dots">${dots}</span></button>`;
+  }
+  $("cal").innerHTML=h;
+}
+
+function evRow(e,showDate){
+  const who=[e.contactName,e.source].filter(Boolean).join(" · ");
+  const pl=placeLine(e);
+  const loc=pl?`<small class="res-loc" style="display:block">${esc(pl)}</small>`:"";
+  return `<button type="button" class="ev" data-open="${esc(e.id)}"><span class="t">${showDate?fmtDate(e.date):fmtTime(e.time)}</span><span class="m"><b>${esc(e.title)}</b><small>${esc(showDate?fmtTime(e.time)+" · "+who:who)}</small>${loc}</span><span style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">${pill(e.status)}${e.example?'<span class="pill ex">Example</span>':''}</span></button>`;
+}
+
+function renderLists(){
+  $("day-title").textContent=sel===todayIso?"Today":fmtDate(sel,true);
+  const dayEvs=sorted(events.filter(e=>e.date===sel));
+  $("day-list").innerHTML=dayEvs.length?dayEvs.map(e=>evRow(e,false)).join(""):`<div class="empty">No events this day. Tap New request to add one.</div>`;
+  const pend=sorted(events.filter(e=>(e.status||"pending")==="pending"&&e.date>=todayIso));
+  $("pending-list").innerHTML=pend.length?pend.map(e=>evRow(e,true)).join(""):`<div class="empty">You're all caught up.</div>`;
+}
+
+function confirmText(e){
+  const lines=[`Hi ${e.contactName?e.contactName.split(" ")[0]:"there"},`,``,
+    e.status==="cancelled"?`Your cigar event has been cancelled:`:e.status==="confirmed"?`Your cigar event is confirmed:`:`We received your cigar event request:`,
+    ``,`Event: ${e.title}`,`Date: ${fmtDate(e.date,true)}`,`Time: ${fmtTime(e.time)}`];
+  const fa=fullAddr(e);
+  if(fa)lines.push(`Location: ${fa}`);
+  if(e.guests)lines.push(`Guests: ${e.guests}`);
+  if(e.eventType)lines.push(`Type: ${e.eventType}`);
+  lines.push(``);
+  lines.push(e.status==="confirmed"?`We'll have everything ready. Reply here with any questions.`:e.status==="cancelled"?`Reach out anytime to book a new date.`:`We'll confirm shortly. Reply here with any questions.`);
+  return lines.join("\n");
+}
+
+function renderDetail(){
+  const e=events.find(x=>x.id===openId); if(!e){showMain();return}
+  const st=e.status||"pending";
+  $("d-title").textContent=e.title;
+  $("d-when").textContent=fmtDate(e.date,true)+" · "+fmtTime(e.time);
+  $("d-status").innerHTML=pill(st);
+  $("d-actions").innerHTML=st==="confirmed"
+    ?`<button class="ghost" type="button" data-st="pending">Mark as pending</button><button class="danger" type="button" data-st="cancelled">Cancel event</button>`
+    :st==="cancelled"?`<button class="ghost" type="button" data-st="pending">Reopen request</button>`
+    :`<button class="btn" type="button" data-st="confirmed">Confirm event</button><button class="danger" type="button" data-st="cancelled">Decline</button>`;
+  const info=[["Contact",e.contactName],["Phone",e.phone],["Email",e.email],["Came from",e.source],["Handle",e.handle],["Guests",e.guests],["Type",e.eventType],["Location",fullAddr(e)],["Notes",e.notes]].filter(r=>r[1]!==""&&r[1]!=null);
+  $("d-info").innerHTML=info.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("");
+  const mapQ=fullAddr(e);$("d-map").hidden=!mapQ;if(mapQ)$("d-map").href="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(mapQ);
+  $("d-msg").textContent=confirmText(e);
+}
+
+function fullAddr(e){const csz=[e.city,[e.state,e.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");return[e.location,e.address,csz].filter(Boolean).join(", ")}
+function placeLine(e){return[e.location,[e.city,e.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}
+function locMatch(e,q){if(!q)return true;const hay=[e.location,e.address,e.city,e.state,e.zip].join(" ").toLowerCase();return q.split(/[\s,]+/).filter(Boolean).every(w=>hay.includes(w))}
+function renderPlaces(){
+  const opts=new Set();
+  events.forEach(e=>{if(e.zip)opts.add(String(e.zip));if(e.city)opts.add(e.city+(e.state?", "+e.state:""));if(e.address)opts.add(e.address);if(e.location)opts.add(e.location)});
+  $("loc-list").innerHTML=[...opts].sort().map(o=>`<option value="${esc(o)}"></option>`).join("");
+  const venues=new Map();events.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(e=>{if(e.location)venues.set(e.location,e)});
+  $("venue-list").innerHTML=[...venues.keys()].sort().map(v=>`<option value="${esc(v)}"></option>`).join("");
+  return venues;
+}
+function renderResults(){
+  renderPlaces();
+  const loc=$("q-loc").value.trim().toLowerCase(), txt=$("q-text").value.trim().toLowerCase();
+  const from=$("q-from").value, to=$("q-to").value, st=$("q-status").value, src=$("q-source").value;
+  $("q-err").textContent=from&&to&&from>to?"The From date is after the To date. Swap them to see results.":"";
+  const active=!!(loc||txt||from||to||st||src);
+  $("results").hidden=!active; if(!active)return;
+  const zip5=/^\d{5}$/.test(loc)?loc:"";
+  const zc=zip5&&window.zipCache[zip5];
+  const isNear=e=>zip5&&((e.zip&&String(e.zip).slice(0,3)===zip5.slice(0,3))||(zc&&e.city&&e.city.toLowerCase()===zc.city.toLowerCase()&&(!e.state||e.state===zc.state)));
+  const hits=sorted(events.filter(e=>{
+    if(!locMatch(e,loc)&&!isNear(e))return false;
+    if(txt&&![e.title,e.contactName,e.handle,e.phone,e.email,e.notes,e.eventType].some(v=>String(v||"").toLowerCase().includes(txt)))return false;
+    if(from&&e.date<from)return false;
+    if(to&&e.date>to)return false;
+    if(st&&(e.status||"pending")!==st)return false;
+    if(src&&e.source!==src)return false;
+    return true;
+  }));
+  $("res-title").textContent=hits.length===1?"1 matching event":hits.length+" matching events";
+  const exact=hits.filter(e=>locMatch(e,loc)), near=hits.filter(e=>!locMatch(e,loc));
+  $("res-title").textContent=exact.length===1?"1 matching event":exact.length+" matching events";
+  $("res-list").innerHTML=(exact.length?exact.map(e=>evRow(e,true)).join(""):`<div class="empty">No events match. Try a ZIP code, a city, or part of a street name.</div>`)
+    +(near.length?`<p class="side-h" style="margin:16px 0 0">Nearby${zc?" · "+esc(zc.city)+", "+esc(zc.state):""}</p>`+near.map(e=>evRow(e,true)).join(""):"");
+}
+function render(){renderCounts();if(openId&&!$("detail-view").hidden)renderDetail();renderCal();renderLists();renderResults()}
+["q-loc","q-text","q-from","q-to","q-status","q-source"].forEach(id=>{$(id).addEventListener("input",()=>{if($("main-view").hidden)showMain();else renderResults()});$(id).addEventListener("change",renderResults)});
+$("adv-toggle").addEventListener("click",()=>{const open=$("adv").hidden;$("adv").hidden=!open;$("adv-toggle").setAttribute("aria-expanded",String(open));$("adv-toggle").textContent=open?"Hide manual search":"Search events manually";if(open)$("q-text").focus()});
+$("q-clear").addEventListener("click",()=>{["q-loc","q-text","q-from","q-to","q-status","q-source"].forEach(id=>$(id).value="");renderResults()});
+function show(which){["main-view","form-view","detail-view","login-view"].forEach(v=>$(v).hidden=v!==which);window.scrollTo(0,0)}
+function showMain(){openId=null;show("main-view");render()}
+function showDetail(id){openId=id;$("del-confirm").hidden=true;$("d-err").textContent="";$("copy-note").textContent="Paste it into their DM, text, or email.";show("detail-view");renderDetail()}
+
+const F=["title","date","time","guests","type","place","addr","city","state","zip","name","phone","email","source","handle","notes"];
+const KEY={addr:"address",city:"city",state:"state",zip:"zip",title:"title",date:"date",time:"time",guests:"guests",type:"eventType",place:"location",name:"contactName",phone:"phone",email:"email",source:"source",handle:"handle",notes:"notes"};
+function openForm(e){
+  editId=e?e.id:null;
+  $("form-title").textContent=e?"Edit event":"New event request";
+  $("f-save").textContent=e?"Save changes":"Save request";
+  F.forEach(f=>{const el=$("f-"+f);const v=e?e[KEY[f]]:"";if(el.tagName==="SELECT")el.value=v||el.options[0].value;else el.value=v??""});
+  if(!e)$("f-date").value=sel;
+  $("f-err").textContent="";show("form-view");$("f-title").focus();
+}
+F.forEach(f=>$("f-"+f).addEventListener("input",()=>$("f-err").textContent=""));
+$("f-place").addEventListener("change",()=>{
+  const v=renderPlaces().get($("f-place").value.trim());if(!v)return;
+  [["addr","address"],["city","city"],["state","state"],["zip","zip"]].forEach(([f,k])=>{if(!$("f-"+f).value&&v[k])$("f-"+f).value=v[k]});
+});
+
+$("ev-form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  const v={};F.forEach(f=>v[KEY[f]]=$("f-"+f).value.trim());
+  if(!v.title){$("f-err").textContent="Enter the event name.";$("f-title").focus();return}
+  if(!v.date){$("f-err").textContent="Pick a date for the event.";$("f-date").focus();return}
+  v.state=v.state.toUpperCase();
+  if(v.zip&&!/^\d{5}(-\d{4})?$/.test(v.zip)){$("f-err").textContent="ZIP code should be 5 digits, like 30309.";$("f-zip").focus();return}
+  if(v.state&&!/^[A-Z]{2}$/.test(v.state)){$("f-err").textContent="Use the 2-letter state code, like GA.";$("f-state").focus();return}
+  if(!v.contactName){$("f-err").textContent="Enter the contact's name.";$("f-name").focus();return}
+  if(!v.phone&&!v.email&&!v.handle){$("f-err").textContent="Add a phone, email, or social handle so you can reach them.";$("f-phone").focus();return}
+  if(v.guests!==""){const g=Number(v.guests);if(!Number.isInteger(g)||g<1){$("f-err").textContent="Guests must be a whole number, 1 or more.";return}v.guests=g}
+  $("f-save").disabled=true;
+  try{
+    if(editId){
+      v.example=false;
+      if(db)await db.collection("events").doc(editId).update(v);else Object.assign(events.find(x=>x.id===editId),v);
+      sel=v.date;view=new Date(v.date+"T00:00:00");view.setDate(1);
+      const id=editId;render();showDetail(id);
+    }else{
+      v.status="pending";v.createdAt=Date.now();
+      let id;
+      if(db){const ref=await db.collection("events").add(v);id=ref.id}else{id="l"+Date.now();events.push({id,...v})}
+      sel=v.date;view=new Date(v.date+"T00:00:00");view.setDate(1);
+      if(!events.find(x=>x.id===id))events.push({id,...v});
+      render();showDetail(id);
+    }
+  }catch(err){$("f-err").textContent=err&&err.code==="quota_exceeded"?"Your calendar is full. Delete old events first.":"That didn't save. Try again."}
+  $("f-save").disabled=false;
+});
+
+async function setStatus(st){
+  const e=events.find(x=>x.id===openId);if(!e)return;
+  const prev=e.status;e.status=st;renderDetail();render();
+  try{if(db)await db.collection("events").doc(e.id).update({status:st})}catch(err){e.status=prev;renderDetail();$("d-err").textContent="That change didn't save. Try again."}
+}
+
+$("cal").addEventListener("click",e=>{const b=e.target.closest("[data-day]");if(!b)return;sel=b.dataset.day;const d=new Date(sel+"T00:00:00");if(d.getMonth()!==view.getMonth()){view=d;view.setDate(1)}render()});
+$("prev").addEventListener("click",()=>{view.setMonth(view.getMonth()-1);render()});
+$("next").addEventListener("click",()=>{view.setMonth(view.getMonth()+1);render()});
+document.addEventListener("click",e=>{const o=e.target.closest("[data-open]");if(o)showDetail(o.dataset.open)});
+$("d-actions").addEventListener("click",e=>{const b=e.target.closest("[data-st]");if(b)setStatus(b.dataset.st)});
+$("new-btn").addEventListener("click",()=>requireLogin(()=>openForm(null)));
+$("form-cancel").addEventListener("click",()=>editId?showDetail(editId):showMain());
+$("back").addEventListener("click",showMain);
+$("edit").addEventListener("click",()=>openForm(events.find(x=>x.id===openId)));
+$("del").addEventListener("click",()=>$("del-confirm").hidden=false);
+$("del-no").addEventListener("click",()=>$("del-confirm").hidden=true);
+$("del-yes").addEventListener("click",async()=>{
+  const id=openId;
+  try{if(db)await db.collection("events").doc(id).delete();events=events.filter(x=>x.id!==id);showMain()}catch(e){$("d-err").textContent="That didn't delete. Try again."}
+});
+$("copy").addEventListener("click",()=>{
+  const t=$("d-msg").textContent;
+  const sel=()=>{const r=document.createRange();r.selectNodeContents($("d-msg"));const s=getSelection();s.removeAllRanges();s.addRange(r);$("copy-note").textContent="Selected. Use your device's Copy."};
+  try{navigator.clipboard.writeText(t).then(()=>$("copy-note").textContent="Copied",sel)}catch(e){sel()}
+});
+
+function goLocal(){
+  const d=n=>{const x=new Date();x.setDate(x.getDate()+n);return iso(x)};
+  if(!events.length)events=[
+    {id:"ex1",title:"Cigar and bourbon pairing",date:d(3),time:"19:00",guests:24,eventType:"Tasting / pairing",location:"Main lounge",contactName:"Andre Collins",phone:"(555) 301-4420",email:"andre@email.com",source:"Instagram",handle:"@andrecollins",notes:"Wants medium-body cigars",status:"pending",example:true},
+    {id:"ex2",title:"Birthday cigar rolling",date:d(9),time:"18:30",guests:12,eventType:"Cigar rolling",location:"Private room",contactName:"Tasha Green",phone:"(555) 882-1093",email:"",source:"Facebook",handle:"Tasha Green",notes:"Deposit paid",status:"confirmed",example:true}
+  ];
+  $("status").textContent="Changes in this view aren't saved. Open the artifact signed in to keep your events.";
+  render();
+}
+
+/* share */
+const stLabel=s=>({pending:"Pending",confirmed:"Confirmed",cancelled:"Cancelled"}[s]||"Pending");
+const p2=n=>String(n).padStart(2,"0");
+function shareTarget(){
+  const e=(!$("detail-view").hidden&&openId)?events.find(x=>x.id===openId):null;
+  if(e)return{event:e,title:e.title,text:confirmText(e)};
+  const up=sorted(events.filter(x=>x.date>=todayIso&&x.status!=="cancelled"));
+  const text="Upcoming cigar events\n\n"+(up.length?up.map(x=>`${fmtDate(x.date)} · ${fmtTime(x.time)} — ${x.title}${x.location?" ("+x.location+")":""} — ${stLabel(x.status)}`).join("\n"):"No upcoming events yet.");
+  return{event:null,title:"Upcoming cigar events",text,count:up.length};
+}
+function gcalLink(e){
+  const base="https://calendar.google.com/calendar/render?action=TEMPLATE";
+  const d=e.date.replace(/-/g,"");let dates;
+  if(e.time){const s=new Date(e.date+"T"+e.time);const f=new Date(s.getTime()+2*3600000);const fmt=x=>x.getFullYear()+p2(x.getMonth()+1)+p2(x.getDate())+"T"+p2(x.getHours())+p2(x.getMinutes())+"00";dates=fmt(s)+"/"+fmt(f)}
+  else{const n=new Date(e.date+"T00:00:00");n.setDate(n.getDate()+1);dates=d+"/"+n.getFullYear()+p2(n.getMonth()+1)+p2(n.getDate())}
+  const details=[e.eventType,e.guests?e.guests+" guests":"",e.notes].filter(Boolean).join(" · ");
+  return base+"&text="+encodeURIComponent(e.title)+"&dates="+dates+"&details="+encodeURIComponent(details)+"&location="+encodeURIComponent(fullAddr(e));
+}
+function renderShare(){
+  const t=shareTarget();
+  $("share-what").textContent=t.event?"Sharing this event: "+t.title:`Sharing your ${t.count} upcoming event${t.count===1?"":"s"}. Open an event to share just that one.`;
+  $("sh-email").href="mailto:?subject="+encodeURIComponent(t.title)+"&body="+encodeURIComponent(t.text);
+  $("sh-text").href="sms:?&body="+encodeURIComponent(t.text);
+  $("sh-google").href=t.event?gcalLink(t.event):"https://calendar.google.com/";
+  $("share-note").textContent="";
+}
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){return false}}
+const note=m=>$("share-note").textContent=m;
+$("sh-copy").addEventListener("click",async()=>{const ok=await copyText(shareTarget().text);note(ok?"Copied. Paste it anywhere.":"Copy isn't allowed here. Open the event and select the message text instead.")});
+[["sh-fb","Facebook"],["sh-ig","Instagram"]].forEach(([id,n])=>$(id).addEventListener("click",()=>{copyText(shareTarget().text).then(ok=>note(ok?`Copied. Paste it into your ${n} post or DM.`:`Opening ${n}. Copy the message from the event to paste it.`))}));
+["sh-email","sh-text"].forEach(id=>$(id).addEventListener("click",()=>note("If nothing opened, tap Copy and paste it into your email or text app.")));
+$("sh-google").addEventListener("click",()=>{if(!shareTarget().event)note("Opening Google Calendar. To add one event with its details filled in, open that event first.")});
+const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60)||"cigar-events";
+async function saveFile(filename,data,okMsg){
+  let dl=null;try{dl=await window.claude.use("downloads")}catch(e){}
+  if(!dl){note("Saving isn't available here. Tap Copy instead.");return}
+  try{await dl.save({filename,data});note(okMsg)}
+  catch(e){note(e&&e.code==="declined"?"Save cancelled.":e&&e.code==="rate_limited"?"Finish the open save first, then try again.":"That file couldn't be saved. Tap Copy instead.")}
+}
+$("sh-save").addEventListener("click",()=>{const t=shareTarget();saveFile(slug(t.title)+".txt",t.text,"Saved to your downloads.")});
+$("sh-print").addEventListener("click",()=>{
+  const t=shareTarget();
+  const doc=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(t.title)}</title><style>body{font-family:Georgia,serif;max-width:640px;margin:40px auto;padding:0 20px;color:#2A1E16}h1{font-size:26px;margin:0 0 16px}pre{white-space:pre-wrap;font:16px/1.6 Georgia,serif}button{font:inherit;padding:8px 16px;margin-top:20px}@media print{button{display:none}}</style></head><body><h1>${esc(t.title)}</h1><pre>${esc(t.text)}</pre><button onclick="window.print()">Print</button></body></html>`;
+  const w=window.open("","_blank");
+  if(w){w.document.write(doc);w.document.close();setTimeout(()=>{try{w.print()}catch(e){}},400);note("Print window opened.")}
+  else saveFile(slug(t.title)+"-print.html",doc,"Saved a printable page. Open it and tap Print.");
+});
+function setShare(open){$("share-panel").hidden=!open;$("share-toggle").setAttribute("aria-expanded",String(open));$("share-caret").textContent=open?"▴":"▾"}
+$("share-toggle").addEventListener("click",()=>{renderShare();setShare($("share-panel").hidden)});
+$("d-share").addEventListener("click",()=>{openDrawer();setShare(true);$("share-sec").scrollIntoView({block:"start"})});
+
+/* calendar show / hide */
+function setCal(open){
+  $("cal-card").hidden=!open;
+  $("cal-toggle").setAttribute("aria-expanded",String(open));
+  $("cal-toggle").textContent=open?"Hide calendar":"Show calendar";
+  try{localStorage.setItem("calOpen",open?"1":"0")}catch(e){}
+}
+$("cal-toggle").addEventListener("click",()=>setCal($("cal-card").hidden));
+try{if(localStorage.getItem("calOpen")==="1")setCal(true)}catch(e){}
+
+/* sidebar */
+function openDrawer(){renderShare();$("drawer").classList.add("open");$("scrim").hidden=false;$("menu-btn").setAttribute("aria-expanded","true");$("drawer-close").focus()}
+function closeDrawer(){$("drawer").classList.remove("open");$("scrim").hidden=true;$("menu-btn").setAttribute("aria-expanded","false")}
+$("menu-btn").addEventListener("click",openDrawer);
+$("acct-btn").addEventListener("click",openDrawer);
+$("drawer-close").addEventListener("click",closeDrawer);
+$("scrim").addEventListener("click",closeDrawer);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer()});
+document.querySelector(".nav").addEventListener("click",e=>{
+  const b=e.target.closest("[data-nav]");if(!b)return;const n=b.dataset.nav;closeDrawer();
+  showMain();
+  if(n==="search"){if($("adv").hidden)$("adv-toggle").click();$("q-text").focus();return}
+  if(n==="calendar")setCal(true);
+  $(n==="pending"?"pending-card":"cal-card").scrollIntoView({block:"start",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+});
+
+/* account + quick login PIN */
+let me=null, uid=null, pinHash=null, settingsRef=null, unlocked=false, pinLoaded=false, pendingAction=null, userReady;
+const userReadyP=new Promise(r=>userReady=r);
+async function requireLogin(action){
+  closeDrawer();
+  await Promise.race([userReadyP,new Promise(r=>setTimeout(r,4000))]);
+  if(!uid){show("login-view");return}
+  if(pinHash&&!unlocked){pendingAction=action;lock();return}
+  action();
+}
+function runPending(){const a=pendingAction;pendingAction=null;if(a)a()}
+$("side-create").addEventListener("click",()=>requireLogin(()=>openForm(null)));
+$("head-create").addEventListener("click",()=>requireLogin(()=>openForm(null)));
+$("login-back").addEventListener("click",showMain);
+$("login-retry").addEventListener("click",()=>{try{location.reload()}catch(e){}});
+async function sha(s){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("")}
+function renderAccount(){
+  const name=me&&me.name?me.name:(uid?"You":"Not signed in");
+  const role=!uid?"Log in to see and save events.":(me.email||"Saved on this device");
+  ["acct-img","side-img","lock-img"].forEach(id=>{const im=$(id);if(me&&me.avatarUrl){im.src=me.avatarUrl;im.hidden=false}else im.hidden=true});
+  $("acct-name").textContent=name.split(" ")[0];
+  $("acct-sub").textContent=!uid?"Sign in":pinHash?"PIN on":"Signed in";
+  $("side-name").textContent=name;
+  $("side-role").textContent=role;
+  $("lock-hello").textContent=me&&me.name?"Welcome back, "+me.name.split(" ")[0]:"Welcome back";
+  $("lock-settings").hidden=!settingsRef;
+  $("pin-status").textContent=pinHash?"Your PIN is on. The app asks for it each time it opens.":"Set a PIN to lock the app when you hand off your phone.";
+  $("pin-save").textContent=pinHash?"Change PIN":"Set PIN";
+  $("pin-actions").hidden=!pinHash;
+}
+function lock(){if(!pinHash)return;closeDrawer();$("lock").hidden=false;$("app").inert=true;$("unlock-pin").value="";$("unlock-err").textContent="";$("forgot-confirm").hidden=true;setTimeout(()=>$("unlock-pin").focus(),50)}
+function unlockUI(){unlocked=true;$("lock").hidden=true;$("app").inert=false}
+["pin-new","pin-again"].forEach(id=>$(id).addEventListener("input",()=>$("pin-err").textContent=""));
+$("unlock-pin").addEventListener("input",()=>$("unlock-err").textContent="");
+$("pin-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const a=$("pin-new").value,b=$("pin-again").value;
+  if(!/^\d{4,6}$/.test(a)){$("pin-err").textContent="Use 4 to 6 numbers.";$("pin-new").focus();return}
+  if(a!==b){$("pin-err").textContent="The two PINs don't match.";$("pin-again").focus();return}
+  try{const h=await sha(uid+":"+a);await settingsRef.set({pinHash:h,updatedAt:Date.now()});pinHash=h;unlocked=true;$("pin-new").value="";$("pin-again").value="";$("pin-err").textContent="";renderAccount();$("pin-status").textContent="PIN saved. The app will ask for it next time it opens."}
+  catch(err){$("pin-err").textContent="Your PIN didn't save. Try again."}
+});
+$("lock-now").addEventListener("click",lock);
+$("pin-remove").addEventListener("click",async()=>{try{await settingsRef.delete();pinHash=null;renderAccount()}catch(e){$("pin-err").textContent="That didn't work. Try again."}});
+$("unlock-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const v=$("unlock-pin").value;
+  if(!v){$("unlock-err").textContent="Enter your PIN.";return}
+  try{if(await sha(uid+":"+v)===pinHash){unlockUI();runPending()}else{$("unlock-err").textContent="That PIN isn't right. Try again.";$("unlock-pin").value=""}}
+  catch(err){$("unlock-err").textContent="Your PIN can't be checked right now."}
+});
+$("forgot").addEventListener("click",()=>$("forgot-confirm").hidden=false);
+$("forgot-yes").addEventListener("click",async()=>{try{await settingsRef.delete();pinHash=null;unlockUI();renderAccount();runPending()}catch(e){$("unlock-err").textContent="That didn't work. Try again."}});
+
+render();
+renderAccount();
+(async()=>{
+  let u=null,d=null;
+  try{if(window.claude&&window.claude.use){[u,d]=await Promise.all([window.claude.use("user"),window.claude.use("db")])}}catch(e){}
+  if(u){me=await u.me();uid=me.id}
+  if(uid&&d){
+    settingsRef=d.doc("data/users/"+uid+"/settings");
+    settingsRef.onSnapshot(s=>{
+      pinHash=s.exists?(s.data().pinHash||null):null;
+      if(!pinLoaded&&!s.metadata.fromCache){pinLoaded=true;if(pinHash&&!unlocked)lock()}
+      if(!pinHash)unlockUI();
+      renderAccount();
+    },()=>{});
+  }
+  renderAccount();
+  userReady();
+})();
+(async()=>{
+  let api=null;
+  try{if(window.claude&&window.claude.use)api=await window.claude.use("db")}catch(e){}
+  if(!api){goLocal();return}
+  db=api;
+  const timer=setTimeout(()=>$("status").textContent="Your events can't be reached yet. They'll appear once the connection returns.",10000);
+  db.collection("events").onSnapshot(snap=>{
+    if(!snap.metadata.fromCache){clearTimeout(timer);$("status").textContent=""}
+    events=snap.docs.map(x=>({id:x.id,...x.data()}));
+    render();
+  },err=>{clearTimeout(timer);$("status").textContent="Your events couldn't load. Reopen the page to try again."});
+})();
+</script>
+<script>
+/* ---------- live address + ZIP lookup ----------
+   Address search: Photon (photon.komoot.io), data © OpenStreetMap contributors.
+   ZIP lookup: Zippopotam.us. Both are free and need no key. */
+const STATES = {Alabama:"AL",Alaska:"AK",Arizona:"AZ",Arkansas:"AR",California:"CA",Colorado:"CO",Connecticut:"CT",Delaware:"DE","District of Columbia":"DC",Florida:"FL",Georgia:"GA",Hawaii:"HI",Idaho:"ID",Illinois:"IL",Indiana:"IN",Iowa:"IA",Kansas:"KS",Kentucky:"KY",Louisiana:"LA",Maine:"ME",Maryland:"MD",Massachusetts:"MA",Michigan:"MI",Minnesota:"MN",Mississippi:"MS",Missouri:"MO",Montana:"MT",Nebraska:"NE",Nevada:"NV","New Hampshire":"NH","New Jersey":"NJ","New Mexico":"NM","New York":"NY","North Carolina":"NC","North Dakota":"ND",Ohio:"OH",Oklahoma:"OK",Oregon:"OR",Pennsylvania:"PA","Puerto Rico":"PR","Rhode Island":"RI","South Carolina":"SC","South Dakota":"SD",Tennessee:"TN",Texas:"TX",Utah:"UT",Vermont:"VT",Virginia:"VA",Washington:"WA","West Virginia":"WV",Wisconsin:"WI",Wyoming:"WY"};
+
+async function zipLookup(z){
+  if (z in window.zipCache) return window.zipCache[z];
+  try {
+    const r = await fetch("https://api.zippopotam.us/us/" + z);
+    if (!r.ok) { window.zipCache[z] = null; return null; }
+    const j = await r.json(); const p = j.places && j.places[0];
+    window.zipCache[z] = p ? { city: p["place name"], state: p["state abbreviation"] } : null;
+  } catch (e) { return undefined; }
+  return window.zipCache[z];
+}
+async function placeSearch(q){
+  const r = await fetch("https://photon.komoot.io/api/?q=" + encodeURIComponent(q) + "&limit=8&lang=en&bbox=-125,24,-66,50");
+  if (!r.ok) throw new Error("lookup failed");
+  const j = await r.json();
+  return (j.features || []).map(f => f.properties || {}).filter(p => p.countrycode === "US").map(p => {
+    const street = [p.housenumber, p.street].filter(Boolean).join(" ");
+    const city = p.city || p.town || p.village || p.district || p.county || "";
+    const state = STATES[p.state] || p.state || "";
+    const zip = String(p.postcode || "").slice(0, 5);
+    const main = street || p.name || city;
+    const sub = [main === city ? "" : city, [state, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    return { main, sub, street, venue: street && p.name && p.name !== street ? p.name : "", city, state, zip };
+  }).filter((x, i, a) => x.main && a.findIndex(y => y.main === x.main && y.sub === x.sub) === i);
+}
+
+function attachSuggest(input, fetcher, onPick){
+  const box = document.createElement("div");
+  box.className = "sugg"; box.hidden = true; box.setAttribute("role", "listbox");
+  input.parentNode.appendChild(box);
+  let timer, seq = 0, items = [];
+  const close = () => { box.hidden = true; };
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    const q = input.value.trim();
+    if (q.length < 3) { close(); return; }
+    timer = setTimeout(async () => {
+      const my = ++seq;
+      box.innerHTML = '<div class="sugg-note">Looking up…</div>'; box.hidden = false;
+      let res;
+      try { res = await fetcher(q); } catch (e) { res = null; }
+      if (my !== seq) return;
+      if (res === null) { box.innerHTML = '<div class="sugg-note">Address lookup isn\'t reachable right now. You can still type it in.</div>'; return; }
+      items = res;
+      if (!res.length) { box.innerHTML = '<div class="sugg-note">No matching places found.</div>'; return; }
+      box.innerHTML = res.map((r, i) => `<button type="button" role="option" data-i="${i}"><b>${esc(r.main)}</b><small>${esc(r.sub || "")}</small></button>`).join("")
+        + '<div class="attr">Address search © OpenStreetMap contributors</div>';
+    }, 350);
+  });
+  box.addEventListener("mousedown", e => e.preventDefault());
+  box.addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (!b) return; close(); onPick(items[+b.dataset.i]); });
+  input.addEventListener("blur", () => setTimeout(close, 150));
+  input.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+}
+
+/* Location search bar: live suggestions, ZIP → city */
+attachSuggest($("q-loc"), async q => {
+  if (/^\d{5}$/.test(q)) {
+    const z = await zipLookup(q);
+    renderResults();
+    if (z === undefined) return null;
+    return z ? [{ main: q, sub: z.city + ", " + z.state, zip: q, city: z.city, state: z.state }] : [];
+  }
+  return placeSearch(q);
+}, async p => {
+  $("q-loc").value = p.zip || [p.city, p.state].filter(Boolean).join(" ") || p.main;
+  if (p.zip && p.city && !(p.zip in window.zipCache)) window.zipCache[p.zip] = { city: p.city, state: p.state };
+  renderResults();
+});
+
+/* New-event form: address autocomplete fills street, city, state, ZIP */
+attachSuggest($("f-addr"), async q => (await placeSearch(q)).filter(p => p.street), p => {
+  $("f-addr").value = p.street;
+  if (p.city) $("f-city").value = p.city;
+  if (p.state) $("f-state").value = p.state;
+  if (p.zip) $("f-zip").value = p.zip;
+  if (p.venue && !$("f-place").value) $("f-place").value = p.venue;
+  $("f-err").textContent = "";
+});
+$("f-zip").addEventListener("input", async () => {
+  const z = $("f-zip").value.trim();
+  if (!/^\d{5}$/.test(z)) return;
+  const r = await zipLookup(z);
+  if (r && $("f-zip").value.trim() === z) {
+    if (!$("f-city").value) $("f-city").value = r.city;
+    if (!$("f-state").value) $("f-state").value = r.state;
+  }
+});
+
+/* ---------- login / logout ---------- */
+(async () => {
+  await sessionReady;
+  const btn = $("auth-btn");
+  if (!SB) return;
+  btn.hidden = false;
+  if (SESSION_USER) {
+    btn.textContent = "Log out";
+    btn.addEventListener("click", async () => { try { await SB.auth.signOut(); } catch (e) {} location.reload(); });
+  } else {
+    btn.textContent = "Log in";
+    btn.addEventListener("click", () => { closeDrawer(); show("login-view"); });
+    $("status").textContent = "Log in to see and save your events.";
+  }
+})();
+["login-email", "login-pass"].forEach(id => $(id).addEventListener("input", () => $("login-err").textContent = ""));
+$("login-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = $("login-email").value.trim(), password = $("login-pass").value;
+  if (!SB) { $("login-err").textContent = "Logins aren't set up yet. Add your Supabase settings at the top of index.html."; return; }
+  if (!email) { $("login-err").textContent = "Enter your email."; $("login-email").focus(); return; }
+  if (!password) { $("login-err").textContent = "Enter your password."; $("login-pass").focus(); return; }
+  $("login-submit").disabled = true;
+  const { error } = await SB.auth.signInWithPassword({ email, password });
+  $("login-submit").disabled = false;
+  if (error) { $("login-err").textContent = "That email and password don't match. Try again."; return; }
+  location.reload();
+});
+
+</script>
+</body>
+</html>
