@@ -123,6 +123,42 @@ footer{color:var(--muted);font-size:12px;text-align:center}
 .sharegrid a,.sharegrid button{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);text-decoration:none;font:inherit;font-weight:800;font-size:14px;text-align:left;min-width:0;cursor:pointer}
 .sharegrid a:hover,.sharegrid button:hover{border-color:var(--accent)}
 .sharegrid .dot{width:28px;height:28px;border-radius:8px;flex:none;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:900}
+/* flyer banner */
+.banner{position:relative;border-radius:16px;overflow:hidden;background:#1f1610;border:1px solid var(--line)}
+.bn-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.bn-track::-webkit-scrollbar{display:none}
+.bn-slide{position:relative;flex:0 0 100%;scroll-snap-align:start;height:clamp(240px,62vw,360px);border:0;border-radius:0;padding:0;background:#1f1610;overflow:hidden;cursor:pointer;color:#fff}
+.bn-bg{position:absolute;inset:-20px;background-size:cover;background-position:center;filter:blur(18px) brightness(.55);transform:scale(1.1)}
+.bn-slide img{position:relative;display:block;height:100%;width:100%;object-fit:contain}
+.bn-cap{position:absolute;left:0;right:0;bottom:0;padding:34px 16px 14px;background:linear-gradient(transparent,rgba(0,0,0,.78));text-align:left;display:flex;flex-direction:column;gap:2px}
+.bn-cap b{font-family:var(--display);font-weight:900;font-size:20px;line-height:1.15;overflow-wrap:anywhere}
+.bn-cap span{font-size:14px;font-weight:700;opacity:.9}
+.bn-tag{position:absolute;top:10px;left:10px;z-index:2;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:999px;pointer-events:none}
+.bn-dots{position:absolute;right:8px;top:6px;display:flex;gap:4px;z-index:2}
+.bn-dots button{width:22px;height:22px;border:0;background:none;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.bn-dots button::before{content:"";width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.45)}
+.bn-dots button[aria-current="true"]::before{background:#fff}
+.cover{display:block;border-radius:12px;overflow:hidden;background:#1f1610;border:1px solid var(--line)}
+.cover img{display:block;width:100%;max-height:70vh;object-fit:contain;max-width:100%}
+/* tickets */
+.tix{display:flex;flex-direction:column;gap:12px;border:1.5px solid var(--accent);border-radius:12px;padding:16px;background:var(--accent-soft)}
+.tixprice{font-family:var(--display);font-weight:900;font-size:24px;color:var(--accent)}
+.tixprice small{font-family:var(--body);font-size:13px;font-weight:700;color:var(--muted)}
+.qty{display:flex;gap:6px;align-items:center}
+.qty input{text-align:center;width:64px;flex:none;background:var(--surface)}
+.qty .ghost{width:44px;height:44px;justify-content:center;padding:0;font-size:20px}
+.tix input{background:var(--surface)}
+.tixdone{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:18px;letter-spacing:.12em;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:1px 8px;user-select:all}
+.trow{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
+.trow:last-child{border-bottom:0}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+/* comments */
+.cmts{display:flex;flex-direction:column}
+.cmt{display:flex;flex-direction:column;gap:4px;padding:12px 0;border-bottom:1px solid var(--line)}
+.cmt:last-child{border-bottom:0}
+.cmt .tag{margin:0 0 0 6px;vertical-align:middle}
+.linkbtn{align-self:flex-start;background:none;border:0;padding:4px 0;font-size:13px;font-weight:700;text-decoration:underline;color:var(--muted)}
 @media (max-width:460px){.fields{grid-template-columns:1fr}.ev{grid-template-columns:56px minmax(0,1fr);gap:12px}}
 </style>
 </head>
@@ -163,6 +199,7 @@ footer{color:var(--muted);font-size:12px;text-align:center}
         <label class="full check"><input id="p-opt" type="checkbox"> Email me when new events come up that match my saved searches</label>
         <div class="full row"><button class="ghost" type="submit">Save profile</button><span class="ok" id="p-note" role="status"></span></div>
       </form>
+      <div><h3 style="font-size:18px">My tickets</h3><div id="my-tix"></div></div>
       <div><h3 style="font-size:18px">Saved events</h3><div id="saved-events"></div></div>
       <div><h3 style="font-size:18px">Saved searches</h3><div id="saved"></div></div>
       <div class="row" style="border-top:1px solid var(--line);padding-top:14px">
@@ -180,6 +217,11 @@ footer{color:var(--muted);font-size:12px;text-align:center}
 
   <!-- HOME -->
   <section id="v-home" style="display:flex;flex-direction:column;gap:18px">
+    <section class="banner" id="banner" hidden aria-label="Featured flyers" aria-roledescription="carousel">
+      <span class="bn-tag">Featured</span>
+      <div class="bn-track" id="bn-track"></div>
+      <div class="bn-dots" id="bn-dots"></div>
+    </section>
     <div class="locbar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
       <input id="q" type="search" placeholder="ZIP code, city, address or event" aria-label="Search events" autocomplete="off">
@@ -239,6 +281,15 @@ footer{color:var(--muted);font-size:12px;text-align:center}
           <div class="note" style="margin-top:6px">Photos, PDF, Word or text files, up to 10 MB each, 8 per event. Everything you add here is public.</div>
           <div class="files" id="f-filelist"></div>
           <div class="err" id="f-file-err" role="alert"></div>
+        </div>
+        <label class="full check"><input id="f-banner" type="checkbox" checked> Show my first photo or flyer in the Featured banner at the top of the home page</label>
+        <div class="sec">Tickets</div>
+        <label class="full check"><input id="f-tix" type="checkbox"> Sell tickets on this site</label>
+        <div class="full fields" id="f-tix-box" hidden>
+          <div><label for="f-tprice">Ticket price ($)</label><input id="f-tprice" inputmode="decimal" maxlength="9" placeholder="25, or 0 for free" autocomplete="off"></div>
+          <div><label for="f-tlimit">Tickets available</label><input id="f-tlimit" inputmode="numeric" maxlength="6" placeholder="Blank = no limit" autocomplete="off"></div>
+          <div class="full"><label for="f-tlink">Payment link (optional)</label><input id="f-tlink" type="url" maxlength="300" placeholder="https://square.link/u/... or a PayPal, Cash App or Venmo link" autocomplete="off">
+            <div class="note" style="margin-top:6px">Buyers get a ticket code, then tap Pay to pay you directly at this link. Leave it blank to collect payment at the door. You'll see every ticket on your event page.</div></div>
         </div>
       </div>
       <div class="err" id="f-err" role="alert"></div>
@@ -320,7 +371,7 @@ const sbApi = {
   },
   async updateProfile(uid, patch){ const { error } = await SB.from("ce_profiles").update(patch).eq("user_id", uid); if (error) throw error; },
   async removeProfileData(uid){
-    for (const t of ["ce_saved_searches", "ce_saves", "ce_profiles"]) { const { error } = await SB.from(t).delete().eq("user_id", uid); if (error) throw error; }
+    for (const t of ["ce_saved_searches", "ce_saves", "ce_comments", "ce_profiles"]) { const { error } = await SB.from(t).delete().eq("user_id", uid); if (error) throw error; }
   },
   async searches(uid){ const { data, error } = await SB.from("ce_saved_searches").select("id,query").eq("user_id", uid).order("created_at", { ascending: false }); if (error) throw error; return data; },
   async addSearch(uid, query){ const { data, error } = await SB.from("ce_saved_searches").insert({ user_id: uid, query }).select("id,query").single(); if (error) throw error; return data; },
@@ -343,15 +394,25 @@ const sbApi = {
     return { path, url: SB.storage.from(BUCKET).getPublicUrl(path).data.publicUrl };
   },
   async removeFile(path){ try { await SB.storage.from(BUCKET).remove([path]); } catch (e) {} },
+  async ticketsLeft(eid){ const { data, error } = await SB.rpc("tickets_left", { p_event: eid }); if (error) throw error; return data; },
+  async buyTickets(eid, name, qty){ const { data, error } = await SB.rpc("buy_tickets", { p_event: eid, p_name: name, p_qty: qty }); if (error) throw error; return Array.isArray(data) ? data[0] : data; },
+  async myTickets(uid){ const { data, error } = await SB.from("ce_tickets").select("*").eq("user_id", uid).order("created_at", { ascending: false }); if (error) throw error; return data; },
+  async eventTickets(eid){ const { data, error } = await SB.from("ce_tickets").select("*").eq("event_id", eid).order("created_at"); if (error) throw error; return data; },
+  async updateTicket(id, patch){ const { data, error } = await SB.from("ce_tickets").update(patch).eq("id", id).select("id"); if (error) throw error; if (!data || !data.length) throw new Error("not allowed"); },
+  async cancelMyTicket(id){ const { data, error } = await SB.rpc("cancel_my_ticket", { p_id: id }); if (error) throw error; if (data !== true) throw new Error("not allowed"); },
+  async comments(eid){ const { data, error } = await SB.from("ce_comments").select("*").eq("event_id", eid).order("created_at").limit(300); if (error) throw error; return data; },
+  async addComment(eid, body){ const { data, error } = await SB.from("ce_comments").insert({ event_id: eid, body }).select().single(); if (error) throw error; return data; },
+  async deleteComment(id){ const { data, error } = await SB.from("ce_comments").delete().eq("id", id).select("id"); if (error) throw error; if (!data || !data.length) throw new Error("not allowed"); },
   subscribe(cb){ try { SB.channel("ce-events").on("postgres_changes", { event: "*", schema: "public", table: "ce_events" }, cb).subscribe(); } catch (e) {} }
 };
 
 /* Demo mode: a pretend server in this browser, so the site works before Supabase is connected. */
 const PREVIEW = /[?&]preview\b/.test(location.search);
-const DKEY = PREVIEW ? "ce.preview.v1" : "ce.demo.v1";
+const DKEY = PREVIEW ? "ce.preview.v2" : "ce.demo.v1";
 const dLoad = () => { try { return JSON.parse(localStorage.getItem(DKEY)) || null; } catch (e) { return null; } };
 const dSave = d => { try { localStorage.setItem(DKEY, JSON.stringify(d)); } catch (e) { throw new Error("This browser won't let the site save. Turn off private browsing."); } };
-function dDb(){ return dLoad() || { users: [], session: null, profiles: {}, events: [], saves: [], searches: [], admins: [], site: { title: "" } }; }
+function dDb(){ const d = dLoad() || { users: [], session: null, profiles: {}, events: [], saves: [], searches: [], admins: [], site: { title: "" } }; d.tickets = d.tickets || []; d.comments = d.comments || []; return d; }
+const dHosts = (d, eid) => { const e = d.events.find(x => x.id === eid); return !!d.session && (d.admins.includes(d.session) || (e && e.host_id === d.session)); };
 let dAuthCb = null;
 const demoApi = {
   demo: true,
@@ -393,7 +454,7 @@ const demoApi = {
   async saveCounts(){ const m = {}; dDb().saves.forEach(s => m[s.event_id] = (m[s.event_id] || 0) + 1); return m; },
   async getProfile(u){ const d = dDb(); if (!d.profiles[u.id]) { d.profiles[u.id] = { user_id: u.id, name: "", email: u.email, email_updates: false }; dSave(d); } return d.profiles[u.id]; },
   async updateProfile(uid, patch){ const d = dDb(); Object.assign(d.profiles[uid], patch); dSave(d); },
-  async removeProfileData(uid){ const d = dDb(); delete d.profiles[uid]; d.saves = d.saves.filter(s => s.user_id !== uid); d.searches = d.searches.filter(s => s.user_id !== uid); dSave(d); },
+  async removeProfileData(uid){ const d = dDb(); delete d.profiles[uid]; d.comments = d.comments.filter(c => c.user_id !== uid); d.saves = d.saves.filter(s => s.user_id !== uid); d.searches = d.searches.filter(s => s.user_id !== uid); dSave(d); },
   async searches(uid){ return dDb().searches.filter(s => s.user_id === uid).reverse(); },
   async addSearch(uid, query){ const d = dDb(); const s = { id: uuid(), user_id: uid, query }; d.searches.push(s); dSave(d); return s; },
   async removeSearch(id){ const d = dDb(); d.searches = d.searches.filter(s => s.id !== id); dSave(d); },
@@ -407,6 +468,30 @@ const demoApi = {
     return { path: "", url };
   },
   async removeFile(){},
+  async ticketsLeft(eid){ const d = dDb(), e = d.events.find(x => x.id === eid); if (!e || e.ticket_limit == null || e.ticket_limit === "") return null; const sold = d.tickets.filter(t => t.event_id === eid && t.status !== "cancelled").reduce((n, t) => n + t.qty, 0); return Math.max(Number(e.ticket_limit) - sold, 0); },
+  async buyTickets(eid, name, qty){
+    const d = dDb(); if (!d.session) throw new Error("sign_in_first");
+    const e = d.events.find(x => x.id === eid);
+    if (!e || e.admin_hidden || e.status !== "live" || !e.tickets_on || e.date < todayIso) throw new Error("not_selling");
+    if (!(qty >= 1 && qty <= 20)) throw new Error("qty_1_to_20");
+    if (!String(name || "").trim()) throw new Error("name_needed");
+    if (d.tickets.filter(t => t.event_id === eid && t.user_id === d.session && t.status !== "cancelled").length >= 5) throw new Error("too_many_orders");
+    const left = await this.ticketsLeft(eid); if (left != null && qty > left) throw new Error("sold_out:" + left);
+    const u = d.users.find(x => x.id === d.session) || {};
+    const t = { id: uuid(), event_id: eid, user_id: d.session, name: String(name).trim().slice(0, 120), email: u.email || "", qty, total: (Number(e.ticket_price) || 0) * qty, code: Math.random().toString(36).slice(2, 8).toUpperCase(), status: "reserved", checked_in: false, created_at: new Date().toISOString() };
+    d.tickets.push(t); dSave(d); return t;
+  },
+  async myTickets(uid){ return dDb().tickets.filter(t => t.user_id === uid).reverse(); },
+  async eventTickets(eid){ const d = dDb(); if (!dHosts(d, eid)) throw new Error("not allowed"); return d.tickets.filter(t => t.event_id === eid); },
+  async updateTicket(id, patch){ const d = dDb(), t = d.tickets.find(x => x.id === id); if (!t || !dHosts(d, t.event_id)) throw new Error("not allowed"); ["status", "checked_in"].forEach(k => { if (k in patch) t[k] = patch[k]; }); dSave(d); },
+  async cancelMyTicket(id){ const d = dDb(), t = d.tickets.find(x => x.id === id); if (!t || t.user_id !== d.session || t.status !== "reserved") throw new Error("not allowed"); t.status = "cancelled"; dSave(d); },
+  async comments(eid){ const d = dDb(), e = d.events.find(x => x.id === eid); if (!e || (e.admin_hidden && !dHosts(d, eid))) return []; return d.comments.filter(c => c.event_id === eid).sort((a, b) => a.created_at.localeCompare(b.created_at)); },
+  async addComment(eid, body){
+    const d = dDb(); if (!d.session) throw new Error("not allowed");
+    const c = { id: uuid(), event_id: eid, user_id: d.session, name: (d.profiles[d.session] || {}).name || "Guest", body: String(body).slice(0, 1000), created_at: new Date().toISOString() };
+    d.comments.push(c); dSave(d); return c;
+  },
+  async deleteComment(id){ const d = dDb(), c = d.comments.find(x => x.id === id); if (!c || !(c.user_id === d.session || dHosts(d, c.event_id))) throw new Error("not allowed"); d.comments = d.comments.filter(x => x.id !== id); dSave(d); },
   subscribe(cb){ addEventListener("storage", e => { if (e.key === DKEY) cb(); }); }
 };
 const api = (SB && !PREVIEW) ? sbApi : demoApi;
@@ -422,12 +507,21 @@ if (PREVIEW && !dLoad()) {
     admins: ["me"],
     site: { title: "" },
     events: [
-      { ...base, id: "pv1", host_id: "me", host_name: "Alex Morgan", title: "Cigar and Bourbon Pairing Night", event_type: "Tasting / pairing", date: day(5), time: "19:30", price: "$40", description: "Four cigar and bourbon pairings with live jazz.\nDress code: smart casual. 21 and over.", location: "Smoke and Oak Lounge", address: "1450 Peachtree St NE", city: "Atlanta", state: "GA", zip: "30309", contact: "@smokeandoak", reviewed: true, files: [{ name: "flyer.svg", type: "image/svg+xml", size: 2000, url: svgFlyer("#8A4B22", "#FFFFFF", "Pairing Night", "Bourbon + Cigars"), path: "" }] },
-      { ...base, id: "pv2", host_id: "jo", host_name: "Jordan Blake", title: "Beginner Cigar Rolling Class", event_type: "Class / workshop", date: day(12), time: "14:00", price: "$25", description: "Learn to roll your own cigar with a master roller. All materials included.", location: "Decatur Square Hall", address: "220 Ponce de Leon Ave", city: "Decatur", state: "GA", zip: "30030", contact: "jordan@example.com", reviewed: false, files: [{ name: "class.svg", type: "image/svg+xml", size: 2000, url: svgFlyer("#2F6B3A", "#FFFFFF", "Rolling Class", "Saturday 2 PM"), path: "" }] },
+      { ...base, id: "pv1", host_id: "me", host_name: "Alex Morgan", title: "Cigar and Bourbon Pairing Night", event_type: "Tasting / pairing", date: day(5), time: "19:30", price: "$40", tickets_on: true, ticket_price: 40, ticket_limit: 50, ticket_link: "https://square.link/u/example", in_banner: true, description: "Four cigar and bourbon pairings with live jazz.\nDress code: smart casual. 21 and over.", location: "Smoke and Oak Lounge", address: "1450 Peachtree St NE", city: "Atlanta", state: "GA", zip: "30309", contact: "@smokeandoak", reviewed: true, files: [{ name: "flyer.svg", type: "image/svg+xml", size: 2000, url: svgFlyer("#8A4B22", "#FFFFFF", "Pairing Night", "Bourbon + Cigars"), path: "" }] },
+      { ...base, id: "pv2", host_id: "jo", host_name: "Jordan Blake", title: "Beginner Cigar Rolling Class", event_type: "Class / workshop", date: day(12), time: "14:00", price: "$25", tickets_on: true, ticket_price: 25, ticket_limit: 12, ticket_link: "", in_banner: true, description: "Learn to roll your own cigar with a master roller. All materials included.", location: "Decatur Square Hall", address: "220 Ponce de Leon Ave", city: "Decatur", state: "GA", zip: "30030", contact: "jordan@example.com", reviewed: false, files: [{ name: "class.svg", type: "image/svg+xml", size: 2000, url: svgFlyer("#2F6B3A", "#FFFFFF", "Rolling Class", "Saturday 2 PM"), path: "" }] },
       { ...base, id: "pv3", host_id: "jo", host_name: "Jordan Blake", title: "Rooftop Lounge Night", event_type: "Lounge night", date: day(20), time: "20:00", price: "Free", description: "Relaxed night on the roof. Bring your own cigars.", location: "Midtown Rooftop", address: "", city: "Atlanta", state: "GA", zip: "30308", reviewed: true, files: [] }
     ],
     saves: [{ user_id: "me", event_id: "pv2" }, { user_id: "jo", event_id: "pv1" }],
-    searches: [{ id: "s1", user_id: "me", query: "30309" }]
+    searches: [{ id: "s1", user_id: "me", query: "30309" }],
+    tickets: [
+      { id: "t1", event_id: "pv1", user_id: "jo", name: "Jordan Blake", email: "jordan@example.com", qty: 2, total: 80, code: "K7Q2MX", status: "paid", checked_in: false, created_at: now },
+      { id: "t2", event_id: "pv1", user_id: "x1", name: "Sam Lee", email: "sam@example.com", qty: 1, total: 40, code: "P3WZ8A", status: "reserved", checked_in: false, created_at: now },
+      { id: "t3", event_id: "pv2", user_id: "me", name: "Alex Morgan", email: "you@example.com", qty: 1, total: 25, code: "R9DT4C", status: "reserved", checked_in: false, created_at: now }
+    ],
+    comments: [
+      { id: "c1", event_id: "pv1", user_id: "jo", name: "Jordan Blake", body: "Is there parking nearby?", created_at: new Date(Date.now() - 5 * 3600000).toISOString() },
+      { id: "c2", event_id: "pv1", user_id: "me", name: "Alex Morgan", body: "Yes, free parking in the deck behind the lounge.", created_at: new Date(Date.now() - 4 * 3600000).toISOString() }
+    ]
   });
 }
 
@@ -454,12 +548,22 @@ const NAV_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" str
 const HEART = on => `<svg viewBox="0 0 24 24" width="18" height="18" fill="${on ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.6-9 9-9 9z"/></svg>`;
 function locMatch(e, q){ const hay = [e.title, e.event_type, e.host_name, e.location, e.address, e.city, e.state, e.zip].join(" ").toLowerCase(); return q.split(/[\s,]+/).filter(Boolean).every(w => hay.includes(w)); }
 const setStatus = t => $("status").textContent = t || "";
+const money = n => "$" + (Number(n) || 0).toFixed(2).replace(/\.00$/, "");
+const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return "the host's payment page"; } };
+const safeLink = u => /^https:\/\/[^\s"'<>]+$/.test(String(u || "")) ? u : "";
+function ago(s){
+  const m = Math.round((Date.now() - new Date(s)) / 60000); if (m < 1) return "just now"; if (m < 60) return m + " min ago";
+  const h = Math.round(m / 60); if (h < 24) return h + (h === 1 ? " hour ago" : " hours ago");
+  const d = Math.round(h / 24); if (d < 7) return d + (d === 1 ? " day ago" : " days ago");
+  return new Date(s).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+const TIX_ERR = m => /sold_out:(\d+)/.test(m) ? (+m.match(/sold_out:(\d+)/)[1] ? `Only ${m.match(/sold_out:(\d+)/)[1]} left. Pick a smaller number.` : "Sorry, it just sold out.") : /not_selling/.test(m) ? "Tickets aren't on sale for this event right now." : /too_many/.test(m) ? "You already have 5 orders for this event." : /sign_in/.test(m) ? "Sign in first." : /name_needed/.test(m) ? "Enter the name for the tickets." : /qty/.test(m) ? "Pick 1 to 20 tickets." : /function|schema cache|does not exist/i.test(m) ? "Ticket sales aren't set up yet. The site owner needs to run tickets-comments-setup.sql." : "That didn't go through. Try again.";
 async function copyText(t){ try { await navigator.clipboard.writeText(t); return true; } catch (e) { return false; } }
 
 /* ============================================================
    STATE
    ============================================================ */
-let USER = null, PROFILE = null, IS_ADMIN = false, SAVES = new Set(), SEARCHES = [], EVENTS = [], LOADED = false, SITE_TITLE = "";
+let USER = null, PROFILE = null, IS_ADMIN = false, SAVES = new Set(), SEARCHES = [], EVENTS = [], LOADED = false, SITE_TITLE = "", MY_TIX = [];
 let formFiles = [], uploading = 0, editingId = null, JUST_POSTED = null;
 
 /* ---------- share an event to social media ---------- */
@@ -539,7 +643,7 @@ function card(e){
       <p class="meta"><b>${esc(longDate(e.date))}</b> · ${esc(fmtTime(e.time))}</p>
       ${place ? `<p class="meta">${esc(place)}</p>` : ""}
       ${e.host_name ? `<p class="meta">Hosted by ${esc(e.host_name)}</p>` : ""}
-      ${e.status === "cancelled" ? '<span class="tag cx">Cancelled</span>' : ""}${e.event_type ? `<span class="tag">${esc(e.event_type)}</span>` : ""}${e.price ? `<span class="tag">${esc(e.price)}</span>` : ""}
+      ${e.status === "cancelled" ? '<span class="tag cx">Cancelled</span>' : ""}${e.event_type ? `<span class="tag">${esc(e.event_type)}</span>` : ""}${e.price ? `<span class="tag">${esc(e.price)}</span>` : ""}${e.tickets_on ? `<span class="tag ok">Tickets ${Number(e.ticket_price) ? esc(money(e.ticket_price)) : "free"}</span>` : ""}
       ${flyer ? `<button type="button" class="flyer" data-go="event-${esc(e.id)}" style="padding:0;background:none" aria-label="See ${esc(e.title)}"><img src="${esc(flyer.url)}" alt="Flyer for ${esc(e.title)}" loading="lazy"></button>` : ""}
       <div class="row">
         <button type="button" class="ghost ${saved ? "saved" : ""}" data-save="${esc(e.id)}" aria-pressed="${saved}">${HEART(saved)}${saved ? "Saved" : "Save"}</button>
@@ -560,11 +664,37 @@ function renderList(){
   if (near.length) h += `<p class="label" style="font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Nearby${zc ? " · " + esc(zc.city) + ", " + esc(zc.state) : ""}</p>` + near.map(card).join("");
   $("list").innerHTML = h;
 }
+/* Featured banner: newest flyers at the top of the home page */
+let bnTimer = null, bnPauseUntil = 0;
+function renderBanner(){
+  const items = EVENTS.filter(e => e.in_banner !== false && e.status !== "cancelled" && images(e).length)
+    .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || ""))).slice(0, 10);
+  $("banner").hidden = !items.length;
+  if (!items.length) { $("bn-track").innerHTML = ""; $("bn-dots").innerHTML = ""; return; }
+  $("bn-track").innerHTML = items.map((e, i) => { const u = images(e)[0].url; return `<button type="button" class="bn-slide" data-go="event-${esc(e.id)}" aria-label="${esc(e.title)}, ${esc(longDate(e.date))} (${i + 1} of ${items.length})"><span class="bn-bg" style="background-image:url(&quot;${esc(u)}&quot;)" aria-hidden="true"></span><img src="${esc(u)}" alt="" ${i ? 'loading="lazy"' : ""}><span class="bn-cap"><b>${esc(e.title)}</b><span>${esc(longDate(e.date))} · ${esc(fmtTime(e.time))}${e.city ? " · " + esc(e.city) : ""}</span></span></button>`; }).join("");
+  $("bn-dots").innerHTML = items.length > 1 ? items.map((e, i) => `<button type="button" data-bn="${i}" aria-label="Show flyer ${i + 1}" aria-current="${i === 0}"></button>`).join("") : "";
+  bnStart();
+}
+function bnIndex(){ const t = $("bn-track"); return t.clientWidth ? Math.round(t.scrollLeft / t.clientWidth) : 0; }
+function bnGo(i){ const t = $("bn-track"); t.scrollTo({ left: i * t.clientWidth, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
+function bnStart(){
+  clearInterval(bnTimer);
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  bnTimer = setInterval(() => {
+    const t = $("bn-track"), n = t.children.length;
+    if (n < 2 || $("v-home").hidden || document.hidden || Date.now() < bnPauseUntil) return;
+    bnGo((bnIndex() + 1) % n);
+  }, 5000);
+}
+$("bn-track").addEventListener("scroll", () => { const i = bnIndex(); $("bn-dots").querySelectorAll("[data-bn]").forEach(b => b.setAttribute("aria-current", String(+b.dataset.bn === i))); }, { passive: true });
+["pointerdown", "touchstart", "focusin"].forEach(ev => $("banner").addEventListener(ev, () => bnPauseUntil = Date.now() + 12000, { passive: true }));
+$("bn-dots").addEventListener("click", e => { const b = e.target.closest("[data-bn]"); if (b) { bnPauseUntil = Date.now() + 12000; bnGo(+b.dataset.bn); } });
+
 async function loadEvents(){
   const t = setTimeout(() => { if (!LOADED) $("list").innerHTML = '<div class="card empty">Events are taking a while to load. Check your connection.</div>'; }, 10000);
   try { EVENTS = await api.listPublic(); LOADED = true; }
   catch (err) { LOADED = true; EVENTS = []; $("list").innerHTML = '<div class="card empty">Events couldn\'t load right now. Try again in a minute.</div>'; clearTimeout(t); return; }
-  clearTimeout(t); renderList();
+  clearTimeout(t); renderList(); renderBanner();
   if (IS_ADMIN) refreshReviewBadge();
 }
 $("q").addEventListener("input", () => { renderList(); $("save-note").textContent = ""; updateSaveRow(); });
@@ -598,9 +728,11 @@ async function renderDetail(id){
   document.title = e.title + (SITE_TITLE ? " · " + SITE_TITLE : "");
   box.innerHTML = `
     ${e.admin_hidden ? '<div class="confirm">This event is hidden from the public.</div>' : ""}
+    ${imgs.length ? `<a class="cover" href="${esc(imgs[0].url)}" target="_blank" rel="noopener"><img src="${esc(imgs[0].url)}" alt="${esc(imgs[0].name || "Flyer for " + e.title)}"></a>` : ""}
     <div><h2 style="font-size:28px">${esc(e.title)}</h2>
       <p class="meta" style="font-size:16px"><b>${esc(longDate(e.date))}</b> · ${esc(fmtTime(e.time))}</p>
       ${e.status === "cancelled" ? '<span class="tag cx">Cancelled</span>' : ""}${e.event_type ? `<span class="tag">${esc(e.event_type)}</span>` : ""}${e.price ? `<span class="tag">${esc(e.price)}</span>` : ""}</div>
+    <div id="ev-tix" hidden></div>
     <div class="row">
       <button type="button" class="${saved ? "ghost saved" : "btn"}" data-save="${esc(e.id)}" aria-pressed="${saved}">${HEART(saved)}${saved ? "Saved" : "Save"}</button>
       ${fa ? `<a class="ghost" href="${navUrl(e)}" target="_blank" rel="noopener">${NAV_SVG}Navigate</a>` : ""}
@@ -608,7 +740,7 @@ async function renderDetail(id){
       <button type="button" class="ghost" id="ev-share" aria-expanded="false" aria-controls="ev-sharebox">Share</button>
     </div>
     <div id="ev-sharebox" ${JUST_POSTED === e.id ? "" : "hidden"}>${shareBox(e, JUST_POSTED === e.id)}</div>
-    ${imgs.length ? `<div class="gallery">${imgs.map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener"><img src="${esc(f.url)}" alt="${esc(f.name || "Event photo")}" loading="lazy"></a>`).join("")}</div>` : ""}
+    ${imgs.length > 1 ? `<div class="gallery">${imgs.slice(1).map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener"><img src="${esc(f.url)}" alt="${esc(f.name || "Event photo")}" loading="lazy"></a>`).join("")}</div>` : ""}
     ${e.description ? `<p class="desc">${esc(e.description)}</p>` : ""}
     <dl class="kv">
       ${fa ? `<dt>Where</dt><dd>${esc(fa)}</dd>` : ""}
@@ -619,11 +751,154 @@ async function renderDetail(id){
     ${mine || IS_ADMIN ? `<div style="border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px">
       <label style="margin:0">${mine ? "Your event" : "Owner tools"}</label>
       <div class="row"><button type="button" class="ghost" data-go="edit-${esc(e.id)}">Edit event</button><button type="button" class="ghost" id="ev-email">Email people who saved it</button></div>
-      <p class="note" id="ev-email-note"></p></div>` : ""}`;
+      <p class="note" id="ev-email-note"></p>
+      <div id="ev-host-tix" style="display:flex;flex-direction:column;gap:10px"></div></div>` : ""}
+    <section id="ev-comments" style="border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px" aria-labelledby="cmt-h"></section>`;
   $("ev-share").addEventListener("click", () => { const box = $("ev-sharebox"); box.hidden = !box.hidden; $("ev-share").setAttribute("aria-expanded", String(!box.hidden)); });
   wireShareBox($("ev-sharebox"), e);
   if (JUST_POSTED === e.id) { JUST_POSTED = null; $("ev-share").setAttribute("aria-expanded", "true"); }
   if ($("ev-email")) $("ev-email").addEventListener("click", () => emailSavers(e, $("ev-email-note")));
+  renderTicketBox(e); renderComments(e);
+  if (mine || IS_ADMIN) renderHostTickets(e);
+}
+
+/* ============================================================
+   TICKETS (buyers reserve with a code, then pay the host's link or at the door)
+   ============================================================ */
+const TSTATUS = { reserved: ["Waiting for payment", "wait"], paid: ["Paid", "ok"], cancelled: ["Cancelled", "cx"] };
+function payBlock(e, t){
+  const link = safeLink(e.ticket_link);
+  if (!Number(t.total)) return '<p class="note">Free. Show your ticket code at the door.</p>';
+  if (t.status === "paid") return '<p class="note">Paid. Show your ticket code at the door.</p>';
+  return link ? `<a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Pay ${esc(money(t.total))} now</a><p class="note">You'll pay the host directly on ${esc(hostOf(link))}. Put your code <b>${esc(t.code)}</b> in the payment note. The host marks your tickets paid once it comes through.</p>`
+    : `<p class="note">Pay ${esc(money(t.total))} at the door. Show your ticket code.</p>`;
+}
+async function renderTicketBox(e){
+  const box = $("ev-tix"); if (!box) return;
+  if (!e.tickets_on) { box.hidden = true; return; }
+  let left = null; try { left = await api.ticketsLeft(e.id); } catch (err) {}
+  if ($("ev-tix") !== box) return;
+  const price = Number(e.ticket_price) || 0, closed = e.status !== "live" || e.date < todayIso || e.admin_hidden, soldOut = left === 0, max = Math.min(20, left == null ? 20 : left);
+  const mineT = MY_TIX.filter(t => t.event_id === e.id && t.status !== "cancelled");
+  box.hidden = false;
+  box.innerHTML = `<div class="tix">
+    <div class="row between"><h3>Tickets</h3><span class="tixprice">${price ? esc(money(price)) : "Free"}<small> ${price ? "each" : ""}</small></span></div>
+    ${left != null ? `<p class="meta" style="margin:-6px 0 0"><b>${soldOut ? "Sold out" : left + " left"}</b></p>` : ""}
+    ${mineT.length ? `<div class="tixdone"><b>Your tickets</b>${mineT.map(t => `<p style="font-size:15px">Code <span class="code">${esc(t.code)}</span> · ${t.qty} ${t.qty === 1 ? "ticket" : "tickets"} · ${esc(money(t.total))} · <span class="tag ${TSTATUS[t.status][1]}" style="margin:0">${TSTATUS[t.status][0]}</span></p>${payBlock(e, t)}`).join("")}</div>` : ""}
+    ${closed ? '<p class="note">Ticket sales are closed for this event.</p>' : soldOut ? '<p class="note">No tickets left.</p>' : `
+    <form id="tix-form" novalidate class="fields">
+      <div><label for="tix-qty">How many</label><div class="qty"><button type="button" class="ghost" data-q="-1" aria-label="One less">−</button><input id="tix-qty" inputmode="numeric" value="1" maxlength="2"><button type="button" class="ghost" data-q="1" aria-label="One more">+</button></div></div>
+      <div><label for="tix-name">Name on the tickets</label><input id="tix-name" maxlength="120" autocomplete="name" value="${esc(PROFILE && PROFILE.name || "")}" placeholder="Your name"></div>
+      <p class="full meta" style="margin:0">Total <b id="tix-total">${esc(money(price))}</b></p>
+      <div class="err full" id="tix-err" role="alert"></div>
+      <div class="full"><button class="btn" type="submit" id="tix-buy" style="width:100%">${mineT.length ? "Get more tickets" : price ? "Get tickets" : "Reserve free tickets"}</button></div>
+      ${USER ? "" : '<p class="full note" style="margin-top:-4px">You\'ll make a free profile first, so your tickets are saved.</p>'}
+    </form>`}
+    <div id="tix-done"></div></div>`;
+  const f = $("tix-form"); if (!f) return;
+  const qty = () => Math.max(1, Math.min(max, parseInt($("tix-qty").value, 10) || 1));
+  const upd = () => { $("tix-total").textContent = money(price * qty()); $("tix-err").textContent = ""; };
+  f.querySelectorAll("[data-q]").forEach(b => b.addEventListener("click", () => { $("tix-qty").value = Math.max(1, Math.min(max, qty() + +b.dataset.q)); upd(); }));
+  $("tix-qty").addEventListener("input", upd); $("tix-qty").addEventListener("blur", () => { $("tix-qty").value = qty(); upd(); });
+  f.addEventListener("submit", async ev => {
+    ev.preventDefault();
+    if (!USER) { pendingAfterLogin = () => { go("event-" + e.id); setTimeout(() => $("tix-qty") && $("tix-qty").focus(), 400); }; openAcct("new", "Create a free profile to get tickets. Your tickets and codes are saved in your profile."); return; }
+    const name = $("tix-name").value.trim(); if (!name) { $("tix-err").textContent = "Enter the name for the tickets."; $("tix-name").focus(); return; }
+    $("tix-buy").disabled = true;
+    try {
+      const t = await api.buyTickets(e.id, name, qty());
+      MY_TIX.unshift({ ...t, event_id: e.id, name, status: "reserved" }); renderMyTickets();
+      await renderTicketBox(e);
+      $("tix-done").innerHTML = `<div class="tixdone" role="status"><h3>You're on the list</h3><p style="font-size:15px">Ticket code <span class="code">${esc(t.code)}</span> · ${t.qty} ${t.qty === 1 ? "ticket" : "tickets"} · ${esc(money(t.total))}</p>${payBlock(e, { ...t, status: "reserved" })}<p class="note">Your code is saved in your profile under My tickets.</p></div>`;
+      $("tix-done").scrollIntoView({ block: "nearest" });
+      if (mineHost(e)) renderHostTickets(e);
+    } catch (err) { $("tix-err").textContent = TIX_ERR(String(err && err.message || "")); $("tix-buy").disabled = false; }
+  });
+}
+const mineHost = e => USER && (e.host_id === USER.id || IS_ADMIN);
+async function renderHostTickets(e){
+  const box = $("ev-host-tix"); if (!box) return;
+  if (!e.tickets_on) { box.innerHTML = '<p class="note">Want to sell tickets? Tap Edit event and turn on Sell tickets.</p>'; return; }
+  let list; try { list = await api.eventTickets(e.id); } catch (err) { box.innerHTML = '<p class="note">Ticket sales couldn\'t load. If this keeps happening, run tickets-comments-setup.sql in Supabase.</p>'; return; }
+  const live = list.filter(t => t.status !== "cancelled"), sum = (a, k) => a.reduce((n, t) => n + Number(t[k]), 0);
+  const sold = sum(live, "qty"), paid = sum(live.filter(t => t.status === "paid"), "total"), owed = sum(live.filter(t => t.status === "reserved"), "total"), inn = sum(live.filter(t => t.checked_in), "qty");
+  box.innerHTML = `<label style="margin:8px 0 0">Ticket sales</label>
+    <p class="meta" style="margin:0"><b>${sold}${e.ticket_limit ? " of " + esc(e.ticket_limit) : ""} tickets</b> · ${esc(money(paid))} paid · ${esc(money(owed))} waiting · ${inn} checked in</p>
+    ${list.length > 5 ? '<input type="search" id="tix-find" placeholder="Find a name or ticket code" aria-label="Find a ticket" autocomplete="off">' : ""}
+    <div id="tix-rows">${list.length ? "" : '<p class="note">No tickets yet. Share your event to get the word out.</p>'}</div>
+    ${live.length ? '<div class="row"><button type="button" class="ghost" id="tix-email">Email ticket holders</button><button type="button" class="ghost" id="tix-copy">Copy the list</button></div>' : ""}
+    <p class="note" id="tix-note" role="status"></p>`;
+  const rows = q => { q = (q || "").trim().toLowerCase(); $("tix-rows").innerHTML = list.filter(t => !q || (t.name + " " + t.code + " " + t.email).toLowerCase().includes(q)).map(t => `<div class="trow" data-t="${esc(t.id)}">
+      <div class="row between"><b style="overflow-wrap:anywhere">${esc(t.name)}</b><span class="tag ${TSTATUS[t.status][1]}" style="margin:0">${TSTATUS[t.status][0]}${t.checked_in ? " · checked in" : ""}</span></div>
+      <p class="meta" style="margin:0"><span class="code" style="font-size:14px">${esc(t.code)}</span> · ${t.qty} × ${esc(money(Number(t.total) / t.qty))} = ${esc(money(t.total))}${t.email ? ` · <span style="user-select:all">${esc(t.email)}</span>` : ""}</p>
+      ${t.status === "cancelled" ? "" : `<div class="row">${t.status === "reserved" ? '<button type="button" class="ghost" data-ta="paid">Mark paid</button>' : '<button type="button" class="ghost" data-ta="unpaid">Mark unpaid</button>'}<button type="button" class="ghost" data-ta="in">${t.checked_in ? "Undo check-in" : "Check in"}</button><button type="button" class="ghost danger" data-ta="cancel">Cancel</button></div>`}</div>`).join("") || (list.length ? '<p class="note">No tickets match.</p>' : '<p class="note">No tickets yet. Share your event to get the word out.</p>'); };
+  rows();
+  if ($("tix-find")) $("tix-find").addEventListener("input", ev => rows(ev.target.value));
+  $("tix-rows").addEventListener("click", async ev => {
+    const b = ev.target.closest("[data-ta]"); if (!b) return;
+    const t = list.find(x => x.id === b.closest("[data-t]").dataset.t), a = b.dataset.ta;
+    if (a === "cancel" && b.textContent !== "Tap again to cancel") { b.textContent = "Tap again to cancel"; return; }
+    const patch = a === "paid" ? { status: "paid" } : a === "unpaid" ? { status: "reserved" } : a === "in" ? { checked_in: !t.checked_in } : { status: "cancelled" };
+    b.disabled = true;
+    try { await api.updateTicket(t.id, patch); await renderHostTickets(e); if (a === "cancel") renderTicketBox(e); }
+    catch (err) { $("tix-note").textContent = "That didn't save. Try again."; b.disabled = false; }
+  });
+  if ($("tix-email")) $("tix-email").addEventListener("click", () => {
+    const emails = [...new Set(live.map(t => t.email).filter(Boolean))];
+    if (!emails.length) { $("tix-note").textContent = "No emails on these tickets."; return; }
+    location.href = "mailto:?bcc=" + emails.map(encodeURIComponent).join(",") + "&subject=" + encodeURIComponent("Your tickets: " + e.title) + "&body=" + encodeURIComponent(`${e.title}\n${longDate(e.date)} · ${fmtTime(e.time)}\n${fullAddr(e)}\n\n[Write your message here]\n\nEvent details: ${eventLink(e)}`);
+  });
+  if ($("tix-copy")) $("tix-copy").addEventListener("click", async () => {
+    const txt = "Name,Email,Code,Tickets,Total,Status,Checked in\n" + live.map(t => [t.name, t.email, t.code, t.qty, Number(t.total).toFixed(2), t.status, t.checked_in ? "yes" : "no"].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(",")).join("\n");
+    $("tix-note").textContent = (await copyText(txt)) ? "Copied. Paste it into Notes, Sheets or Excel." : "Copying isn't allowed in this browser.";
+  });
+}
+async function renderMyTickets(){
+  const box = $("my-tix"); if (!box || !USER) return;
+  const list = MY_TIX.filter(t => t.status !== "cancelled");
+  if (!list.length) { box.innerHTML = '<p class="note" style="margin-top:6px">No tickets yet. Events selling tickets show a green Tickets tag.</p>'; return; }
+  let evs = []; try { evs = await api.getEvents([...new Set(list.map(t => t.event_id))]); } catch (e) {}
+  const byId = {}; evs.forEach(e => byId[e.id] = e);
+  box.innerHTML = list.map(t => { const e = byId[t.event_id]; return `<div class="srow"><button type="button" class="go" ${e ? `data-go="event-${esc(e.id)}"` : "disabled"}>${esc(e ? e.title : "Event removed")}<br><span class="note">${e ? esc(longDate(e.date)) + " · " : ""}${t.qty} ${t.qty === 1 ? "ticket" : "tickets"} · code ${esc(t.code)} · ${TSTATUS[t.status][0]}</span></button>${t.status === "reserved" ? `<button type="button" class="ghost" data-tcancel="${esc(t.id)}">Cancel</button>` : ""}</div>`; }).join("");
+}
+$("my-tix").addEventListener("click", async e => {
+  const b = e.target.closest("[data-tcancel]"); if (!b) return;
+  if (b.textContent !== "Tap again") { b.textContent = "Tap again"; return; }
+  try { await api.cancelMyTicket(b.dataset.tcancel); const t = MY_TIX.find(x => x.id === b.dataset.tcancel); if (t) t.status = "cancelled"; renderMyTickets(); }
+  catch (err) { $("p-err").textContent = "That didn't cancel. Try again."; }
+});
+
+/* ============================================================
+   COMMENTS
+   ============================================================ */
+async function renderComments(e){
+  const box = $("ev-comments"); if (!box) return;
+  let list; try { list = await api.comments(e.id); } catch (err) { box.innerHTML = '<h3 id="cmt-h">Comments</h3><p class="note">Comments couldn\'t load. If this keeps happening, the site owner needs to run tickets-comments-setup.sql.</p>'; return; }
+  if ($("ev-comments") !== box) return;
+  const canDel = c => USER && (c.user_id === USER.id || e.host_id === USER.id || IS_ADMIN);
+  box.innerHTML = `<h3 id="cmt-h">Comments${list.length ? ` <span class="note" style="font-family:var(--body)">${list.length}</span>` : ""}</h3>
+    <div class="cmts">${list.map(c => `<div class="cmt">
+      <div class="row between" style="gap:6px"><b style="overflow-wrap:anywhere">${esc(c.name || "Guest")}${c.user_id === e.host_id ? '<span class="tag">Host</span>' : ""}</b><span class="note">${esc(ago(c.created_at))}</span></div>
+      <p class="desc" style="font-size:15px">${esc(c.body)}</p>
+      ${canDel(c) ? `<button type="button" class="linkbtn" data-cdel="${esc(c.id)}">Delete</button>` : ""}</div>`).join("") || '<p class="note">No comments yet. Ask the host a question or tell people you\'re going.</p>'}</div>
+    ${USER ? `<form id="cmt-form" novalidate style="display:flex;flex-direction:column;gap:8px">
+        <label for="cmt-body" style="margin:0">Add a comment</label>
+        <textarea id="cmt-body" maxlength="1000" placeholder="Ask a question or share something" style="min-height:84px"></textarea>
+        <div class="err" id="cmt-err" role="alert"></div>
+        <div class="row"><button class="btn" type="submit" id="cmt-send">Post comment</button><span class="note">Everyone can see comments.</span></div></form>`
+      : '<div><button type="button" class="ghost" id="cmt-signin">Sign in to comment</button></div>'}`;
+  box.querySelectorAll("[data-cdel]").forEach(b => b.addEventListener("click", async () => {
+    if (b.textContent !== "Tap again to delete") { b.textContent = "Tap again to delete"; return; }
+    try { await api.deleteComment(b.dataset.cdel); renderComments(e); } catch (err) { b.textContent = "Didn't delete. Try again"; }
+  }));
+  if ($("cmt-signin")) $("cmt-signin").addEventListener("click", () => { pendingAfterLogin = () => { go("event-" + e.id); setTimeout(() => $("cmt-body") && $("cmt-body").focus(), 400); }; openAcct("new", "Create a free profile to comment. It takes a minute."); });
+  if ($("cmt-form")) $("cmt-form").addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const body = $("cmt-body").value.trim(); if (!body) { $("cmt-err").textContent = "Write something first."; $("cmt-body").focus(); return; }
+    $("cmt-send").disabled = true;
+    try { await api.addComment(e.id, body); await renderComments(e); }
+    catch (err) { const m = String(err && err.message || ""); $("cmt-err").textContent = /30 comments/.test(m) ? "You can post up to 30 comments a day." : /relation|schema cache|does not exist/i.test(m) ? "Comments aren't set up yet. The site owner needs to run tickets-comments-setup.sql." : "Your comment didn't post. Try again."; $("cmt-send").disabled = false; }
+  });
 }
 
 /* host emails people who saved their event */
@@ -648,6 +923,11 @@ function openForm(e){
   $("f-save").textContent = e ? "Save changes" : "Publish event";
   Object.entries(FF).forEach(([k, id]) => { const el = $(id); const v = e ? e[k] : ""; if (el.tagName === "SELECT") el.value = v || el.options[0].value; else el.value = v || ""; });
   $("f-date").min = todayIso;
+  $("f-banner").checked = !e || e.in_banner !== false;
+  $("f-tix").checked = !!(e && e.tickets_on); $("f-tix-box").hidden = !$("f-tix").checked;
+  $("f-tprice").value = e && e.ticket_price != null ? String(Number(e.ticket_price)) : "";
+  $("f-tlimit").value = e && e.ticket_limit != null ? String(e.ticket_limit) : "";
+  $("f-tlink").value = e ? e.ticket_link || "" : "";
   formFiles = e && Array.isArray(e.files) ? e.files.slice() : [];
   renderFileList(); $("f-err").textContent = ""; $("f-file-err").textContent = "";
   $("form-extra") && $("form-extra").remove();
@@ -669,7 +949,8 @@ function openForm(e){
   updateNav();
 }
 $("form-cancel").addEventListener("click", () => history.length > 1 ? history.back() : go(""));
-Object.values(FF).forEach(id => $(id).addEventListener("input", () => $("f-err").textContent = ""));
+Object.values(FF).concat(["f-tprice", "f-tlimit", "f-tlink"]).forEach(id => $(id).addEventListener("input", () => $("f-err").textContent = ""));
+$("f-tix").addEventListener("change", () => { $("f-tix-box").hidden = !$("f-tix").checked; if ($("f-tix").checked && !$("f-tprice").value) { const m = $("f-price").value.match(/\d+(\.\d{1,2})?/); if (m) $("f-tprice").value = m[0]; $("f-tprice").focus(); } });
 $("ev-form").addEventListener("submit", async ev => {
   ev.preventDefault();
   const v = {}; Object.entries(FF).forEach(([k, id]) => v[k] = $(id).value.trim());
@@ -681,6 +962,17 @@ $("ev-form").addEventListener("submit", async ev => {
   if (v.state && !/^[A-Z]{2}$/.test(v.state)) return err("Use the 2-letter state code, like GA.", "f-state");
   if (v.zip && !/^\d{5}(-\d{4})?$/.test(v.zip)) return err("ZIP code should be 5 digits.", "f-zip");
   if (!v.location && !v.address && !v.city) return err("Add where it's happening: a venue, address or city.", "f-place");
+  v.in_banner = $("f-banner").checked;
+  v.tickets_on = $("f-tix").checked;
+  const tp = $("f-tprice").value.trim().replace(/^\$/, ""), tl = $("f-tlimit").value.trim(), tk = $("f-tlink").value.trim();
+  if (v.tickets_on) {
+    if (!/^\d{1,5}(\.\d{1,2})?$/.test(tp) || Number(tp) > 10000) return err("Enter a ticket price, like 25 (use 0 for free).", "f-tprice");
+    if (tl && (!/^\d+$/.test(tl) || +tl < 1 || +tl > 100000)) return err("Tickets available should be a whole number, or leave it blank.", "f-tlimit");
+    if (tk && !safeLink(tk)) return err("The payment link should start with https://", "f-tlink");
+  }
+  v.ticket_price = /^\d{1,5}(\.\d{1,2})?$/.test(tp) ? Number(tp) : null;
+  v.ticket_limit = /^\d+$/.test(tl) && +tl >= 1 && +tl <= 100000 ? +tl : null;
+  v.ticket_link = safeLink(tk) || "";
   if (uploading) return err("Wait for your files to finish uploading.");
   v.files = formFiles.filter(f => !f.busy).map(({ name, type, size, url, path }) => ({ name, type, size, url, path }));
   if (!editingId) v.host_name = (PROFILE && PROFILE.name) || "";
@@ -691,7 +983,7 @@ $("ev-form").addEventListener("submit", async ev => {
     await loadEvents(); go("event-" + saved.id);
   } catch (e2) {
     const m = String(e2 && e2.message || "");
-    err(/20 events/.test(m) ? "You can post up to 20 events a day." : /relation|does not exist|schema cache/i.test(m) ? "The website's database isn't set up yet. Run supabase-setup.sql in Supabase." : "Your event didn't save. Try again.");
+    err(/20 events/.test(m) ? "You can post up to 20 events a day." : /ticket|in_banner/i.test(m) ? "Ticket sales aren't set up yet. Run tickets-comments-setup.sql in Supabase, then try again." : /relation|does not exist|schema cache/i.test(m) ? "The website's database isn't set up yet. Run supabase-setup.sql in Supabase." : "Your event didn't save. Try again.");
   } finally { $("f-save").disabled = false; }
 });
 
@@ -767,7 +1059,7 @@ async function renderMine(){
 /* ============================================================
    OWNER REVIEW CHECKLIST
    ============================================================ */
-const CHECKS = ["Event name and description are appropriate (no hate, harassment, adult or illegal content)", "It's a real event with a real date and place", "Photos and flyers are appropriate", "No spam, scams or misleading prices", "Contact info looks legitimate"];
+const CHECKS = ["Event name and description are appropriate (no hate, harassment, adult or illegal content)", "It's a real event with a real date and place", "Photos and flyers are appropriate", "No spam, scams or misleading prices", "Ticket price and payment link look legitimate (or no tickets)", "Contact info looks legitimate"];
 async function refreshReviewBadge(){
   if (!IS_ADMIN) { $("review-btn").hidden = true; return; }
   try { const { events } = await api.reviewData(); const n = events.filter(e => !e.reviewed).length; $("review-count").textContent = n; $("review-count").hidden = !n; $("review-btn").hidden = false; } catch (e) {}
@@ -781,6 +1073,7 @@ async function renderReview(){
       <div class="row between" style="align-items:flex-start"><button type="button" class="ev-title" data-go="event-${esc(e.id)}" style="flex:1;min-width:0"><h3>${esc(e.title)}</h3></button>${e.admin_hidden ? '<span class="tag cx">Hidden</span>' : '<span class="tag">Live</span>'}</div>
       <p class="meta" style="margin:0"><b>${esc(longDate(e.date))}</b> · ${esc(fmtTime(e.time))}${placeLine(e) ? " · " + esc(placeLine(e)) : ""}</p>
       <p class="meta" style="margin:0">${hostLine(e)}</p>
+      ${e.tickets_on ? `<p class="meta" style="margin:0">Tickets ${esc(money(e.ticket_price))}${e.ticket_limit ? ", " + esc(e.ticket_limit) + " available" : ""} · ${e.ticket_link ? `pays at <span style="user-select:all;overflow-wrap:anywhere">${esc(e.ticket_link)}</span>` : "pay at the door"}</p>` : ""}
       ${e.description ? `<p class="desc" style="font-size:14px;max-height:9em;overflow:auto">${esc(e.description)}</p>` : ""}
       ${images(e).length ? `<div class="gallery">${images(e).slice(0, 4).map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener"><img src="${esc(f.url)}" alt="" loading="lazy"></a>`).join("")}</div>` : ""}
       <ul>${CHECKS.map((c, i) => `<li><label class="check"><input type="checkbox" data-chk> ${esc(c)}</label></li>`).join("")}</ul>
@@ -899,16 +1192,18 @@ $("rm-yes").addEventListener("click", async () => {
 
 async function onUser(u){
   if ((u && u.id) === (USER && USER.id) && PROFILE) return;
-  USER = u; PROFILE = null; SAVES = new Set(); SEARCHES = []; IS_ADMIN = false;
+  USER = u; PROFILE = null; SAVES = new Set(); SEARCHES = []; IS_ADMIN = false; MY_TIX = [];
   if (USER) {
     try { PROFILE = await api.getProfile(USER); } catch (e) {}
     try { SAVES = new Set(await api.mySaves(USER.id)); } catch (e) {}
     try { SEARCHES = await api.searches(USER.id); } catch (e) {}
+    try { MY_TIX = await api.myTickets(USER.id); } catch (e) {}
     IS_ADMIN = await api.isAdmin();
   }
-  renderAcct(); renderSavedEvents(); refreshSaveButtons(); refreshReviewBadge();
+  renderAcct(); renderSavedEvents(); renderMyTickets(); refreshSaveButtons(); refreshReviewBadge();
   if (USER && pendingAfterLogin) { const f = pendingAfterLogin; pendingAfterLogin = null; closeAcct(); f(); }
-  else if (!location.hash.startsWith("#event-")) route();
+  else if (location.hash.startsWith("#event-")) renderDetail(location.hash.slice(7));
+  else route();
 }
 
 /* ============================================================
@@ -1144,12 +1439,13 @@ $("f-zip").addEventListener("input", async () => { const z = $("f-zip").value.tr
 
 const TOUR=[
   {title:"Welcome",text:"This quick tour shows how to find events, save the ones you like, and post your own. It takes about a minute.",before:()=>{closeAcct();if(location.hash)go("")}},
+  {target:"#banner",title:"Featured flyers",text:"When a host adds a photo, flyer or ad, it shows up in this banner at the top. Swipe through, or tap one to open the event."},
   {target:".locbar",title:"Find events near you",text:"Type a ZIP code, city, address or event name. Pick a suggestion as you type. Events nearby show up too."},
   {target:"#list",title:"Browse events",text:"Tap an event's name to see everything about it: photos, details, the host and how to reach them. No account needed."},
   {target:"#list [data-save]",title:"Save events",text:"Tap Save to keep an event in your profile. The host can email you updates about events you save."},
   {target:"#list a[href*='maps/dir']",title:"Navigate",text:"Opens Google Maps with directions to the event. Add to calendar puts it in your Google Calendar."},
   {target:"#acct-open",title:"Your free profile",text:"Sign in or create a profile to save events and searches, choose to get emails about new events near you, and post your own."},
-  {target:"#post-btn",title:"Post your own event",text:"Anyone with a profile can post an event, with photos, flyers and documents. It goes live right away, and you can edit it or email the people who saved it from My events."},
+  {target:"#post-btn",title:"Post your own event",text:"Anyone with a profile can post an event, with photos, flyers and documents, and sell tickets. It goes live right away, and you can edit it or email the people who saved it from My events."},
   {target:"#share-site",title:"Spread the word",text:"Share this page on social media or with friends. Each event has its own Share button with Facebook, X, WhatsApp, Instagram, TikTok and more."},
   {title:"You're all set",text:"Replay this tour anytime with the How it works button."}
 ];
