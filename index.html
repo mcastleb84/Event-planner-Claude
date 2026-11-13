@@ -143,6 +143,11 @@ footer{color:var(--muted);font-size:12px;text-align:center}
 /* tickets */
 .tix{display:flex;flex-direction:column;gap:12px;border:1.5px solid var(--accent);border-radius:12px;padding:16px;background:var(--accent-soft)}
 .tixprice{font-family:var(--display);font-weight:900;font-size:24px;color:var(--accent)}
+.paybox{display:flex;flex-direction:column;gap:10px}
+.payin{display:flex;flex-direction:column;gap:6px;margin:-2px 0 4px 32px}
+.paybtns{display:flex;flex-direction:column;gap:8px}
+.paybtns .btn,.paybtns .ghost{width:100%;justify-content:center}
+.payzelle{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px}
 .tixprice small{font-family:var(--body);font-size:13px;font-weight:700;color:var(--muted)}
 .qty{display:flex;gap:6px;align-items:center}
 .qty input{text-align:center;width:64px;flex:none;background:var(--surface)}
@@ -288,8 +293,24 @@ footer{color:var(--muted);font-size:12px;text-align:center}
         <div class="full fields" id="f-tix-box" hidden>
           <div><label for="f-tprice">Ticket price ($)</label><input id="f-tprice" inputmode="decimal" maxlength="9" placeholder="25, or 0 for free" autocomplete="off"></div>
           <div><label for="f-tlimit">Tickets available</label><input id="f-tlimit" inputmode="numeric" maxlength="6" placeholder="Blank = no limit" autocomplete="off"></div>
-          <div class="full"><label for="f-tlink">Payment link (optional)</label><input id="f-tlink" type="url" maxlength="300" placeholder="https://square.link/u/... or a PayPal, Cash App or Venmo link" autocomplete="off">
-            <div class="note" style="margin-top:6px">Buyers get a ticket code, then tap Pay to pay you directly at this link. Leave it blank to collect payment at the door. You'll see every ticket on your event page.</div></div>
+          <div class="full paybox">
+            <label style="margin:0">How do you want to get paid?</label>
+            <div class="note">Pick as many as you like. Buyers see each one as a Pay button after they get their ticket code. Money goes straight to you.</div>
+            <label class="check"><input type="checkbox" data-pay="card"> Debit or credit card</label>
+            <div class="payin" id="pay-card-box" hidden><input id="f-tlink" type="url" maxlength="300" placeholder="https://buy.stripe.com/... or a Square or PayPal checkout link" autocomplete="off" aria-label="Card payment link">
+              <div class="note">Make a free payment link in Stripe, Square or PayPal for one ticket at your price, with "let customers adjust quantity" turned on. Paste it here. Buyers pay by card on that page.</div></div>
+            <label class="check"><input type="checkbox" data-pay="cashapp"> Cash App</label>
+            <div class="payin" hidden><input id="f-pay-cashapp" maxlength="21" placeholder="$YourCashtag" autocomplete="off" aria-label="Cash App cashtag"></div>
+            <label class="check"><input type="checkbox" data-pay="venmo"> Venmo</label>
+            <div class="payin" hidden><input id="f-pay-venmo" maxlength="31" placeholder="@your-venmo" autocomplete="off" aria-label="Venmo username"></div>
+            <label class="check"><input type="checkbox" data-pay="paypal"> PayPal</label>
+            <div class="payin" hidden><input id="f-pay-paypal" maxlength="60" placeholder="Your paypal.me name" autocomplete="off" aria-label="PayPal.me name"></div>
+            <label class="check"><input type="checkbox" data-pay="zelle"> Zelle</label>
+            <div class="payin" hidden><input id="f-pay-zelle" maxlength="80" placeholder="Email or phone you use for Zelle" autocomplete="off" aria-label="Zelle email or phone">
+              <div class="note">Buyers see this when it's time to pay.</div></div>
+            <label class="check"><input type="checkbox" data-pay="door"> Pay at the door</label>
+            <div class="note">You'll see every ticket on your event page and mark each one paid when the money comes in.</div>
+          </div>
         </div>
       </div>
       <div class="err" id="f-err" role="alert"></div>
@@ -444,7 +465,7 @@ const demoApi = {
     const admin = d.admins.includes(d.session);
     if (!admin && e.host_id !== d.session) throw new Error("not allowed");
     const p = { ...patch };
-    if (!admin) { delete p.admin_hidden; delete p.reviewed; if (["title", "description", "files", "date", "location", "address", "contact", "price"].some(k => k in p && JSON.stringify(p[k]) !== JSON.stringify(e[k]))) e.reviewed = false; }
+    if (!admin) { delete p.admin_hidden; delete p.reviewed; if (["title", "description", "files", "date", "location", "address", "contact", "price", "ticket_link", "pay_options"].some(k => k in p && JSON.stringify(p[k]) !== JSON.stringify(e[k]))) e.reviewed = false; }
     Object.assign(e, p, { updated_at: new Date().toISOString() }); dSave(d); return e;
   },
   async deleteEvent(id){ const d = dDb(); d.events = d.events.filter(x => x.id !== id); d.saves = d.saves.filter(s => s.event_id !== id); dSave(d); },
@@ -507,7 +528,7 @@ if (PREVIEW && !dLoad()) {
     admins: ["me"],
     site: { title: "" },
     events: [
-      { ...base, id: "pv1", host_id: "me", host_name: "Alex Morgan", title: "Cigar and Bourbon Pairing Night", event_type: "Tasting / pairing", date: day(5), time: "19:30", price: "$40", tickets_on: true, ticket_price: 40, ticket_limit: 50, ticket_link: "https://square.link/u/example", in_banner: true, description: "Four cigar and bourbon pairings with live jazz.\nDress code: smart casual. 21 and over.", location: "Smoke and Oak Lounge", address: "1450 Peachtree St NE", city: "Atlanta", state: "GA", zip: "30309", contact: "@smokeandoak", reviewed: true, files: [{ name: "flyer.svg", type: "image/svg+xml", size: 2000, url: svgFlyer("#8A4B22", "#FFFFFF", "Pairing Night", "Bourbon + Cigars"), path: "" }] },
+      { ...base, id: "pv1", host_id: "me", host_name: "Alex Morgan", title: "Cigar and Bourbon Pairing Night", event_type: "Tasting / pairing", date: day(5), time: "19:30", price: "$40", tickets_on: true, ticket_price: 40, ticket_limit: 50, ticket_link: "https://square.link/u/example", pay_options: { card: "https://square.link/u/example", cashapp: "SmokeAndOak", door: true }, in_banner: true, description: "Four cigar and bourbon pairings with live jazz.\nDress code: smart casual. 21 and over.", location: "Smoke and Oak Lounge", address: "1450 Peachtree St NE", city: "Atlanta", state: "GA", zip: "30309", contact: "@smokeandoak", reviewed: true, files: [{ name: "flyer.svg", type: "image/svg+xml", size: 2000, url: svgFlyer("#8A4B22", "#FFFFFF", "Pairing Night", "Bourbon + Cigars"), path: "" }] },
       { ...base, id: "pv2", host_id: "jo", host_name: "Jordan Blake", title: "Beginner Cigar Rolling Class", event_type: "Class / workshop", date: day(12), time: "14:00", price: "$25", tickets_on: true, ticket_price: 25, ticket_limit: 12, ticket_link: "", in_banner: true, description: "Learn to roll your own cigar with a master roller. All materials included.", location: "Decatur Square Hall", address: "220 Ponce de Leon Ave", city: "Decatur", state: "GA", zip: "30030", contact: "jordan@example.com", reviewed: false, files: [{ name: "class.svg", type: "image/svg+xml", size: 2000, url: svgFlyer("#2F6B3A", "#FFFFFF", "Rolling Class", "Saturday 2 PM"), path: "" }] },
       { ...base, id: "pv3", host_id: "jo", host_name: "Jordan Blake", title: "Rooftop Lounge Night", event_type: "Lounge night", date: day(20), time: "20:00", price: "Free", description: "Relaxed night on the roof. Bring your own cigars.", location: "Midtown Rooftop", address: "", city: "Atlanta", state: "GA", zip: "30308", reviewed: true, files: [] }
     ],
@@ -550,6 +571,22 @@ function locMatch(e, q){ const hay = [e.title, e.event_type, e.host_name, e.loca
 const setStatus = t => $("status").textContent = t || "";
 const money = n => "$" + (Number(n) || 0).toFixed(2).replace(/\.00$/, "");
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return "the host's payment page"; } };
+const PAY_KEYS = ["card", "cashapp", "venmo", "paypal", "zelle", "door"];
+const PAY_NAMES = { card: "Debit or credit card", cashapp: "Cash App", venmo: "Venmo", paypal: "PayPal", zelle: "Zelle", door: "At the door" };
+function payOpts(e){
+  const o = e && e.pay_options && typeof e.pay_options === "object" ? e.pay_options : null;
+  if (o && PAY_KEYS.some(k => o[k])) return { ...o, card: safeLink(o.card || e.ticket_link || "") };
+  const link = safeLink(e && e.ticket_link), h = link ? hostOf(link) : "";
+  if (!link) return { door: true };
+  if (/cash\.app/.test(h)) return { cashlink: link };
+  if (/venmo/.test(h)) return { venmolink: link };
+  return { card: link };
+}
+const payList = o => PAY_KEYS.filter(k => o[k]).map(k => PAY_NAMES[k]).concat(o.cashlink ? ["Cash App"] : [], o.venmolink ? ["Venmo"] : []);
+function cardUrl(link, t){
+  try { const u = new URL(link); if (/(^|\.)stripe\.com$/.test(u.hostname)) { u.searchParams.set("client_reference_id", t.code); if (t.email) u.searchParams.set("prefilled_email", t.email); } return u.toString(); } catch (e) { return link; }
+}
+const amt = n => (Number(n) || 0).toFixed(2);
 const safeLink = u => /^https:\/\/[^\s"'<>]+$/.test(String(u || "")) ? u : "";
 function ago(s){
   const m = Math.round((Date.now() - new Date(s)) / 60000); if (m < 1) return "just now"; if (m < 60) return m + " min ago";
@@ -767,11 +804,22 @@ async function renderDetail(id){
    ============================================================ */
 const TSTATUS = { reserved: ["Waiting for payment", "wait"], paid: ["Paid", "ok"], cancelled: ["Cancelled", "cx"] };
 function payBlock(e, t){
-  const link = safeLink(e.ticket_link);
   if (!Number(t.total)) return '<p class="note">Free. Show your ticket code at the door.</p>';
   if (t.status === "paid") return '<p class="note">Paid. Show your ticket code at the door.</p>';
-  return link ? `<a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Pay ${esc(money(t.total))} now</a><p class="note">You'll pay the host directly on ${esc(hostOf(link))}. Put your code <b>${esc(t.code)}</b> in the payment note. The host marks your tickets paid once it comes through.</p>`
-    : `<p class="note">Pay ${esc(money(t.total))} at the door. Show your ticket code.</p>`;
+  const o = payOpts(e), tot = esc(money(t.total)), b = [];
+  const ext = (href, label, main) => `<a class="${main ? "btn" : "ghost"}" href="${esc(href)}" target="_blank" rel="noopener">${label}</a>`;
+  if (o.card) b.push(ext(cardUrl(o.card, t), `Pay ${tot} by debit or credit card`, true));
+  const tag = String(o.cashapp || "").replace(/^\$/, "");
+  if (tag) b.push(ext(`https://cash.app/$${encodeURIComponent(tag)}/${amt(t.total)}`, `Pay ${tot} with Cash App`, !b.length));
+  else if (o.cashlink) b.push(ext(o.cashlink, `Pay ${tot} with Cash App`, !b.length));
+  const vm = String(o.venmo || "").replace(/^@/, "");
+  if (vm) b.push(ext(`https://venmo.com/?txn=pay&recipients=${encodeURIComponent(vm)}&amount=${amt(t.total)}&note=${encodeURIComponent("Tickets " + t.code)}`, `Pay ${tot} with Venmo`, !b.length));
+  else if (o.venmolink) b.push(ext(o.venmolink, `Pay ${tot} with Venmo`, !b.length));
+  if (o.paypal) b.push(ext(`https://www.paypal.com/paypalme/${encodeURIComponent(o.paypal)}/${amt(t.total)}USD`, `Pay ${tot} with PayPal`, !b.length));
+  if (o.zelle) b.push(`<div class="payzelle">Zelle ${tot} to <b style="user-select:all;overflow-wrap:anywhere">${esc(o.zelle)}</b></div>`);
+  const door = o.door ? (b.length ? `<p class="note">Or pay ${tot} at the door.</p>` : `<p class="note">Pay ${tot} at the door. Show your ticket code.</p>`) : "";
+  if (!b.length) return door || `<p class="note">The host will tell you how to pay ${tot}. Show your ticket code at the door.</p>`;
+  return `<div class="paybtns">${b.join("")}</div>${door}<p class="note">You pay the host directly. Put your code <b>${esc(t.code)}</b> in the payment note. The host marks your tickets paid once it comes through.</p>`;
 }
 async function renderTicketBox(e){
   const box = $("ev-tix"); if (!box) return;
@@ -784,6 +832,7 @@ async function renderTicketBox(e){
   box.innerHTML = `<div class="tix">
     <div class="row between"><h3>Tickets</h3><span class="tixprice">${price ? esc(money(price)) : "Free"}<small> ${price ? "each" : ""}</small></span></div>
     ${left != null ? `<p class="meta" style="margin:-6px 0 0"><b>${soldOut ? "Sold out" : left + " left"}</b></p>` : ""}
+    ${price ? `<p class="meta" style="margin:-6px 0 0">Pay with: ${esc(payList(payOpts(e)).join(" · "))}</p>` : ""}
     ${mineT.length ? `<div class="tixdone"><b>Your tickets</b>${mineT.map(t => `<p style="font-size:15px">Code <span class="code">${esc(t.code)}</span> · ${t.qty} ${t.qty === 1 ? "ticket" : "tickets"} · ${esc(money(t.total))} · <span class="tag ${TSTATUS[t.status][1]}" style="margin:0">${TSTATUS[t.status][0]}</span></p>${payBlock(e, t)}`).join("")}</div>` : ""}
     ${closed ? '<p class="note">Ticket sales are closed for this event.</p>' : soldOut ? '<p class="note">No tickets left.</p>' : `
     <form id="tix-form" novalidate class="fields">
@@ -820,6 +869,7 @@ async function renderHostTickets(e){
   const box = $("ev-host-tix"); if (!box) return;
   if (!e.tickets_on) { box.innerHTML = '<p class="note">Want to sell tickets? Tap Edit event and turn on Sell tickets.</p>'; return; }
   let list; try { list = await api.eventTickets(e.id); } catch (err) { box.innerHTML = '<p class="note">Ticket sales couldn\'t load. If this keeps happening, run tickets-comments-setup.sql in Supabase.</p>'; return; }
+  if ($("ev-host-tix") !== box || !box.isConnected) return;
   const live = list.filter(t => t.status !== "cancelled"), sum = (a, k) => a.reduce((n, t) => n + Number(t[k]), 0);
   const sold = sum(live, "qty"), paid = sum(live.filter(t => t.status === "paid"), "total"), owed = sum(live.filter(t => t.status === "reserved"), "total"), inn = sum(live.filter(t => t.checked_in), "qty");
   box.innerHTML = `<label style="margin:8px 0 0">Ticket sales</label>
@@ -927,7 +977,13 @@ function openForm(e){
   $("f-tix").checked = !!(e && e.tickets_on); $("f-tix-box").hidden = !$("f-tix").checked;
   $("f-tprice").value = e && e.ticket_price != null ? String(Number(e.ticket_price)) : "";
   $("f-tlimit").value = e && e.ticket_limit != null ? String(e.ticket_limit) : "";
-  $("f-tlink").value = e ? e.ticket_link || "" : "";
+  const po = e ? payOpts(e) : { card: "", door: true };
+  $("f-tlink").value = po.card || "";
+  $("f-pay-cashapp").value = po.cashapp ? "$" + String(po.cashapp).replace(/^\$/, "") : "";
+  $("f-pay-venmo").value = po.venmo ? "@" + String(po.venmo).replace(/^@/, "") : "";
+  $("f-pay-paypal").value = po.paypal || "";
+  $("f-pay-zelle").value = po.zelle || "";
+  document.querySelectorAll("[data-pay]").forEach(c => { c.checked = !!po[c.dataset.pay]; payToggle(c); });
   formFiles = e && Array.isArray(e.files) ? e.files.slice() : [];
   renderFileList(); $("f-err").textContent = ""; $("f-file-err").textContent = "";
   $("form-extra") && $("form-extra").remove();
@@ -948,8 +1004,10 @@ function openForm(e){
   }
   updateNav();
 }
+function payToggle(c){ const box = c.closest("label").nextElementSibling; if (box && box.classList.contains("payin")) box.hidden = !c.checked; }
+document.querySelectorAll("[data-pay]").forEach(c => c.addEventListener("change", () => { payToggle(c); $("f-err").textContent = ""; const box = c.closest("label").nextElementSibling; if (c.checked && box && box.classList.contains("payin")) box.querySelector("input").focus(); }));
 $("form-cancel").addEventListener("click", () => history.length > 1 ? history.back() : go(""));
-Object.values(FF).concat(["f-tprice", "f-tlimit", "f-tlink"]).forEach(id => $(id).addEventListener("input", () => $("f-err").textContent = ""));
+Object.values(FF).concat(["f-tprice", "f-tlimit", "f-tlink", "f-pay-cashapp", "f-pay-venmo", "f-pay-paypal", "f-pay-zelle"]).forEach(id => $(id).addEventListener("input", () => $("f-err").textContent = ""));
 $("f-tix").addEventListener("change", () => { $("f-tix-box").hidden = !$("f-tix").checked; if ($("f-tix").checked && !$("f-tprice").value) { const m = $("f-price").value.match(/\d+(\.\d{1,2})?/); if (m) $("f-tprice").value = m[0]; $("f-tprice").focus(); } });
 $("ev-form").addEventListener("submit", async ev => {
   ev.preventDefault();
@@ -968,22 +1026,46 @@ $("ev-form").addEventListener("submit", async ev => {
   if (v.tickets_on) {
     if (!/^\d{1,5}(\.\d{1,2})?$/.test(tp) || Number(tp) > 10000) return err("Enter a ticket price, like 25 (use 0 for free).", "f-tprice");
     if (tl && (!/^\d+$/.test(tl) || +tl < 1 || +tl > 100000)) return err("Tickets available should be a whole number, or leave it blank.", "f-tlimit");
-    if (tk && !safeLink(tk)) return err("The payment link should start with https://", "f-tlink");
+  }
+  const on = k => document.querySelector(`[data-pay="${k}"]`).checked, pv = id => $(id).value.trim();
+  const pay = {};
+  if (on("card")) pay.card = tk;
+  if (on("cashapp")) pay.cashapp = pv("f-pay-cashapp").replace(/^https?:\/\/cash\.app\//i, "").replace(/^\$/, "");
+  if (on("venmo")) pay.venmo = pv("f-pay-venmo").replace(/^https?:\/\/(account\.)?venmo\.com\/(u\/)?/i, "").replace(/^@/, "");
+  if (on("paypal")) pay.paypal = pv("f-pay-paypal").replace(/^https?:\/\/(www\.)?(paypal\.me|paypal\.com\/paypalme)\//i, "").replace(/\/.*$/, "");
+  if (on("zelle")) pay.zelle = pv("f-pay-zelle");
+  if (on("door")) pay.door = true;
+  if (v.tickets_on && Number(tp) > 0) {
+    if (!Object.keys(pay).length) return err("Pick at least one way to get paid.");
+    if ("card" in pay && !safeLink(pay.card)) return err("Paste your card payment link. It should start with https://", "f-tlink");
+    if ("cashapp" in pay && !/^[A-Za-z][A-Za-z0-9_]{0,19}$/.test(pay.cashapp)) return err("Enter your Cash App cashtag, like $SmokeAndOak.", "f-pay-cashapp");
+    if ("venmo" in pay && !/^[A-Za-z0-9_-]{2,30}$/.test(pay.venmo)) return err("Enter your Venmo username, like @smoke-and-oak.", "f-pay-venmo");
+    if ("paypal" in pay && !/^[A-Za-z0-9]{1,20}$/.test(pay.paypal)) return err("Enter your PayPal.me name, the part after paypal.me/", "f-pay-paypal");
+    if ("zelle" in pay && !/^([^\s@]+@[^\s@]+\.[^\s@]+|[\d\s().+-]{10,20})$/.test(pay.zelle)) return err("Enter the email or phone number you use for Zelle.", "f-pay-zelle");
   }
   v.ticket_price = /^\d{1,5}(\.\d{1,2})?$/.test(tp) ? Number(tp) : null;
   v.ticket_limit = /^\d+$/.test(tl) && +tl >= 1 && +tl <= 100000 ? +tl : null;
-  v.ticket_link = safeLink(tk) || "";
+  Object.keys(pay).forEach(k => { if (!pay[k]) delete pay[k]; });
+  v.ticket_link = safeLink(pay.card) || "";
+  v.pay_options = pay;
   if (uploading) return err("Wait for your files to finish uploading.");
   v.files = formFiles.filter(f => !f.busy).map(({ name, type, size, url, path }) => ({ name, type, size, url, path }));
   if (!editingId) v.host_name = (PROFILE && PROFILE.name) || "";
   $("f-save").disabled = true;
   try {
-    const saved = editingId ? await api.updateEvent(editingId, v) : await api.createEvent(v);
+    const save = row => editingId ? api.updateEvent(editingId, row) : api.createEvent(row);
+    let saved;
+    try { saved = await save(v); }
+    catch (e1) {
+      if (!/pay_options/.test(String(e1 && e1.message || ""))) throw e1;
+      if (Object.keys(pay).some(k => k !== "card" && k !== "door")) throw new Error("pay_setup");
+      const { pay_options, ...rest } = v; saved = await save(rest);
+    }
     if (!editingId) JUST_POSTED = saved.id;
     await loadEvents(); go("event-" + saved.id);
   } catch (e2) {
     const m = String(e2 && e2.message || "");
-    err(/20 events/.test(m) ? "You can post up to 20 events a day." : /ticket|in_banner/i.test(m) ? "Ticket sales aren't set up yet. Run tickets-comments-setup.sql in Supabase, then try again." : /relation|does not exist|schema cache/i.test(m) ? "The website's database isn't set up yet. Run supabase-setup.sql in Supabase." : "Your event didn't save. Try again.");
+    err(/pay_setup/.test(m) ? "Cash App, Venmo, PayPal and Zelle aren't turned on yet. The site owner needs to run card-payments-setup.sql in Supabase. Card links and pay at the door work now." : /20 events/.test(m) ? "You can post up to 20 events a day." : /ticket|in_banner/i.test(m) ? "Ticket sales aren't set up yet. Run tickets-comments-setup.sql in Supabase, then try again." : /relation|does not exist|schema cache/i.test(m) ? "The website's database isn't set up yet. Run supabase-setup.sql in Supabase." : "Your event didn't save. Try again.");
   } finally { $("f-save").disabled = false; }
 });
 
