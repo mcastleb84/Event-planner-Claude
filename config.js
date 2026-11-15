@@ -6,6 +6,8 @@ window.CIGAR_CONFIG = {
   SHOP_NAME: "Cigar Events", // shown at the top of the public page
   // Your Square payment link (the same one the barbershop Pay button uses). Shows as a one-tap
   // "Use my Square link" choice for you (the site owner) when you sell tickets.
+  // Email shown on the Privacy and terms page for questions and data requests. Leave "" to hide it.
+  CONTACT_EMAIL: "",
   SQUARE_LINK: "https://square.link/u/UiKIIteU"
 };
 

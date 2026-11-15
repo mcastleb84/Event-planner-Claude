@@ -122,6 +122,7 @@ textarea{min-height:110px;resize:vertical}
 .rv{display:flex;flex-direction:column;gap:12px}
 .rv ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
 footer{color:var(--page-muted,var(--muted));font-size:12px;text-align:center}
+footer a{color:inherit;font-weight:700}
 .sharebox{display:flex;flex-direction:column;gap:12px;border:1.5px solid var(--accent);border-radius:12px;padding:16px;background:var(--accent-soft)}
 .sharebox.quiet{border:1px solid var(--line);background:var(--field)}
 .sharegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -170,6 +171,12 @@ footer{color:var(--page-muted,var(--muted));font-size:12px;text-align:center}
 .cmt{display:flex;flex-direction:column;gap:4px;padding:12px 0;border-bottom:1px solid var(--line)}
 .cmt:last-child{border-bottom:0}
 .cmt .tag{margin:0 0 0 6px;vertical-align:middle}
+.agebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;background:var(--ink);color:var(--surface);padding:10px 14px;font-size:14px;text-align:center}
+.agebar .btn{padding:8px 14px;font-size:14px}
+.legal{display:flex;flex-direction:column;gap:10px;font-size:15px;line-height:1.55}
+.legal h3{font-size:18px;margin-top:8px}
+.legal ul{margin:0;padding-left:20px}
+.rpt{display:flex;flex-direction:column;gap:6px;background:var(--no-soft);color:var(--no);border-radius:10px;padding:10px 12px;font-size:14px}
 .linkbtn{align-self:flex-start;background:none;border:0;padding:4px 0;font-size:13px;font-weight:700;text-decoration:underline;color:var(--muted)}
 /* host colors and face photo */
 body.themed{background:none}
@@ -226,6 +233,7 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
   <button class="ghost pill" type="button" id="review-btn" hidden>Review <span class="badge" id="review-count">0</span></button>
   <button class="ghost pill" type="button" id="acct-open" aria-controls="acct">Sign in</button>
 </header>
+<div class="agebar" id="agebar" hidden role="region" aria-label="Age notice"><span>This site lists cigar events for adults <b>21 and over</b>.</span><button class="btn" type="button" id="age-ok">I'm 21 or older</button></div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 <div class="pe" id="pe" hidden>
   <div class="pe-box" role="dialog" aria-modal="true" aria-labelledby="pe-h">
@@ -278,15 +286,26 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
   <section class="card" id="acct" hidden style="scroll-margin-top:80px">
     <div id="acct-out" style="display:flex;flex-direction:column;gap:14px">
       <div class="row between"><h2 id="acct-h">Create your free profile</h2><button class="ghost" type="button" data-close-acct>Close</button></div>
-      <p class="note" id="acct-lede" style="font-size:15px">Save events and searches, get emails about new events near you, and post your own events. You don't need a profile to browse.</p>
+      <p class="note" id="acct-lede" style="font-size:15px">Save events and searches, keep your tickets in one place, and post your own events. You don't need a profile to browse.</p>
       <div class="tabs"><button type="button" id="tab-new" aria-pressed="true">Create profile</button><button type="button" id="tab-in" aria-pressed="false">Sign in</button></div>
       <form id="acct-form" novalidate class="fields">
         <div class="full" id="a-name-wrap"><label for="a-name">Name</label><input id="a-name" autocomplete="name" placeholder="Marcus Reed"></div>
         <div class="full"><label for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" placeholder="marcus@email.com"></div>
         <div class="full"><label for="a-pass">Password</label><input id="a-pass" type="password" autocomplete="new-password" placeholder="At least 8 characters"></div>
-        <label class="full check" id="a-opt-wrap"><input id="a-opt" type="checkbox"> Email me when new events come up that match my saved searches</label>
+        <label class="full check" id="a-opt-wrap" hidden><input id="a-opt" type="checkbox"> Email me when new events come up that match my saved searches</label>
         <div class="err full" id="a-err" role="alert"></div>
         <div class="full"><button class="btn" type="submit" id="a-submit" style="width:100%">Create profile</button></div>
+        <p class="full note" id="a-agree" style="margin-top:-4px">By creating a profile you confirm you're 21 or older and agree to the <a href="#terms">privacy policy and terms</a>.</p>
+        <div class="full" id="a-forgot-wrap" hidden><button type="button" class="linkbtn" id="a-forgot">Forgot your password?</button><p class="ok" id="a-forgot-note" role="status" style="margin:4px 0 0"></p></div>
+      </form>
+    </div>
+    <div id="acct-reset" hidden style="display:flex;flex-direction:column;gap:14px">
+      <div class="row between"><h2>Choose a new password</h2><button class="ghost" type="button" data-close-acct>Close</button></div>
+      <form id="reset-form" novalidate class="fields">
+        <div class="full"><label for="r-pass">New password</label><input id="r-pass" type="password" autocomplete="new-password" placeholder="At least 8 characters"></div>
+        <div class="full"><label for="r-pass2">Type it again</label><input id="r-pass2" type="password" autocomplete="new-password"></div>
+        <div class="err full" id="r-err" role="alert"></div>
+        <div class="full"><button class="btn" type="submit" id="r-submit" style="width:100%">Save new password</button></div>
       </form>
     </div>
     <div id="acct-in" hidden style="display:flex;flex-direction:column;gap:16px">
@@ -298,7 +317,7 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
       <form id="prof-form" novalidate class="fields">
         <div class="full"><label for="p-name">Name</label><input id="p-name" autocomplete="name"></div>
         <div class="full"><span class="note">Signed in as <b id="p-email" style="color:var(--ink)"></b></span></div>
-        <label class="full check"><input id="p-opt" type="checkbox"> Email me when new events come up that match my saved searches</label>
+        <label class="full check" id="p-opt-wrap" hidden><input id="p-opt" type="checkbox"> Email me when new events come up that match my saved searches</label>
         <div class="full row"><button class="ghost" type="submit">Save profile</button><span class="ok" id="p-note" role="status"></span></div>
       </form>
       <div><h3 style="font-size:18px">My tickets</h3><div id="my-tix"></div></div>
@@ -443,6 +462,7 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
           </div>
         </div>
       </div>
+      <p class="note">Your event goes live right away. Only post real events for adults 21 and over that follow the <a href="#terms">terms</a>. You handle your own ticket payments.</p>
       <div class="err" id="f-err" role="alert"></div>
       <div class="row"><button class="ghost" type="button" id="f-preview-btn">Preview</button><button class="btn" type="submit" id="f-save">Publish event</button></div>
     </form>
@@ -475,8 +495,44 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
     <div class="list" id="hidden-list"></div>
   </section>
 
+  <!-- PRIVACY AND TERMS -->
+  <section id="v-terms" hidden class="card legal">
+    <div><button class="ghost" type="button" data-go="">← All events</button></div>
+    <h2>Privacy policy and terms</h2>
+    <p class="note">Last updated <span id="terms-date">November 14, 2026</span></p>
+    <p><b><span data-site-name>This site</span></b> is a free community listing of cigar events. By using it, you agree to these terms.</p>
+    <h3>Who can use it</h3>
+    <ul><li>You must be 21 or older to create a profile, post an event or buy tickets.</li><li>Events listed here are for adults 21 and over.</li></ul>
+    <h3>What we collect</h3>
+    <ul>
+      <li><b>Profiles:</b> your name, email and password (the password is stored securely by our login provider, Supabase, and we can't see it).</li>
+      <li><b>Tickets:</b> the name and email you give, how many tickets and the total. The event's host sees these so they can confirm your payment, check you in and email you about the event.</li>
+      <li><b>Things you post:</b> events, photos, flyers and comments. These are public.</li>
+      <li><b>Saved events and searches:</b> kept with your profile so you can find them again. If you save an event, its host can see your name and email so they can send you updates about it.</li>
+      <li><b>On your device:</b> your color and text choices, and the ticket codes you bought without a profile.</li>
+    </ul>
+    <p>We don't sell your information or show ads based on it. We don't handle your card number. Payments go straight to the host through the payment service they chose (like Square, Cash App, Venmo, PayPal or Zelle), and that service's own privacy policy applies.</p>
+    <h3>Tickets and payments</h3>
+    <ul>
+      <li>Each event is run by its host, not by this site. The host sets the price, gets the money, and handles refunds, changes and cancellations.</li>
+      <li>Your tickets show "Waiting for payment" until the host marks them paid. Put your ticket code in the payment note so the host can match it.</li>
+      <li>Questions about an event or a refund go to the host, using the contact on the event page.</li>
+    </ul>
+    <h3>Rules for posts and comments</h3>
+    <ul>
+      <li>Only post real events with a real date and place, and only post photos you have the right to use.</li>
+      <li>No hate, harassment, adult or illegal content, spam, scams or misleading prices.</li>
+      <li>We may hide or remove any post, comment or profile that breaks these rules, without notice. Use "Report this event" on any event page to tell us about a problem.</li>
+    </ul>
+    <h3>Your choices</h3>
+    <ul><li>You can edit or delete your events and comments at any time.</li><li>You can remove your profile from your profile page. That deletes your saved events, saved searches and comments.</li><li>To ask for a copy of your information or have it deleted, <span id="terms-contact">contact the site owner</span>.</li></ul>
+    <h3>No guarantees</h3>
+    <p>The site is provided as is. We aren't responsible for events, hosts, payments or anything that happens at an event. Hosts are responsible for following local laws, including age and tobacco rules.</p>
+    <p>We may update these terms. The date at the top shows the latest version.</p>
+  </section>
+
   <p class="note" id="status" role="status"></p>
-  <footer>Address search © OpenStreetMap contributors</footer>
+  <footer>For adults 21 and over · <a href="#terms">Privacy and terms</a><br>Address search © OpenStreetMap contributors</footer>
 </main>
 
 <script src="config.js"></script>
@@ -485,6 +541,7 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const CFG = window.CIGAR_CONFIG || {};
+const CAME_FOR_RESET = /type=recovery/.test(location.hash); // read before Supabase clears the link
 const SB = (CFG.SUPABASE_URL && CFG.SUPABASE_ANON_KEY && window.supabase) ? window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY) : null;
 const BUCKET = "ce-event-files";
 const pad = n => String(n).padStart(2, "0");
@@ -498,7 +555,11 @@ const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "x" + Date.now().t
 const sbApi = {
   demo: false,
   async user(){ const { data } = await SB.auth.getSession(); return data.session ? data.session.user : null; },
-  onAuth(cb){ SB.auth.onAuthStateChange((ev, s) => cb(s ? s.user : null)); },
+  onAuth(cb){ SB.auth.onAuthStateChange((ev, s) => cb(s ? s.user : null, ev)); },
+  async resetPassword(email){ const { error } = await SB.auth.resetPasswordForEmail(email, { redirectTo: location.href.split("#")[0].split("?")[0] }); if (error) throw error; },
+  async setPassword(password){ const { error } = await SB.auth.updateUser({ password }); if (error) throw error; },
+  async reportEvent(eid, reason, details, email){ const { error } = await SB.rpc("report_event", { p_event: eid, p_reason: reason, p_details: details, p_email: email }); if (error) throw error; },
+  async resolveReports(eid){ try { await SB.from("ce_reports").update({ resolved: true }).eq("event_id", eid).eq("resolved", false); } catch (e) {} },
   async signUp(name, email, password, opt){
     const { data, error } = await SB.auth.signUp({ email, password, options: { data: { name, email_updates: opt }, emailRedirectTo: location.href.split("#")[0].split("?")[0] } });
     if (error) throw error; return { needsConfirm: !data.session };
@@ -546,7 +607,9 @@ const sbApi = {
     const ids = [...new Set(data.map(e => e.host_id))];
     const p = ids.length ? await SB.from("ce_profiles").select("user_id,name,email").in("user_id", ids) : { data: [] };
     const hosts = {}; (p.data || []).forEach(x => hosts[x.user_id] = x);
-    return { events: data, hosts };
+    const reports = {};
+    try { const r = await SB.from("ce_reports").select("event_id,reason,details,created_at").eq("resolved", false).order("created_at", { ascending: false }).limit(500); (r.data || []).forEach(x => (reports[x.event_id] = reports[x.event_id] || []).push(x)); } catch (e) {}
+    return { events: data, hosts, reports };
   },
   async getTitle(){ const { data } = await SB.from("ce_site").select("title").eq("id", 1).maybeSingle(); return data ? data.title : ""; },
   async setTitle(t){ const { data, error } = await SB.from("ce_site").update({ title: t }).eq("id", 1).select("title"); if (error) throw error; if (!data || !data.length) throw new Error("not allowed"); },
@@ -624,7 +687,11 @@ const demoApi = {
   async addSearch(uid, query){ const d = dDb(); const s = { id: uuid(), user_id: uid, query }; d.searches.push(s); dSave(d); return s; },
   async removeSearch(id){ const d = dDb(); d.searches = d.searches.filter(s => s.id !== id); dSave(d); },
   async isAdmin(){ const d = dDb(); return !!d.session && d.admins.includes(d.session); },
-  async reviewData(){ const d = dDb(); const hosts = {}; Object.values(d.profiles).forEach(p => hosts[p.user_id] = p); return { events: d.events.filter(e => !e.reviewed || e.admin_hidden).reverse(), hosts }; },
+  async reviewData(){ const d = dDb(); const hosts = {}; Object.values(d.profiles).forEach(p => hosts[p.user_id] = p); const reports = {}; (d.reports || []).filter(r => !r.resolved).forEach(r => (reports[r.event_id] = reports[r.event_id] || []).push(r)); return { events: d.events.filter(e => !e.reviewed || e.admin_hidden).reverse(), hosts, reports }; },
+  async resetPassword(email){},
+  async setPassword(password){ const d = dDb(); const u = d.users.find(x => x.id === d.session); if (u) { u.password = password; dSave(d); } },
+  async reportEvent(eid, reason, details, email){ const d = dDb(); d.reports = d.reports || []; d.reports.push({ id: uuid(), event_id: eid, reason, details, email, created_at: new Date().toISOString(), resolved: false }); const e = d.events.find(x => x.id === eid); if (e) e.reviewed = false; dSave(d); },
+  async resolveReports(eid){ const d = dDb(); (d.reports || []).forEach(r => { if (r.event_id === eid) r.resolved = true; }); dSave(d); },
   async getTitle(){ return dDb().site.title || ""; },
   async setTitle(t){ const d = dDb(); if (!d.admins.includes(d.session)) throw new Error("not allowed"); d.site.title = t; dSave(d); },
   async upload(uid, blob, name, type){
@@ -987,7 +1054,7 @@ function wireShareBox(box, e){
 /* ============================================================
    ROUTING (#event-<id>, #post, #edit-<id>, #mine, #review)
    ============================================================ */
-const VIEWS = ["v-home", "v-event", "v-post", "v-mine", "v-review"];
+const VIEWS = ["v-home", "v-event", "v-post", "v-mine", "v-review", "v-terms"];
 function showView(id){ VIEWS.forEach(v => $(v).hidden = v !== id); }
 let navDepth = 0;
 function go(hash){ if ((hash ? "#" + hash : "") !== location.hash) navDepth++; const t = hash ? "#" + hash : ""; if (location.hash === t) { route(); return; } if (!hash) { history.pushState(null, "", location.pathname + location.search); route(); } else location.hash = hash; }
@@ -1001,6 +1068,7 @@ async function route(){
   if (h.startsWith("edit-")) return requireProfile(async () => { const e = await api.getEvent(h.slice(5)); if (!e || e.host_id !== USER.id && !IS_ADMIN) { go(""); return; } openForm(e); showView("v-post"); }, "post");
   if (h === "mine") return requireProfile(() => { showView("v-mine"); renderMine(); }, "mine");
   if (h === "review") { if (!IS_ADMIN) { go(""); return; } showView("v-review"); return renderReview(); }
+  if (h === "terms") { closeAcct(); document.title = "Privacy and terms" + (SITE_TITLE ? " · " + SITE_TITLE : ""); showView("v-terms"); return; }
   showView("v-home"); renderList();
 }
 addEventListener("hashchange", route);
@@ -1163,7 +1231,15 @@ function detailHTML(e, pv){
       <div class="row"><button type="button" class="ghost" data-go="edit-${esc(e.id)}">Edit event</button><button type="button" class="ghost" id="ev-email">Email people who saved it</button></div>
       <p class="note" id="ev-email-note"></p>
       <div id="ev-host-tix" style="display:flex;flex-direction:column;gap:10px"></div></div>` : ""}
-    ${pv ? '<p class="note" style="border-top:1px solid var(--line);padding-top:14px">Comments will show here once your event is live.</p>' : '<section id="ev-comments" style="border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px" aria-labelledby="cmt-h"></section>'}`;
+    ${pv ? '<p class="note" style="border-top:1px solid var(--line);padding-top:14px">Comments will show here once your event is live.</p>' : '<section id="ev-comments" style="border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px" aria-labelledby="cmt-h"></section>'}
+    ${pv || mine ? "" : `<div id="ev-report"><button type="button" class="linkbtn" id="rp-open" aria-expanded="false" aria-controls="rp-form">Report this event</button>
+      <form id="rp-form" hidden novalidate class="fields" style="margin-top:8px">
+        <div class="full"><label for="rp-reason">What's wrong?</label><select id="rp-reason"><option value="">Pick one</option><option>Scam or fake event</option><option>Wrong date, place or price</option><option>Hate, harassment or adult content</option><option>Illegal or unsafe</option><option>Spam</option><option>Something else</option></select></div>
+        <div class="full"><label for="rp-details">Details (optional)</label><textarea id="rp-details" maxlength="1000" rows="3" placeholder="Tell us what you saw"></textarea></div>
+        ${USER ? "" : '<div class="full"><label for="rp-email">Your email (optional)</label><input id="rp-email" type="email" maxlength="160" autocomplete="email" placeholder="So we can follow up"></div>'}
+        <div class="err full" id="rp-err" role="alert"></div>
+        <div class="full row"><button type="submit" class="btn" id="rp-send">Send report</button><button type="button" class="ghost" id="rp-cancel">Cancel</button></div>
+      </form><p class="ok" id="rp-done" role="status"></p></div>`}`;
 }
 function renderDetailDone(e, mine){
   $("ev-share").addEventListener("click", () => { const box = $("ev-sharebox"); box.hidden = !box.hidden; $("ev-share").setAttribute("aria-expanded", String(!box.hidden)); });
@@ -1172,6 +1248,23 @@ function renderDetailDone(e, mine){
   if ($("ev-email")) $("ev-email").addEventListener("click", () => emailSavers(e, $("ev-email-note")));
   renderTicketBox(e); renderComments(e);
   if (mine || IS_ADMIN) renderHostTickets(e);
+  wireReport(e);
+}
+function wireReport(e){
+  const open = $("rp-open"), f = $("rp-form"); if (!open || !f) return;
+  const toggle = show => { f.hidden = !show; open.setAttribute("aria-expanded", String(show)); open.hidden = show; if (show) $("rp-reason").focus(); };
+  open.addEventListener("click", () => toggle(true));
+  $("rp-cancel").addEventListener("click", () => { toggle(false); open.focus(); });
+  f.addEventListener("submit", async ev => {
+    ev.preventDefault(); const err = $("rp-err"); err.textContent = "";
+    const reason = $("rp-reason").value, details = $("rp-details").value.trim().slice(0, 1000), email = $("rp-email") ? $("rp-email").value.trim() : (USER && USER.email || "");
+    if (!reason) { err.textContent = "Pick what's wrong."; $("rp-reason").focus(); return; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.textContent = "Check your email, or leave it blank."; $("rp-email").focus(); return; }
+    $("rp-send").disabled = true;
+    try { await api.reportEvent(e.id, reason, details, email); f.hidden = true; $("rp-done").textContent = "Thanks. The site owner will take a look."; if (IS_ADMIN) refreshReviewBadge(); }
+    catch (x) { err.textContent = /too_many/.test(String(x && x.message)) ? "Thanks, this event has already been reported. The site owner will take a look." : "That didn't send. Try again."; }
+    finally { $("rp-send").disabled = false; }
+  });
 }
 
 /* ============================================================
@@ -1873,6 +1966,7 @@ async function renderReview(){
       <div class="row between" style="align-items:flex-start"><button type="button" class="ev-title" data-go="event-${esc(e.id)}" style="flex:1;min-width:0"><h3>${esc(e.title)}</h3></button>${e.admin_hidden ? '<span class="tag cx">Hidden</span>' : '<span class="tag">Live</span>'}</div>
       <p class="meta" style="margin:0"><b>${esc(longDate(e.date))}</b> · ${esc(whenTime(e))}${placeLine(e) ? " · " + esc(placeLine(e)) : ""}</p>
       <p class="meta" style="margin:0">${hostLine(e)}</p>
+      ${(d.reports && d.reports[e.id] || []).length ? `<div class="rpt"><b>Reported ${d.reports[e.id].length} ${d.reports[e.id].length === 1 ? "time" : "times"}</b>${d.reports[e.id].slice(0, 5).map(r => `<span>${esc(r.reason)}${r.details ? ": " + esc(r.details) : ""}</span>`).join("")}</div>` : ""}
       ${e.tickets_on ? `<p class="meta" style="margin:0">Tickets ${esc(money(e.ticket_price))}${e.ticket_limit ? ", " + esc(e.ticket_limit) + " available" : ""} · ${e.ticket_link ? `pays at <span style="user-select:all;overflow-wrap:anywhere">${esc(e.ticket_link)}</span>` : "pay at the door"}</p>` : ""}
       ${e.description ? `<p class="desc" style="font-size:14px;max-height:9em;overflow:auto">${esc(e.description)}</p>` : ""}
       ${images(e).length ? `<div class="gallery">${images(e).slice(0, 4).map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener"><img src="${esc(f.url)}" alt="" loading="lazy"></a>`).join("")}</div>` : ""}
@@ -1885,6 +1979,7 @@ async function renderReview(){
     if (act === "ok" && [...cardEl.querySelectorAll("[data-chk]")].some(c => !c.checked)) { note.textContent = "Tick every item on the checklist first, or hide the event."; return; }
     if (act === "del" && b.textContent !== "Tap again to delete") { b.textContent = "Tap again to delete"; return; }
     try {
+      if (act !== "unhide") await api.resolveReports(id);
       if (act === "ok") await api.updateEvent(id, { reviewed: true });
       if (act === "hide") await api.updateEvent(id, { reviewed: true, admin_hidden: true });
       if (act === "unhide") await api.updateEvent(id, { admin_hidden: false });
@@ -1900,15 +1995,19 @@ $("review-btn").addEventListener("click", () => go("review"));
    PROFILE PANEL (sign up, sign in, saved events and searches)
    ============================================================ */
 let mode = "new";
+/* Saved-search alert emails aren't sent yet. Set this to true once they are, to show the checkboxes again. */
+const EMAIL_ALERTS = false;
+let RESETTING = false;
 function openAcct(m, lede){
   if (m && !USER) setMode(m);
   if (lede && !USER) $("acct-lede").textContent = lede;
   $("acct").hidden = false; $("acct").scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 }
-function closeAcct(){ $("acct").hidden = true; $("acct-lede").textContent = "Save events and searches, get emails about new events near you, and post your own events. You don't need a profile to browse."; }
+function closeAcct(){ $("acct").hidden = true; $("acct-lede").textContent = "Save events and searches, keep your tickets in one place, and post your own events. You don't need a profile to browse."; }
 function setMode(m){
   mode = m; $("tab-new").setAttribute("aria-pressed", String(m === "new")); $("tab-in").setAttribute("aria-pressed", String(m === "in"));
-  $("a-name-wrap").hidden = m !== "new"; $("a-opt-wrap").hidden = m !== "new";
+  $("a-name-wrap").hidden = m !== "new"; $("a-opt-wrap").hidden = m !== "new" || !EMAIL_ALERTS;
+  $("a-forgot-wrap").hidden = m !== "in"; $("a-agree").hidden = m !== "new"; $("a-forgot-note").textContent = "";
   $("a-submit").textContent = m === "new" ? "Create profile" : "Sign in";
   $("acct-h").textContent = m === "new" ? "Create your free profile" : "Sign in to your profile";
   $("a-pass").autocomplete = m === "new" ? "new-password" : "current-password";
@@ -1945,11 +2044,29 @@ $("bg-file").addEventListener("change", async e => {
   catch (err) { $("bg-photo-err").textContent = "That photo didn't open. Try another one."; }
 });
 $("acct-open").addEventListener("click", () => $("acct").hidden ? openAcct() : closeAcct());
-document.querySelectorAll("[data-close-acct]").forEach(b => b.addEventListener("click", () => { pendingAfterLogin = null; closeAcct(); }));
+document.querySelectorAll("[data-close-acct]").forEach(b => b.addEventListener("click", () => { pendingAfterLogin = null; if (RESETTING) { RESETTING = false; $("acct-reset").hidden = true; renderAcct(); } closeAcct(); }));
 ["a-name", "a-email", "a-pass"].forEach(id => $(id).addEventListener("input", () => $("a-err").textContent = ""));
+$("a-forgot").addEventListener("click", async () => {
+  const email = $("a-email").value.trim(), note = $("a-forgot-note"); $("a-err").textContent = ""; note.textContent = "";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $("a-err").textContent = "Type your email above first, then tap Forgot your password."; $("a-email").focus(); return; }
+  $("a-forgot").disabled = true;
+  try { await api.resetPassword(email); note.textContent = api.demo ? "This is a preview, so no email is sent." : "If that email has a profile, we sent a link to reset your password. Check your inbox and spam folder."; }
+  catch (x) { $("a-err").textContent = /rate|seconds|too many/i.test(String(x && x.message)) ? "Wait a minute, then try again." : "That didn't work. Try again."; }
+  finally { $("a-forgot").disabled = false; }
+});
+function openReset(){ RESETTING = true; $("acct").hidden = false; $("acct-out").hidden = true; $("acct-in").hidden = true; $("acct-reset").hidden = false; $("r-pass").focus(); }
+$("reset-form").addEventListener("submit", async e => {
+  e.preventDefault(); const p1 = $("r-pass").value, p2 = $("r-pass2").value, err = m => { $("r-err").textContent = m; };
+  if (p1.length < 8) return err("Use at least 8 characters.");
+  if (p1 !== p2) return err("The two passwords don't match.");
+  $("r-submit").disabled = true;
+  try { await api.setPassword(p1); $("r-pass").value = $("r-pass2").value = ""; RESETTING = false; $("acct-reset").hidden = true; renderAcct(); toast("Your new password is saved", 3000); }
+  catch (x) { err(/different|same/i.test(String(x && x.message)) ? "Pick a password you haven't used before." : "That didn't work. Open the link from your email again."); }
+  finally { $("r-submit").disabled = false; }
+});
 $("acct-form").addEventListener("submit", async e => {
   e.preventDefault();
-  const name = $("a-name").value.trim(), email = $("a-email").value.trim(), password = $("a-pass").value, opt = $("a-opt").checked;
+  const name = $("a-name").value.trim(), email = $("a-email").value.trim(), password = $("a-pass").value, opt = EMAIL_ALERTS && $("a-opt").checked;
   const err = (m, f) => { $("a-err").textContent = m; if (f) $(f).focus(); };
   if (mode === "new" && !name) return err("Enter your name.", "a-name");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err("Enter a valid email.", "a-email");
@@ -1970,7 +2087,7 @@ $("acct-form").addEventListener("submit", async e => {
 function renderAcct(){
   const first = PROFILE && PROFILE.name ? PROFILE.name.split(" ")[0] : "";
   $("acct-open").textContent = USER ? (first ? "Hi, " + first : "Your profile") : "Sign in";
-  $("acct-out").hidden = !!USER; $("acct-in").hidden = !USER;
+  $("acct-out").hidden = !!USER || RESETTING; $("acct-in").hidden = !USER || RESETTING;
   if (USER) {
     $("p-name").value = PROFILE ? PROFILE.name : ""; $("p-email").textContent = USER.email || ""; $("p-opt").checked = !!(PROFILE && PROFILE.email_updates);
     $("saved").innerHTML = SEARCHES.length ? SEARCHES.map(x => `<div class="srow"><button type="button" class="go" data-run="${esc(x.query)}">${esc(x.query)}</button><button type="button" class="ghost" data-del="${esc(x.id)}" aria-label="Remove saved search ${esc(x.query)}">Remove</button></div>`).join("") : '<p class="note" style="margin-top:6px">No saved searches yet. Search for a ZIP code or city, then tap Save this search.</p>';
@@ -2068,7 +2185,12 @@ $("share-site").addEventListener("click", async () => {
     try { localStorage.setItem("tour.site.v1", "1"); } catch (e) {}
   }
   try { applyTitle(await api.getTitle()); } catch (e) { applyTitle(""); }
-  api.onAuth(u => onUser(u));
+  api.onAuth((u, ev) => { onUser(u); if (ev === "PASSWORD_RECOVERY") openReset(); });
+  if (CAME_FOR_RESET) setTimeout(() => { if (!RESETTING && USER) openReset(); }, 1500);
+  document.querySelectorAll("[data-site-name]").forEach(x => x.textContent = SITE_TITLE || CFG.SHOP_NAME || "This site");
+  if (CFG.CONTACT_EMAIL) { const c = $("terms-contact"); c.textContent = "email "; const a = document.createElement("a"); a.href = "mailto:" + CFG.CONTACT_EMAIL; a.textContent = CFG.CONTACT_EMAIL; c.appendChild(a); }
+  try { if (!localStorage.getItem("ce.age21")) $("agebar").hidden = false; } catch (e) { $("agebar").hidden = false; }
+  $("age-ok").addEventListener("click", () => { $("agebar").hidden = true; try { localStorage.setItem("ce.age21", "1"); } catch (e) {} });
   await loadEvents();
   await onUser(await api.user());
   route();
