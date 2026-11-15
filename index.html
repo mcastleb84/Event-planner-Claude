@@ -158,6 +158,8 @@ footer{color:var(--page-muted,var(--muted));font-size:12px;text-align:center}
 .qty input{text-align:center;width:64px;flex:none;background:var(--surface)}
 .qty .ghost{width:44px;height:44px;justify-content:center;padding:0;font-size:20px}
 .tix input{background:var(--surface)}
+.paysteps{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:15px}
+.paysteps ol{margin:0;padding-left:20px}
 .tixdone{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
 .code{font-family:ui-monospace,Menlo,monospace;font-size:18px;letter-spacing:.12em;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:1px 8px;user-select:all}
 .trow{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
@@ -1208,13 +1210,14 @@ async function renderTicketBox(e){
   let left = null; try { left = await api.ticketsLeft(e.id); } catch (err) {}
   if ($("ev-tix") !== box) return;
   const price = Number(e.ticket_price) || 0, closed = e.status !== "live" || e.date < todayIso || e.admin_hidden, soldOut = left === 0, max = Math.min(20, left == null ? 20 : left);
+  const po0 = payOpts(e), onlinePay = !!(po0.card || po0.cashapp || po0.cashlink || po0.venmo || po0.venmolink || po0.paypal || po0.zelle);
   const mineT = MY_TIX.filter(t => t.event_id === e.id && t.status !== "cancelled").concat(USER ? [] : guestTix().filter(t => t.event_id === e.id && t.status !== "cancelled"));
   box.hidden = false;
   box.innerHTML = `<div class="tix">
     <div class="row between"><h3>Tickets</h3><span class="tixprice">${price ? esc(money(price)) : "Free"}<small> ${price ? "each" : ""}</small></span></div>
     ${left != null ? `<p class="meta" style="margin:-6px 0 0"><b>${soldOut ? "Sold out" : left + " left"}</b></p>` : ""}
-    ${price ? `<p class="meta" style="margin:-6px 0 0">Pay with: ${esc(payList(payOpts(e)).join(" · "))}</p>` : ""}
-    ${mineT.length ? `<div class="tixdone"><b>Your tickets</b>${mineT.map(t => `<p style="font-size:15px">Code <span class="code">${esc(t.code)}</span> · ${t.qty} ${t.qty === 1 ? "ticket" : "tickets"} · ${esc(money(t.total))} · <span class="tag ${TSTATUS[t.status][1]}" style="margin:0">${TSTATUS[t.status][0]}</span></p>${payBlock(e, t)}${t.guest ? `<a class="ghost" href="${esc(emailMyTicket(e, t))}" style="align-self:flex-start">Email me my ticket</a>` : ""}`).join("")}</div>` : ""}
+    ${price && !closed && !soldOut ? `<div class="paysteps"><b>How paying works</b><ol><li>Pick how many and tap <b>${onlinePay ? "Get tickets and pay" : "Get tickets"}</b>.</li><li>You get a ticket code, then ${onlinePay ? "tap a Pay button to pay the host" : "pay the host as shown"}.</li></ol><p class="meta" style="margin:0">Ways to pay: <b>${esc(payList(payOpts(e)).join(" · "))}</b></p></div>` : price ? `<p class="meta" style="margin:-6px 0 0">Pay with: ${esc(payList(payOpts(e)).join(" · "))}</p>` : ""}
+    ${mineT.length ? `<div class="tixdone"><b>Your tickets${mineT.some(t => t.status === "reserved" && Number(t.total)) ? " · tap Pay below to finish" : ""}</b>${mineT.map(t => `<p style="font-size:15px">Code <span class="code">${esc(t.code)}</span> · ${t.qty} ${t.qty === 1 ? "ticket" : "tickets"} · ${esc(money(t.total))} · <span class="tag ${TSTATUS[t.status][1]}" style="margin:0">${TSTATUS[t.status][0]}</span></p>${payBlock(e, t)}${t.guest ? `<a class="ghost" href="${esc(emailMyTicket(e, t))}" style="align-self:flex-start">Email me my ticket</a>` : ""}`).join("")}</div>` : ""}
     ${closed ? '<p class="note">Ticket sales are closed for this event.</p>' : soldOut ? '<p class="note">No tickets left.</p>' : `
     <form id="tix-form" novalidate class="fields">
       <div><label for="tix-qty">How many</label><div class="qty"><button type="button" class="ghost" data-q="-1" aria-label="One less">−</button><input id="tix-qty" inputmode="numeric" value="1" maxlength="2"><button type="button" class="ghost" data-q="1" aria-label="One more">+</button></div></div>
@@ -1222,7 +1225,7 @@ async function renderTicketBox(e){
       ${USER ? "" : '<div class="full"><label for="tix-email">Your email</label><input id="tix-email" type="email" maxlength="160" autocomplete="email" inputmode="email" placeholder="you@email.com" required><div class="note" style="margin-top:4px">Needed so the host can send you your receipt and any updates about the event.</div></div>'}
       <p class="full meta" style="margin:0">Total <b id="tix-total">${esc(money(price))}</b></p>
       <div class="err full" id="tix-err" role="alert"></div>
-      <div class="full"><button class="btn" type="submit" id="tix-buy" style="width:100%">${mineT.length ? "Get more tickets" : price ? "Get tickets" : "Reserve free tickets"}</button></div>
+      <div class="full"><button class="btn" type="submit" id="tix-buy" style="width:100%">${mineT.length ? "Get more tickets" : price ? (onlinePay ? "Get tickets and pay" : "Get tickets") : "Reserve free tickets"}</button></div>
       ${USER ? "" : '<p class="full note" style="margin-top:-4px">No profile needed. <button type="button" class="linkbtn" id="tix-signin" style="display:inline;padding:0">Sign in or create a free profile</button> to keep all your tickets in one place.</p>'}
     </form>`}
     <div id="tix-done"></div></div>`;
@@ -1246,7 +1249,7 @@ async function renderTicketBox(e){
         $("tix-done").innerHTML = `<div class="tixdone" role="status"><h3>You're on the list</h3><p style="font-size:15px">Ticket code <span class="code">${esc(t.code)}</span> · ${t.qty} ${t.qty === 1 ? "ticket" : "tickets"} · ${esc(money(t.total))}</p>${payBlock(e, t)}
           <p class="note"><b>Save your code.</b> Take a screenshot, or tap below to email it to yourself. It's also saved on this phone, on this event's page.</p>
           <a class="btn" href="${esc(emailMyTicket(e, t))}" style="align-self:flex-start">Email me my ticket</a></div>`;
-        $("tix-done").scrollIntoView({ block: "nearest" });
+        { const pb = $("tix-done").querySelector(".paybtns") || $("tix-done"); pb.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
         if (mineHost(e)) renderHostTickets(e);
       } catch (err) { $("tix-err").textContent = TIX_ERR(String(err && err.message || "")); $("tix-buy").disabled = false; }
       return;
@@ -1257,7 +1260,7 @@ async function renderTicketBox(e){
       MY_TIX.unshift({ ...t, event_id: e.id, name, status: "reserved" }); renderMyTickets();
       await renderTicketBox(e);
       $("tix-done").innerHTML = `<div class="tixdone" role="status"><h3>You're on the list</h3><p style="font-size:15px">Ticket code <span class="code">${esc(t.code)}</span> · ${t.qty} ${t.qty === 1 ? "ticket" : "tickets"} · ${esc(money(t.total))}</p>${payBlock(e, { ...t, status: "reserved" })}<p class="note">Your code is saved in your profile under My tickets.</p></div>`;
-      $("tix-done").scrollIntoView({ block: "nearest" });
+      { const pb = $("tix-done").querySelector(".paybtns") || $("tix-done"); pb.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
       if (mineHost(e)) renderHostTickets(e);
     } catch (err) { $("tix-err").textContent = TIX_ERR(String(err && err.message || "")); $("tix-buy").disabled = false; }
   });
