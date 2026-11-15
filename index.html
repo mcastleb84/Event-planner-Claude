@@ -316,8 +316,9 @@ body.themed #status{color:var(--page-muted)}
       <p class="note" style="font-size:15px" id="form-lede">Your event goes live as soon as you publish it. Anyone can find it, and people with a profile can save it.</p>
       <div class="fields">
         <div class="full"><label for="f-title">Event name</label><input id="f-title" maxlength="120" placeholder="Cigar and bourbon pairing night" autocomplete="off"></div>
-        <div><label for="f-date">Date</label><input id="f-date" type="date"></div>
+        <div class="full"><label for="f-date">Date</label><input id="f-date" type="date"></div>
         <div><label for="f-time">Start time</label><input id="f-time" type="time"></div>
+        <div><label for="f-end">End time (optional)</label><input id="f-end" type="time"></div>
         <div><label for="f-type">Type</label>
           <select id="f-type"><option>Lounge night</option><option>Tasting / pairing</option><option>Cigar rolling</option><option>Private party</option><option>Corporate event</option><option>Wedding / celebration</option><option>Class / workshop</option><option>Other</option></select></div>
         <div><label for="f-price">Price</label><input id="f-price" maxlength="60" placeholder="Free, $25, or $40 at the door"></div>
@@ -621,6 +622,12 @@ if (PREVIEW && !dLoad()) {
    HELPERS
    ============================================================ */
 function fmtTime(t){ if (!t) return "Time to be announced"; const [h, m] = t.split(":").map(Number); const d = new Date(); d.setHours(h, m || 0); return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }); }
+const hm = t => String(t || "").slice(0, 5);
+function whenTime(e){
+  if (!e.time) return "Time to be announced";
+  if (!e.end_time) return fmtTime(e.time);
+  return fmtTime(e.time) + " – " + fmtTime(e.end_time) + (hm(e.end_time) <= hm(e.time) ? " (next day)" : "");
+}
 const dt = s => new Date(s + "T00:00:00");
 const longDate = s => dt(s).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: dt(s).getFullYear() !== new Date().getFullYear() ? "numeric" : undefined });
 function fullAddr(e){ const csz = [e.city, [e.state, e.zip].filter(Boolean).join(" ")].filter(Boolean).join(", "); return [e.location, e.address, csz].filter(Boolean).join(", "); }
@@ -628,7 +635,8 @@ const placeLine = e => [e.location, [e.city, e.state].filter(Boolean).join(", ")
 const navUrl = e => "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(fullAddr(e));
 function gcal(e){
   const d = e.date.replace(/-/g, ""); let dates;
-  if (e.time) { const s = new Date(e.date + "T" + e.time), f = new Date(s.getTime() + 7200000); const F = x => x.getFullYear() + pad(x.getMonth() + 1) + pad(x.getDate()) + "T" + pad(x.getHours()) + pad(x.getMinutes()) + "00"; dates = F(s) + "/" + F(f); }
+  if (e.time) { const s = new Date(e.date + "T" + hm(e.time)); let f = new Date(s.getTime() + 7200000);
+    if (e.end_time) { f = new Date(e.date + "T" + hm(e.end_time)); if (f <= s) f.setDate(f.getDate() + 1); } const F = x => x.getFullYear() + pad(x.getMonth() + 1) + pad(x.getDate()) + "T" + pad(x.getHours()) + pad(x.getMinutes()) + "00"; dates = F(s) + "/" + F(f); }
   else { const n = dt(e.date); n.setDate(n.getDate() + 1); dates = d + "/" + isoOf(n).replace(/-/g, ""); }
   return "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(e.title) + "&dates=" + dates + "&location=" + encodeURIComponent(fullAddr(e)) + "&details=" + encodeURIComponent((e.description || "").slice(0, 600));
 }
@@ -716,7 +724,7 @@ let USER = null, PROFILE = null, IS_ADMIN = false, SAVES = new Set(), SEARCHES =
 let formFiles = [], uploading = 0, editingId = null, JUST_POSTED = null;
 
 /* ---------- share an event to social media ---------- */
-function shareText(e){ return `${e.title} · ${longDate(e.date)}, ${fmtTime(e.time)}${placeLine(e) ? " · " + placeLine(e) : ""}`; }
+function shareText(e){ return `${e.title} · ${longDate(e.date)}, ${whenTime(e)}${placeLine(e) ? " · " + placeLine(e) : ""}`; }
 function shareTargets(e){
   const url = eventLink(e), text = shareText(e), u = encodeURIComponent(url), both = encodeURIComponent(text + " " + url);
   return [
@@ -807,7 +815,7 @@ function card(e){
     <div class="cal" aria-hidden="true"><span class="mo">${d.toLocaleDateString(undefined, { month: "short" }).toUpperCase()}</span><span class="dy">${d.getDate()}</span><span class="wd">${d.toLocaleDateString(undefined, { weekday: "short" })}</span></div>
     <div style="min-width:0">
       <button type="button" class="ev-title" data-go="event-${esc(e.id)}"><h3>${esc(e.title)}</h3></button>
-      <p class="meta"><b>${esc(longDate(e.date))}</b> · ${esc(fmtTime(e.time))}</p>
+      <p class="meta"><b>${esc(longDate(e.date))}</b> · ${esc(whenTime(e))}</p>
       ${place ? `<p class="meta">${esc(place)}</p>` : ""}
       ${e.host_name ? `<p class="meta">Hosted by ${esc(e.host_name)}</p>` : ""}
       ${e.status === "cancelled" ? '<span class="tag cx">Cancelled</span>' : ""}${e.event_type ? `<span class="tag">${esc(e.event_type)}</span>` : ""}${e.price ? `<span class="tag">${esc(e.price)}</span>` : ""}${e.tickets_on ? `<span class="tag ok">Tickets ${Number(e.ticket_price) ? esc(money(e.ticket_price)) : "free"}</span>` : ""}
@@ -838,7 +846,7 @@ function renderBanner(){
     .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || ""))).slice(0, 10);
   $("banner").hidden = !items.length;
   if (!items.length) { $("bn-track").innerHTML = ""; $("bn-dots").innerHTML = ""; return; }
-  $("bn-track").innerHTML = items.map((e, i) => { const u = images(e)[0].url; return `<button type="button" class="bn-slide" data-go="event-${esc(e.id)}" aria-label="${esc(e.title)}, ${esc(longDate(e.date))} (${i + 1} of ${items.length})"><span class="bn-bg" style="background-image:url(&quot;${esc(u)}&quot;)" aria-hidden="true"></span><img src="${esc(u)}" alt=""${cleanTheme(e.theme).fill ? ' class="fill"' : ""} ${i ? 'loading="lazy"' : ""}><span class="bn-cap"><b>${esc(e.title)}</b><span>${esc(longDate(e.date))} · ${esc(fmtTime(e.time))}${e.city ? " · " + esc(e.city) : ""}</span></span></button>`; }).join("");
+  $("bn-track").innerHTML = items.map((e, i) => { const u = images(e)[0].url; return `<button type="button" class="bn-slide" data-go="event-${esc(e.id)}" aria-label="${esc(e.title)}, ${esc(longDate(e.date))} (${i + 1} of ${items.length})"><span class="bn-bg" style="background-image:url(&quot;${esc(u)}&quot;)" aria-hidden="true"></span><img src="${esc(u)}" alt=""${cleanTheme(e.theme).fill ? ' class="fill"' : ""} ${i ? 'loading="lazy"' : ""}><span class="bn-cap"><b>${esc(e.title)}</b><span>${esc(longDate(e.date))} · ${esc(whenTime(e))}${e.city ? " · " + esc(e.city) : ""}</span></span></button>`; }).join("");
   $("bn-dots").innerHTML = items.length > 1 ? items.map((e, i) => `<button type="button" data-bn="${i}" aria-label="Show flyer ${i + 1}" aria-current="${i === 0}"></button>`).join("") : "";
   bnStart();
 }
@@ -899,7 +907,7 @@ async function renderDetail(id){
     ${e.admin_hidden ? '<div class="confirm">This event is hidden from the public.</div>' : ""}
     ${imgs.length ? `<a class="cover" href="${esc(imgs[0].url)}" target="_blank" rel="noopener"><img src="${esc(imgs[0].url)}" alt="${esc(imgs[0].name || "Flyer for " + e.title)}"></a>` : ""}
     <div><h2 style="font-size:28px">${esc(e.title)}</h2>
-      <p class="meta" style="font-size:16px"><b>${esc(longDate(e.date))}</b> · ${esc(fmtTime(e.time))}</p>
+      <p class="meta" style="font-size:16px"><b>${esc(longDate(e.date))}</b> · ${esc(whenTime(e))}</p>
       ${e.status === "cancelled" ? '<span class="tag cx">Cancelled</span>' : ""}${e.event_type ? `<span class="tag">${esc(e.event_type)}</span>` : ""}${e.price ? `<span class="tag">${esc(e.price)}</span>` : ""}</div>
     <div id="ev-tix" hidden></div>
     <div class="row">
@@ -1029,7 +1037,7 @@ async function renderHostTickets(e){
   if ($("tix-email")) $("tix-email").addEventListener("click", () => {
     const emails = [...new Set(live.map(t => t.email).filter(Boolean))];
     if (!emails.length) { $("tix-note").textContent = "No emails on these tickets."; return; }
-    location.href = "mailto:?bcc=" + emails.map(encodeURIComponent).join(",") + "&subject=" + encodeURIComponent("Your tickets: " + e.title) + "&body=" + encodeURIComponent(`${e.title}\n${longDate(e.date)} · ${fmtTime(e.time)}\n${fullAddr(e)}\n\n[Write your message here]\n\nEvent details: ${eventLink(e)}`);
+    location.href = "mailto:?bcc=" + emails.map(encodeURIComponent).join(",") + "&subject=" + encodeURIComponent("Your tickets: " + e.title) + "&body=" + encodeURIComponent(`${e.title}\n${longDate(e.date)} · ${whenTime(e)}\n${fullAddr(e)}\n\n[Write your message here]\n\nEvent details: ${eventLink(e)}`);
   });
   if ($("tix-copy")) $("tix-copy").addEventListener("click", async () => {
     const txt = "Name,Email,Code,Tickets,Total,Status,Checked in\n" + live.map(t => [t.name, t.email, t.code, t.qty, Number(t.total).toFixed(2), t.status, t.checked_in ? "yes" : "no"].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(",")).join("\n");
@@ -1105,7 +1113,7 @@ async function emailSavers(e, note){
   note.textContent = "Getting the list…";
   let list; try { list = (await api.savers(e.id)).filter(x => x.email); } catch (err) { note.textContent = "The list couldn't load. Try again."; return; }
   if (!list.length) { note.textContent = "Nobody has saved this event yet. Share it to get the word out."; return; }
-  const body = [`Update about ${e.title}`, `${longDate(e.date)} · ${fmtTime(e.time)}`, fullAddr(e), "", "[Write your update here]", "", "Event details: " + eventLink(e), "", "You're getting this because you saved this event."].filter((l, i, a) => l !== "" || a[i - 1] !== "").join("\n");
+  const body = [`Update about ${e.title}`, `${longDate(e.date)} · ${whenTime(e)}`, fullAddr(e), "", "[Write your update here]", "", "Event details: " + eventLink(e), "", "You're getting this because you saved this event."].filter((l, i, a) => l !== "" || a[i - 1] !== "").join("\n");
   const href = "mailto:?bcc=" + list.map(x => encodeURIComponent(x.email)).join(",") + "&subject=" + encodeURIComponent("Update: " + e.title) + "&body=" + encodeURIComponent(body);
   note.innerHTML = `${list.length} ${list.length === 1 ? "person" : "people"} saved this event. <a class="ghost" href="${href}" style="margin-top:6px">Open email (BCC)</a> <button type="button" class="ghost" id="copy-savers" style="margin-top:6px">Copy emails</button>`;
   $("copy-savers").addEventListener("click", async () => { const t = list.map(x => x.email).join(", "); if (!(await copyText(t))) note.append(" " + t); else $("copy-savers").textContent = "Copied"; });
@@ -1114,7 +1122,7 @@ async function emailSavers(e, note){
 /* ============================================================
    POST / EDIT FORM
    ============================================================ */
-const FF = { title: "f-title", date: "f-date", time: "f-time", event_type: "f-type", price: "f-price", description: "f-desc", location: "f-place", address: "f-addr", city: "f-city", state: "f-state", zip: "f-zip", contact: "f-contact" };
+const FF = { title: "f-title", date: "f-date", time: "f-time", end_time: "f-end", event_type: "f-type", price: "f-price", description: "f-desc", location: "f-place", address: "f-addr", city: "f-city", state: "f-state", zip: "f-zip", contact: "f-contact" };
 function openForm(e){
   editingId = e ? e.id : null;
   $("form-h").textContent = e ? "Edit event" : "Post an event";
@@ -1168,6 +1176,9 @@ $("ev-form").addEventListener("submit", async ev => {
   if (!v.title) return err("Give your event a name.", "f-title");
   if (!v.date) return err("Pick a date.", "f-date");
   if (!editingId && v.date < todayIso) return err("Pick a date from today on.", "f-date");
+  if (v.end_time && !v.time) return err("Add a start time too, or clear the end time.", "f-time");
+  if (v.end_time && hm(v.end_time) === hm(v.time)) return err("The end time should be different from the start time.", "f-end");
+  v.end_time = v.end_time || null;
   if (v.state && !/^[A-Z]{2}$/.test(v.state)) return err("Use the 2-letter state code, like GA.", "f-state");
   if (v.zip && !/^\d{5}(-\d{4})?$/.test(v.zip)) return err("ZIP code should be 5 digits.", "f-zip");
   if (!v.location && !v.address && !v.city) return err("Add where it's happening: a venue, address or city.", "f-place");
@@ -1206,10 +1217,15 @@ $("ev-form").addEventListener("submit", async ev => {
   $("f-save").disabled = true;
   try {
     const save = row => editingId ? api.updateEvent(editingId, row) : api.createEvent(row);
-    let saved, noTheme = false;
+    let saved, noTheme = false, noEnd = false;
     const saveRow = async row => {
       try { return await save(row); }
-      catch (e0) { if (!/theme/.test(String(e0 && e0.message || ""))) throw e0; noTheme = true; const { theme, ...rest } = row; return await save(rest); }
+      catch (e0) {
+        const m0 = String(e0 && e0.message || "");
+        if (/end_time/.test(m0)) { noEnd = true; const { end_time, ...rest } = row; return await saveRow(rest); }
+        if (/theme/.test(m0)) { noTheme = true; const { theme, ...rest } = row; return await saveRow(rest); }
+        throw e0;
+      }
     };
     try { saved = await saveRow(v); }
     catch (e1) {
@@ -1217,7 +1233,8 @@ $("ev-form").addEventListener("submit", async ev => {
       if (Object.keys(pay).some(k => k !== "card" && k !== "door")) throw new Error("pay_setup");
       const { pay_options, ...rest } = v; saved = await saveRow(rest);
     }
-    if (noTheme && Object.keys(v.theme).some(k => k !== "fill")) toast("Your event saved, but your colors didn't. The site owner needs to run event-colors-setup.sql in Supabase.", 6000);
+    if (noEnd && v.end_time) toast("Your event saved, but the end time didn't. The site owner needs to run end-time-setup.sql in Supabase.", 6000);
+    else if (noTheme && Object.keys(v.theme).some(k => k !== "fill")) toast("Your event saved, but your colors didn't. The site owner needs to run event-colors-setup.sql in Supabase.", 6000);
     if (!editingId) JUST_POSTED = saved.id;
     await loadEvents(); go("event-" + saved.id);
   } catch (e2) {
@@ -1264,7 +1281,7 @@ function renderLook(){
 }
 function renderPreview(){
   const t = formTheme();
-  const fake = { id: "preview", title: $("f-title").value.trim() || "Your event name", date: $("f-date").value || todayIso, time: $("f-time").value, event_type: $("f-type").value, price: $("f-price").value.trim(),
+  const fake = { id: "preview", title: $("f-title").value.trim() || "Your event name", date: $("f-date").value || todayIso, time: $("f-time").value, end_time: $("f-end").value, event_type: $("f-type").value, price: $("f-price").value.trim(),
     location: $("f-place").value.trim(), city: $("f-city").value.trim(), state: $("f-state").value.trim().toUpperCase(), host_name: (PROFILE && PROFILE.name) || "", files: formFiles.filter(f => !f.busy), theme: t, tickets_on: $("f-tix").checked, ticket_price: Number($("f-tprice").value) || 0 };
   const pv = themeVars(t, false), btn = styleOf(themeVars({ button: t.button }, false));
   $("f-preview").innerHTML = `<p class="note" style="margin:0">On the event list</p>${card(fake)}
@@ -1408,7 +1425,7 @@ $("pe-panel").addEventListener("click", e => {
   else if (d.prot) { s.rot = (s.rot + 90) % 360; s.ux = s.uy = 0.5; peBase(); }
   else if (d.pl) s.look = d.pl;
   else if (d.ptAdd) {
-    const when = $("f-date").value ? longDate($("f-date").value) + ($("f-time").value ? " · " + fmtTime($("f-time").value) : "") : "Saturday, 8 PM";
+    const when = $("f-date").value ? longDate($("f-date").value) + ($("f-time").value ? " · " + whenTime({ time: $("f-time").value, end_time: $("f-end").value }) : "") : "Saturday, 8 PM";
     const txt = d.ptAdd === "name" ? ($("f-title").value.trim() || "Your event name") : d.ptAdd === "when" ? when : "Your words here";
     const ys = [0.16, 0.84, 0.5, 0.3, 0.7], y = ys[s.texts.length % ys.length];
     s.texts.push({ text: txt, size: d.ptAdd === "name" ? 0.1 : 0.06, color: "#ffffff", font: d.ptAdd === "name" ? "display" : "body", style: "shadow", x: 0.5, y });
@@ -1522,7 +1539,7 @@ async function renderMine(){
     return `<div class="card" style="display:flex;flex-direction:column;gap:8px">
       <div class="row between" style="align-items:flex-start"><button type="button" class="ev-title" data-go="event-${esc(e.id)}" style="flex:1;min-width:0"><h3>${esc(e.title)}</h3></button>
       <span>${e.admin_hidden ? '<span class="tag cx">Hidden by the site owner</span>' : e.status === "cancelled" ? '<span class="tag cx">Cancelled</span>' : past ? '<span class="tag wait">Past</span>' : '<span class="tag">Live</span>'}</span></div>
-      <p class="meta" style="margin:0"><b>${esc(longDate(e.date))}</b> · ${esc(fmtTime(e.time))}${placeLine(e) ? " · " + esc(placeLine(e)) : ""}</p>
+      <p class="meta" style="margin:0"><b>${esc(longDate(e.date))}</b> · ${esc(whenTime(e))}${placeLine(e) ? " · " + esc(placeLine(e)) : ""}</p>
       <p class="meta" style="margin:0">${n} ${n === 1 ? "person" : "people"} saved this</p>
       <div class="row"><button type="button" class="ghost" data-go="event-${esc(e.id)}">Open</button><button type="button" class="ghost" data-go="edit-${esc(e.id)}">Edit</button>${n ? `<button type="button" class="ghost" data-email="${esc(e.id)}">Email ${n === 1 ? "them" : "all " + n}</button>` : ""}</div>
       <p class="note" data-email-note="${esc(e.id)}"></p></div>`;
@@ -1545,7 +1562,7 @@ async function renderReview(){
   const hostLine = e => { const h = d.hosts[e.host_id] || {}; return `Posted by ${esc(h.name || e.host_name || "someone")}${h.email ? ` · <span style="user-select:all">${esc(h.email)}</span>` : ""}`; };
   box.innerHTML = todo.length ? todo.map(e => `<div class="card rv" data-rv="${esc(e.id)}">
       <div class="row between" style="align-items:flex-start"><button type="button" class="ev-title" data-go="event-${esc(e.id)}" style="flex:1;min-width:0"><h3>${esc(e.title)}</h3></button>${e.admin_hidden ? '<span class="tag cx">Hidden</span>' : '<span class="tag">Live</span>'}</div>
-      <p class="meta" style="margin:0"><b>${esc(longDate(e.date))}</b> · ${esc(fmtTime(e.time))}${placeLine(e) ? " · " + esc(placeLine(e)) : ""}</p>
+      <p class="meta" style="margin:0"><b>${esc(longDate(e.date))}</b> · ${esc(whenTime(e))}${placeLine(e) ? " · " + esc(placeLine(e)) : ""}</p>
       <p class="meta" style="margin:0">${hostLine(e)}</p>
       ${e.tickets_on ? `<p class="meta" style="margin:0">Tickets ${esc(money(e.ticket_price))}${e.ticket_limit ? ", " + esc(e.ticket_limit) + " available" : ""} · ${e.ticket_link ? `pays at <span style="user-select:all;overflow-wrap:anywhere">${esc(e.ticket_link)}</span>` : "pay at the door"}</p>` : ""}
       ${e.description ? `<p class="desc" style="font-size:14px;max-height:9em;overflow:auto">${esc(e.description)}</p>` : ""}
