@@ -556,6 +556,7 @@ const sbApi = {
   },
   async removeFile(path){ try { await SB.storage.from(BUCKET).remove([path]); } catch (e) {} },
   async ticketsLeft(eid){ const { data, error } = await SB.rpc("tickets_left", { p_event: eid }); if (error) throw error; return data; },
+  async buyTicketsGuest(eid, name, email, qty){ const { data, error } = await SB.rpc("buy_tickets_guest", { p_event: eid, p_name: name, p_email: email, p_qty: qty }); if (error) throw error; return Array.isArray(data) ? data[0] : data; },
   async buyTickets(eid, name, qty){ const { data, error } = await SB.rpc("buy_tickets", { p_event: eid, p_name: name, p_qty: qty }); if (error) throw error; return Array.isArray(data) ? data[0] : data; },
   async myTickets(uid){ const { data, error } = await SB.from("ce_tickets").select("*").eq("user_id", uid).order("created_at", { ascending: false }); if (error) throw error; return data; },
   async eventTickets(eid){ const { data, error } = await SB.from("ce_tickets").select("*").eq("event_id", eid).order("created_at"); if (error) throw error; return data; },
@@ -631,6 +632,17 @@ const demoApi = {
   },
   async removeFile(){},
   async ticketsLeft(eid){ const d = dDb(), e = d.events.find(x => x.id === eid); if (!e || e.ticket_limit == null || e.ticket_limit === "") return null; const sold = d.tickets.filter(t => t.event_id === eid && t.status !== "cancelled").reduce((n, t) => n + t.qty, 0); return Math.max(Number(e.ticket_limit) - sold, 0); },
+  async buyTicketsGuest(eid, name, email, qty){
+    const d = dDb(), e = d.events.find(x => x.id === eid);
+    if (!e || e.admin_hidden || e.status !== "live" || !e.tickets_on || e.date < todayIso) throw new Error("not_selling");
+    if (!(qty >= 1 && qty <= 20)) throw new Error("qty_1_to_20");
+    if (!String(name || "").trim()) throw new Error("name_needed");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("email_needed");
+    if (d.tickets.filter(t => t.event_id === eid && t.email.toLowerCase() === email.toLowerCase() && t.status !== "cancelled").length >= 5) throw new Error("too_many_orders");
+    const left = await this.ticketsLeft(eid); if (left != null && qty > left) throw new Error("sold_out:" + left);
+    const t = { id: uuid(), event_id: eid, user_id: null, name: String(name).trim().slice(0, 120), email, qty, total: (Number(e.ticket_price) || 0) * qty, code: Math.random().toString(36).slice(2, 8).toUpperCase(), status: "reserved", checked_in: false, created_at: new Date().toISOString() };
+    d.tickets.push(t); dSave(d); return t;
+  },
   async buyTickets(eid, name, qty){
     const d = dDb(); if (!d.session) throw new Error("sign_in_first");
     const e = d.events.find(x => x.id === eid);
@@ -923,7 +935,7 @@ function ago(s){
   const d = Math.round(h / 24); if (d < 7) return d + (d === 1 ? " day ago" : " days ago");
   return new Date(s).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
-const TIX_ERR = m => /sold_out:(\d+)/.test(m) ? (+m.match(/sold_out:(\d+)/)[1] ? `Only ${m.match(/sold_out:(\d+)/)[1]} left. Pick a smaller number.` : "Sorry, it just sold out.") : /not_selling/.test(m) ? "Tickets aren't on sale for this event right now." : /too_many/.test(m) ? "You already have 5 orders for this event." : /sign_in/.test(m) ? "Sign in first." : /name_needed/.test(m) ? "Enter the name for the tickets." : /qty/.test(m) ? "Pick 1 to 20 tickets." : /function|schema cache|does not exist/i.test(m) ? "Ticket sales aren't set up yet. The site owner needs to run tickets-comments-setup.sql." : "That didn't go through. Try again.";
+const TIX_ERR = m => /sold_out:(\d+)/.test(m) ? (+m.match(/sold_out:(\d+)/)[1] ? `Only ${m.match(/sold_out:(\d+)/)[1]} left. Pick a smaller number.` : "Sorry, it just sold out.") : /not_selling/.test(m) ? "Tickets aren't on sale for this event right now." : /too_many/.test(m) ? "You already have 5 orders for this event." : /sign_in/.test(m) ? "Sign in first." : /name_needed/.test(m) ? "Enter the name for the tickets." : /email_needed/.test(m) ? "Enter a real email address so you can get your ticket details." : /buy_tickets_guest/.test(m) ? "Buying without a profile isn't turned on yet. The site owner needs to run guest-tickets-setup.sql. You can create a free profile to buy now." : /qty/.test(m) ? "Pick 1 to 20 tickets." : /function|schema cache|does not exist/i.test(m) ? "Ticket sales aren't set up yet. The site owner needs to run tickets-comments-setup.sql." : "That didn't go through. Try again.";
 async function copyText(t){ try { await navigator.clipboard.writeText(t); return true; } catch (e) { return false; } }
 
 /* ============================================================
@@ -1182,38 +1194,63 @@ function payBlock(e, t){
   if (!b.length) return door || `<p class="note">The host will tell you how to pay ${tot}. Show your ticket code at the door.</p>`;
   return `<div class="paybtns">${b.join("")}</div>${door}<p class="note">You pay the host directly. Put your code <b>${esc(t.code)}</b> in the payment note. The host marks your tickets paid once it comes through.</p>`;
 }
+/* Tickets bought without a profile are remembered on this device so the buyer can find their code again. */
+const GT_KEY = "ce.guestTickets.v1";
+const guestTix = () => { try { const v = JSON.parse(localStorage.getItem(GT_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+const addGuestTix = t => { try { localStorage.setItem(GT_KEY, JSON.stringify([t].concat(guestTix()).slice(0, 50))); } catch (e) {} };
+function emailMyTicket(e, t){
+  const body = `Your tickets for ${e.title}\n${longDate(e.date)} · ${whenTime(e)}\n${fullAddr(e)}\n\nTicket code: ${t.code}\nName: ${t.name}\nTickets: ${t.qty}\nTotal: ${money(t.total)}\n\nShow this code at the door.\nEvent page: ${eventLink(e)}`;
+  return "mailto:" + encodeURIComponent(t.email || "") + "?subject=" + encodeURIComponent("Your tickets: " + e.title + " (code " + t.code + ")") + "&body=" + encodeURIComponent(body);
+}
 async function renderTicketBox(e){
   const box = $("ev-tix"); if (!box) return;
   if (!e.tickets_on) { box.hidden = true; return; }
   let left = null; try { left = await api.ticketsLeft(e.id); } catch (err) {}
   if ($("ev-tix") !== box) return;
   const price = Number(e.ticket_price) || 0, closed = e.status !== "live" || e.date < todayIso || e.admin_hidden, soldOut = left === 0, max = Math.min(20, left == null ? 20 : left);
-  const mineT = MY_TIX.filter(t => t.event_id === e.id && t.status !== "cancelled");
+  const mineT = MY_TIX.filter(t => t.event_id === e.id && t.status !== "cancelled").concat(USER ? [] : guestTix().filter(t => t.event_id === e.id && t.status !== "cancelled"));
   box.hidden = false;
   box.innerHTML = `<div class="tix">
     <div class="row between"><h3>Tickets</h3><span class="tixprice">${price ? esc(money(price)) : "Free"}<small> ${price ? "each" : ""}</small></span></div>
     ${left != null ? `<p class="meta" style="margin:-6px 0 0"><b>${soldOut ? "Sold out" : left + " left"}</b></p>` : ""}
     ${price ? `<p class="meta" style="margin:-6px 0 0">Pay with: ${esc(payList(payOpts(e)).join(" · "))}</p>` : ""}
-    ${mineT.length ? `<div class="tixdone"><b>Your tickets</b>${mineT.map(t => `<p style="font-size:15px">Code <span class="code">${esc(t.code)}</span> · ${t.qty} ${t.qty === 1 ? "ticket" : "tickets"} · ${esc(money(t.total))} · <span class="tag ${TSTATUS[t.status][1]}" style="margin:0">${TSTATUS[t.status][0]}</span></p>${payBlock(e, t)}`).join("")}</div>` : ""}
+    ${mineT.length ? `<div class="tixdone"><b>Your tickets</b>${mineT.map(t => `<p style="font-size:15px">Code <span class="code">${esc(t.code)}</span> · ${t.qty} ${t.qty === 1 ? "ticket" : "tickets"} · ${esc(money(t.total))} · <span class="tag ${TSTATUS[t.status][1]}" style="margin:0">${TSTATUS[t.status][0]}</span></p>${payBlock(e, t)}${t.guest ? `<a class="ghost" href="${esc(emailMyTicket(e, t))}" style="align-self:flex-start">Email me my ticket</a>` : ""}`).join("")}</div>` : ""}
     ${closed ? '<p class="note">Ticket sales are closed for this event.</p>' : soldOut ? '<p class="note">No tickets left.</p>' : `
     <form id="tix-form" novalidate class="fields">
       <div><label for="tix-qty">How many</label><div class="qty"><button type="button" class="ghost" data-q="-1" aria-label="One less">−</button><input id="tix-qty" inputmode="numeric" value="1" maxlength="2"><button type="button" class="ghost" data-q="1" aria-label="One more">+</button></div></div>
       <div><label for="tix-name">Name on the tickets</label><input id="tix-name" maxlength="120" autocomplete="name" value="${esc(PROFILE && PROFILE.name || "")}" placeholder="Your name"></div>
+      ${USER ? "" : '<div class="full"><label for="tix-email">Your email</label><input id="tix-email" type="email" maxlength="160" autocomplete="email" inputmode="email" placeholder="you@email.com" required><div class="note" style="margin-top:4px">Needed so the host can send you your receipt and any updates about the event.</div></div>'}
       <p class="full meta" style="margin:0">Total <b id="tix-total">${esc(money(price))}</b></p>
       <div class="err full" id="tix-err" role="alert"></div>
       <div class="full"><button class="btn" type="submit" id="tix-buy" style="width:100%">${mineT.length ? "Get more tickets" : price ? "Get tickets" : "Reserve free tickets"}</button></div>
-      ${USER ? "" : '<p class="full note" style="margin-top:-4px">You\'ll make a free profile first, so your tickets are saved.</p>'}
+      ${USER ? "" : '<p class="full note" style="margin-top:-4px">No profile needed. <button type="button" class="linkbtn" id="tix-signin" style="display:inline;padding:0">Sign in or create a free profile</button> to keep all your tickets in one place.</p>'}
     </form>`}
     <div id="tix-done"></div></div>`;
   const f = $("tix-form"); if (!f) return;
+  if ($("tix-signin")) $("tix-signin").addEventListener("click", () => { pendingAfterLogin = () => { go("event-" + e.id); setTimeout(() => $("tix-qty") && $("tix-qty").focus(), 400); }; openAcct("new", "Create a free profile to keep all your tickets and codes in one place."); });
   const qty = () => Math.max(1, Math.min(max, parseInt($("tix-qty").value, 10) || 1));
   const upd = () => { $("tix-total").textContent = money(price * qty()); $("tix-err").textContent = ""; };
   f.querySelectorAll("[data-q]").forEach(b => b.addEventListener("click", () => { $("tix-qty").value = Math.max(1, Math.min(max, qty() + +b.dataset.q)); upd(); }));
   $("tix-qty").addEventListener("input", upd); $("tix-qty").addEventListener("blur", () => { $("tix-qty").value = qty(); upd(); });
   f.addEventListener("submit", async ev => {
     ev.preventDefault();
-    if (!USER) { pendingAfterLogin = () => { go("event-" + e.id); setTimeout(() => $("tix-qty") && $("tix-qty").focus(), 400); }; openAcct("new", "Create a free profile to get tickets. Your tickets and codes are saved in your profile."); return; }
     const name = $("tix-name").value.trim(); if (!name) { $("tix-err").textContent = "Enter the name for the tickets."; $("tix-name").focus(); return; }
+    if (!USER) {
+      const email = $("tix-email").value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $("tix-err").textContent = "Enter your email so you can get your receipt and ticket details."; $("tix-email").focus(); return; }
+      $("tix-buy").disabled = true;
+      try {
+        const t = { ...(await api.buyTicketsGuest(e.id, name, email, qty())), event_id: e.id, name, email, status: "reserved", guest: true };
+        addGuestTix(t);
+        await renderTicketBox(e);
+        $("tix-done").innerHTML = `<div class="tixdone" role="status"><h3>You're on the list</h3><p style="font-size:15px">Ticket code <span class="code">${esc(t.code)}</span> · ${t.qty} ${t.qty === 1 ? "ticket" : "tickets"} · ${esc(money(t.total))}</p>${payBlock(e, t)}
+          <p class="note"><b>Save your code.</b> Take a screenshot, or tap below to email it to yourself. It's also saved on this phone, on this event's page.</p>
+          <a class="btn" href="${esc(emailMyTicket(e, t))}" style="align-self:flex-start">Email me my ticket</a></div>`;
+        $("tix-done").scrollIntoView({ block: "nearest" });
+        if (mineHost(e)) renderHostTickets(e);
+      } catch (err) { $("tix-err").textContent = TIX_ERR(String(err && err.message || "")); $("tix-buy").disabled = false; }
+      return;
+    }
     $("tix-buy").disabled = true;
     try {
       const t = await api.buyTickets(e.id, name, qty());
