@@ -10,7 +10,7 @@
 /* Layout: one column. Sticky top bar; views (home, event, post, my events, review) swap below it; profile panel opens under the bar */
 :root{
   --bg:#FFFFFF; --check:#F7F7F7; --surface:#FFFFFF; --field:#F7F7F7; --ink:#2A1E16; --muted:#6B6460; --line:#E2E0DE;
-  --accent:#8A4B22; --accent-ink:#FFFFFF; --accent-soft:#F2E3D5;
+  --accent:#8A4B22; --accent-ink:#FFFFFF; --accent-soft:#F2E3D5; --accent-text:#8A4B22;
   --ok:#2F6B3A; --ok-soft:#E1EFE2; --wait:#8A6100; --wait-soft:#F8EDCF; --no:#A2342A; --no-soft:#F8E3E0;
   --display:"Fraunces", Georgia, "Times New Roman", serif;
   --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -29,7 +29,7 @@ h3{font-family:var(--display);font-weight:900;font-size:20px;line-height:1.2;mar
 p{margin:0}
 .lede{color:var(--muted);font-size:17px;max-width:54ch}
 .note{font-size:13px;color:var(--muted)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.card{color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
 button,a.btn,a.ghost{font:inherit;cursor:pointer;border-radius:10px;color:var(--ink)}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .btn,a.btn{background:var(--accent);color:var(--accent-ink);border:0;padding:11px 18px;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
@@ -55,7 +55,7 @@ textarea{min-height:110px;resize:vertical}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion: reduce){.icon.spin svg{animation:none}}
 .toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:70;background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:700;max-width:min(92vw,420px);text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.2)}
-.brand{font-family:var(--display);font-weight:900;font-size:18px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;border:0;padding:4px 0;text-align:left}
+.brand{color:var(--page-ink,var(--ink))!important;font-family:var(--display);font-weight:900;font-size:18px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;border:0;padding:4px 0;text-align:left}
 .pill{border-radius:999px;padding:7px 14px}
 .badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--no);color:#fff;font-size:12px;font-weight:800}
 /* search */
@@ -80,13 +80,13 @@ textarea{min-height:110px;resize:vertical}
 .ev-title h3{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:4px}
 .meta{color:var(--muted);font-size:15px;margin-top:4px}
 .meta b{color:var(--ink);font-weight:800}
-.tag{display:inline-block;font-size:12px;font-weight:800;padding:2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin:8px 6px 0 0}
+.tag{display:inline-block;font-size:12px;font-weight:800;padding:2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent-text);margin:8px 6px 0 0}
 .tag.cx{background:var(--no-soft);color:var(--no)}
 .tag.wait{background:var(--wait-soft);color:var(--wait)}
 .flyer{display:block;margin-top:12px;border-radius:10px;overflow:hidden;border:1px solid var(--line);max-width:320px}
 .flyer img{display:block;width:100%;height:auto;max-width:100%}
 .ev .row{margin-top:12px}
-.saved{background:var(--accent-soft)!important;border-color:var(--accent)!important;color:var(--accent)!important}
+.saved{background:var(--accent-soft)!important;border-color:var(--accent)!important;color:var(--accent-text)!important}
 .empty{color:var(--muted);text-align:center;padding:22px 8px}
 .desc{white-space:pre-wrap;overflow-wrap:anywhere;font-size:16px}
 .kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 14px;font-size:15px;margin:0}
@@ -121,7 +121,7 @@ textarea{min-height:110px;resize:vertical}
 /* review */
 .rv{display:flex;flex-direction:column;gap:12px}
 .rv ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
-footer{color:var(--muted);font-size:12px;text-align:center}
+footer{color:var(--page-muted,var(--muted));font-size:12px;text-align:center}
 .sharebox{display:flex;flex-direction:column;gap:12px;border:1.5px solid var(--accent);border-radius:12px;padding:16px;background:var(--accent-soft)}
 .sharebox.quiet{border:1px solid var(--line);background:var(--field)}
 .sharegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -147,7 +147,7 @@ footer{color:var(--muted);font-size:12px;text-align:center}
 .cover img{display:block;width:100%;max-height:70vh;object-fit:contain;max-width:100%}
 /* tickets */
 .tix{display:flex;flex-direction:column;gap:12px;border:1.5px solid var(--accent);border-radius:12px;padding:16px;background:var(--accent-soft)}
-.tixprice{font-family:var(--display);font-weight:900;font-size:24px;color:var(--accent)}
+.tixprice{font-family:var(--display);font-weight:900;font-size:24px;color:var(--accent-text)}
 .paybox{display:flex;flex-direction:column;gap:10px}
 .payin{display:flex;flex-direction:column;gap:6px;margin:-2px 0 4px 32px}
 .paybtns{display:flex;flex-direction:column;gap:8px}
@@ -169,6 +169,26 @@ footer{color:var(--muted);font-size:12px;text-align:center}
 .cmt:last-child{border-bottom:0}
 .cmt .tag{margin:0 0 0 6px;vertical-align:middle}
 .linkbtn{align-self:flex-start;background:none;border:0;padding:4px 0;font-size:13px;font-weight:700;text-decoration:underline;color:var(--muted)}
+/* host colors and face photo */
+body.themed{background:none}
+body.themed::after{content:"";position:fixed;inset:0;z-index:-1;background:var(--page-grad,var(--bg))}
+body.themed #status{color:var(--page-muted)}
+.face{grid-column:1/-1;position:relative;display:block;height:clamp(180px,52vw,300px);margin:-18px -18px 0;border:0;border-bottom:1px solid var(--line);border-radius:13px 13px 0 0;overflow:hidden;padding:0;background:#1f1610;cursor:pointer}
+.face img{position:relative;display:block;width:100%;height:100%;object-fit:contain}
+.face img.fill,.bn-slide img.fill{object-fit:cover}
+.swatches{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.sw{width:38px;height:38px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--line);padding:0;flex:none}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+.swc{position:relative;width:38px;height:38px;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 0 0 1px var(--line);flex:none;background:conic-gradient(#e53935,#fdd835,#43a047,#1e88e5,#8e24aa,#e53935);margin:0;cursor:pointer}
+.swc[data-on="1"]{box-shadow:0 0 0 2px var(--ink)}
+.swc input{position:absolute;inset:0;opacity:0;width:100%;height:100%;padding:0;border:0;cursor:pointer}
+.faces{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
+.faces button{position:relative;padding:0;border:3px solid transparent;border-radius:12px;overflow:hidden;background:var(--field)}
+.faces button[aria-pressed="true"]{border-color:var(--accent)}
+.faces img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover}
+.faces .chip,.fcard .chip{position:absolute;left:4px;bottom:4px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:800;padding:1px 8px;border-radius:999px}
+.pvpage{border-radius:12px;border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--pv-grad,#fff)}
+.pvpage .note{color:var(--page-muted,var(--muted))}
 @media (max-width:460px){.fields{grid-template-columns:1fr}.ev{grid-template-columns:56px minmax(0,1fr);gap:12px}}
 </style>
 </head>
@@ -295,7 +315,24 @@ footer{color:var(--muted);font-size:12px;text-align:center}
           <div class="files" id="f-filelist"></div>
           <div class="err" id="f-file-err" role="alert"></div>
         </div>
-        <label class="full check"><input id="f-banner" type="checkbox" checked> Show my first photo or flyer in the Featured banner at the top of the home page</label>
+        <label class="full check"><input id="f-banner" type="checkbox" checked> Show my face photo in the Featured banner at the top of the home page</label>
+        <div class="sec">Look of your ad</div>
+        <div class="full">
+          <label id="f-face-l">Face of your ad</label>
+          <div class="note" style="margin-bottom:8px">Tap the photo people should see first. It shows on the event list, in the Featured banner and at the top of your event page.</div>
+          <div class="faces" id="f-faces" role="group" aria-labelledby="f-face-l"></div>
+          <label class="check" style="margin-top:10px"><input id="f-fill" type="checkbox"> Fill the whole frame with the photo (trims the edges)</label>
+        </div>
+        <div class="full"><label id="sw-button-l">Button color</label><div class="swatches" id="sw-button" role="group" aria-labelledby="sw-button-l"></div></div>
+        <div class="full"><label id="sw-page-l">Page color</label><div class="swatches" id="sw-page" role="group" aria-labelledby="sw-page-l"></div>
+          <label class="check" style="margin-top:12px"><input id="f-two" type="checkbox"> Blend in a second page color</label>
+          <div class="swatches" id="sw-page2" role="group" aria-label="Second page color" hidden style="margin-top:10px"></div>
+        </div>
+        <div class="full" style="display:flex;flex-direction:column;gap:10px">
+          <label style="margin:0">Preview</label>
+          <div id="f-preview" inert style="display:flex;flex-direction:column;gap:10px"></div>
+          <div class="row"><button type="button" class="ghost" id="f-look-reset">Use the standard colors</button></div>
+        </div>
         <div class="sec">Tickets</div>
         <label class="full check"><input id="f-tix" type="checkbox"> Sell tickets on this site</label>
         <div class="full fields" id="f-tix-box" hidden>
@@ -596,6 +633,46 @@ function cardUrl(link, t){
 }
 const amt = n => (Number(n) || 0).toFixed(2);
 const safeLink = u => /^https:\/\/[^\s"'<>]+$/.test(String(u || "")) ? u : "";
+
+/* ---------- host colors: button color, page color (one or two), face photo fill ---------- */
+const hexOk = c => /^#[0-9a-f]{6}$/i.test(String(c || "")) ? String(c).toLowerCase() : "";
+function cleanTheme(t){
+  t = t && typeof t === "object" ? t : {}; const o = {};
+  if (hexOk(t.button)) o.button = hexOk(t.button);
+  if (hexOk(t.page)) { o.page = hexOk(t.page); if (hexOk(t.page2) && hexOk(t.page2) !== o.page) o.page2 = hexOk(t.page2); }
+  if (t.fill === true) o.fill = true;
+  return o;
+}
+const rgbOf = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const lum = h => rgbOf(h).map(v => (v /= 255) <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)).reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0);
+const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+const mix = (a, b, t) => { const A = rgbOf(a), B = rgbOf(b); return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join(""); };
+const INK = "#2a1e16";
+const inkOn = c => contrast(c, "#ffffff") >= contrast(c, INK) ? "#ffffff" : INK;
+function readableOn(c, bg){ let x = c; const to = lum(bg) > 0.4 ? "#000000" : "#ffffff"; for (let i = 0; i < 12 && contrast(x, bg) < 4.5; i++) x = mix(x, to, 0.18); return x; }
+const pageGrad = t => t.page2 ? `linear-gradient(165deg,${t.page},${t.page2})` : t.page;
+/* CSS variables for a host's colors. Only checked #rrggbb values ever reach a style. */
+function themeVars(raw, onCard){
+  const t = cleanTheme(raw), v = {};
+  if (t.button) Object.assign(v, { "--accent": t.button, "--accent-ink": inkOn(t.button), "--accent-text": readableOn(t.button, "#ffffff"), "--accent-soft": mix(t.button, "#ffffff", 0.86) });
+  if (t.page) {
+    const mid = t.page2 ? mix(t.page, t.page2, 0.5) : t.page, ink = inkOn(mid);
+    Object.assign(v, { "--page-ink": ink, "--page-muted": mix(ink, mid, 0.32) });
+    if (onCard) Object.assign(v, { "--surface": t.page, "--ink": ink, "--muted": mix(ink, mid, 0.3), "--line": mix(mid, ink, 0.2), "--field": mix(mid, ink, 0.07) });
+    else Object.assign(v, { "--bg": t.page, "--page-grad": pageGrad(t) });
+  }
+  return v;
+}
+const styleOf = v => Object.entries(v).map(([k, x]) => k + ":" + x).join(";");
+function cardStyle(e){ const t = cleanTheme(e.theme), v = themeVars(t, true); if (t.page2) v.background = pageGrad(t); return styleOf(v); }
+const ACCENT_KEYS = ["--accent", "--accent-ink", "--accent-text", "--accent-soft"];
+const PAGE_KEYS = ["--bg", "--page-grad", "--page-ink", "--page-muted"];
+function applyPageTheme(raw){
+  const root = document.documentElement, t = cleanTheme(raw), v = themeVars(t, false);
+  PAGE_KEYS.forEach(k => root.style.removeProperty(k));
+  document.body.classList.toggle("themed", !!t.page);
+  PAGE_KEYS.forEach(k => { if (v[k]) root.style.setProperty(k, v[k]); });
+}
 function ago(s){
   const m = Math.round((Date.now() - new Date(s)) / 60000); if (m < 1) return "just now"; if (m < 60) return m + " min ago";
   const h = Math.round(m / 60); if (h < 24) return h + (h === 1 ? " hour ago" : " hours ago");
@@ -660,6 +737,7 @@ async function route(){
   const h = location.hash.slice(1);
   $("nav-back").hidden = !h;
   window.scrollTo(0, 0);
+  applyPageTheme(null); ACCENT_KEYS.forEach(k => $("v-event").style.removeProperty(k));
   if (h.startsWith("event-")) { showView("v-event"); return renderDetail(h.slice(6)); }
   if (h === "post") return requireProfile(() => { openForm(null); showView("v-post"); }, "post");
   if (h.startsWith("edit-")) return requireProfile(async () => { const e = await api.getEvent(h.slice(5)); if (!e || e.host_id !== USER.id && !IS_ADMIN) { go(""); return; } openForm(e); showView("v-post"); }, "post");
@@ -696,7 +774,9 @@ function requireProfile(fn, why){
    ============================================================ */
 function card(e){
   const d = dt(e.date), place = placeLine(e), fa = fullAddr(e), flyer = images(e)[0], saved = SAVES.has(e.id);
-  return `<article class="card ev">
+  const fill = cleanTheme(e.theme).fill ? ' class="fill"' : "";
+  return `<article class="card ev" style="${cardStyle(e)}">
+    ${flyer ? `<button type="button" class="face" data-go="event-${esc(e.id)}" aria-label="See ${esc(e.title)}"><span class="bn-bg" style="background-image:url(&quot;${esc(flyer.url)}&quot;)" aria-hidden="true"></span><img src="${esc(flyer.url)}"${fill} alt="Flyer for ${esc(e.title)}" loading="lazy"></button>` : ""}
     <div class="cal" aria-hidden="true"><span class="mo">${d.toLocaleDateString(undefined, { month: "short" }).toUpperCase()}</span><span class="dy">${d.getDate()}</span><span class="wd">${d.toLocaleDateString(undefined, { weekday: "short" })}</span></div>
     <div style="min-width:0">
       <button type="button" class="ev-title" data-go="event-${esc(e.id)}"><h3>${esc(e.title)}</h3></button>
@@ -704,7 +784,6 @@ function card(e){
       ${place ? `<p class="meta">${esc(place)}</p>` : ""}
       ${e.host_name ? `<p class="meta">Hosted by ${esc(e.host_name)}</p>` : ""}
       ${e.status === "cancelled" ? '<span class="tag cx">Cancelled</span>' : ""}${e.event_type ? `<span class="tag">${esc(e.event_type)}</span>` : ""}${e.price ? `<span class="tag">${esc(e.price)}</span>` : ""}${e.tickets_on ? `<span class="tag ok">Tickets ${Number(e.ticket_price) ? esc(money(e.ticket_price)) : "free"}</span>` : ""}
-      ${flyer ? `<button type="button" class="flyer" data-go="event-${esc(e.id)}" style="padding:0;background:none" aria-label="See ${esc(e.title)}"><img src="${esc(flyer.url)}" alt="Flyer for ${esc(e.title)}" loading="lazy"></button>` : ""}
       <div class="row">
         <button type="button" class="ghost ${saved ? "saved" : ""}" data-save="${esc(e.id)}" aria-pressed="${saved}">${HEART(saved)}${saved ? "Saved" : "Save"}</button>
         ${fa ? `<a class="ghost" href="${navUrl(e)}" target="_blank" rel="noopener">${NAV_SVG}Navigate</a>` : ""}
@@ -731,7 +810,7 @@ function renderBanner(){
     .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || ""))).slice(0, 10);
   $("banner").hidden = !items.length;
   if (!items.length) { $("bn-track").innerHTML = ""; $("bn-dots").innerHTML = ""; return; }
-  $("bn-track").innerHTML = items.map((e, i) => { const u = images(e)[0].url; return `<button type="button" class="bn-slide" data-go="event-${esc(e.id)}" aria-label="${esc(e.title)}, ${esc(longDate(e.date))} (${i + 1} of ${items.length})"><span class="bn-bg" style="background-image:url(&quot;${esc(u)}&quot;)" aria-hidden="true"></span><img src="${esc(u)}" alt="" ${i ? 'loading="lazy"' : ""}><span class="bn-cap"><b>${esc(e.title)}</b><span>${esc(longDate(e.date))} · ${esc(fmtTime(e.time))}${e.city ? " · " + esc(e.city) : ""}</span></span></button>`; }).join("");
+  $("bn-track").innerHTML = items.map((e, i) => { const u = images(e)[0].url; return `<button type="button" class="bn-slide" data-go="event-${esc(e.id)}" aria-label="${esc(e.title)}, ${esc(longDate(e.date))} (${i + 1} of ${items.length})"><span class="bn-bg" style="background-image:url(&quot;${esc(u)}&quot;)" aria-hidden="true"></span><img src="${esc(u)}" alt=""${cleanTheme(e.theme).fill ? ' class="fill"' : ""} ${i ? 'loading="lazy"' : ""}><span class="bn-cap"><b>${esc(e.title)}</b><span>${esc(longDate(e.date))} · ${esc(fmtTime(e.time))}${e.city ? " · " + esc(e.city) : ""}</span></span></button>`; }).join("");
   $("bn-dots").innerHTML = items.length > 1 ? items.map((e, i) => `<button type="button" data-bn="${i}" aria-label="Show flyer ${i + 1}" aria-current="${i === 0}"></button>`).join("") : "";
   bnStart();
 }
@@ -783,6 +862,8 @@ async function renderDetail(id){
   const box = $("ev-detail");
   box.innerHTML = '<p class="note">Loading…</p>';
   let e; try { e = await api.getEvent(id); } catch (err) { e = null; }
+  if (location.hash.slice(1) !== "event-" + id) return;
+  if (e) { applyPageTheme(e.theme); Object.entries(themeVars({ button: cleanTheme(e.theme).button }, false)).forEach(([k, x]) => $("v-event").style.setProperty(k, x)); }
   if (!e) { box.innerHTML = '<h2>Event not found</h2><p class="note" style="font-size:15px">It may have been removed. <button type="button" class="ghost" data-go="">See all events</button></p>'; return; }
   const fa = fullAddr(e), mine = USER && e.host_id === USER.id, saved = SAVES.has(e.id), imgs = images(e), dcs = docs(e);
   document.title = e.title + (SITE_TITLE ? " · " + SITE_TITLE : "");
@@ -1008,6 +1089,8 @@ function openForm(e){
   $("f-pay-zelle").value = po.zelle || "";
   document.querySelectorAll("[data-pay]").forEach(c => { c.checked = !!po[c.dataset.pay]; payToggle(c); });
   formFiles = e && Array.isArray(e.files) ? e.files.slice() : [];
+  FT = { button: "", page: "", page2: "", fill: false, ...cleanTheme(e && e.theme) };
+  $("f-two").checked = !!FT.page2;
   renderFileList(); $("f-err").textContent = ""; $("f-file-err").textContent = "";
   $("form-extra") && $("form-extra").remove();
   if (e) {
@@ -1073,17 +1156,23 @@ $("ev-form").addEventListener("submit", async ev => {
   v.pay_options = pay;
   if (uploading) return err("Wait for your files to finish uploading.");
   v.files = formFiles.filter(f => !f.busy).map(({ name, type, size, url, path }) => ({ name, type, size, url, path }));
+  v.theme = formTheme();
   if (!editingId) v.host_name = (PROFILE && PROFILE.name) || "";
   $("f-save").disabled = true;
   try {
     const save = row => editingId ? api.updateEvent(editingId, row) : api.createEvent(row);
-    let saved;
-    try { saved = await save(v); }
+    let saved, noTheme = false;
+    const saveRow = async row => {
+      try { return await save(row); }
+      catch (e0) { if (!/theme/.test(String(e0 && e0.message || ""))) throw e0; noTheme = true; const { theme, ...rest } = row; return await save(rest); }
+    };
+    try { saved = await saveRow(v); }
     catch (e1) {
       if (!/pay_options/.test(String(e1 && e1.message || ""))) throw e1;
       if (Object.keys(pay).some(k => k !== "card" && k !== "door")) throw new Error("pay_setup");
-      const { pay_options, ...rest } = v; saved = await save(rest);
+      const { pay_options, ...rest } = v; saved = await saveRow(rest);
     }
+    if (noTheme && Object.keys(v.theme).some(k => k !== "fill")) toast("Your event saved, but your colors didn't. The site owner needs to run event-colors-setup.sql in Supabase.", 6000);
     if (!editingId) JUST_POSTED = saved.id;
     await loadEvents(); go("event-" + saved.id);
   } catch (e2) {
@@ -1100,9 +1189,61 @@ function renderFileList(){
   $("f-filelist").innerHTML = formFiles.map((f, i) => {
     if (f.busy) return `<div class="fcard"><div class="busy">Uploading…</div></div>`;
     const inner = isImg(f) ? `<img src="${esc(f.url)}" alt="${esc(f.name)}">` : `<div class="doc"><b>${esc((String(f.name).split(".").pop() || "FILE").toUpperCase().slice(0, 5))}</b><span>${esc(f.name)}</span><span class="note" style="font-size:11px">${kb(f.size || 0)}</span></div>`;
-    return `<div class="fcard"><a href="${esc(f.url)}" target="_blank" rel="noopener">${inner}</a><button type="button" class="rm" data-rm="${i}" aria-label="Remove ${esc(f.name)}">×</button></div>`;
+    const face = isImg(f) && formFiles.find(x => !x.busy && isImg(x)) === f ? '<span class="chip">Face</span>' : "";
+    return `<div class="fcard"><a href="${esc(f.url)}" target="_blank" rel="noopener">${inner}</a>${face}<button type="button" class="rm" data-rm="${i}" aria-label="Remove ${esc(f.name)}">×</button></div>`;
   }).join("");
+  renderLook();
 }
+
+/* ---------- Look of your ad: face photo, button color, page color(s), live preview ---------- */
+let FT = { button: "", page: "", page2: "", fill: false };
+const BTN_COLORS = [["#8a4b22", "Standard brown"], ["#a2342a", "Red"], ["#d35400", "Orange"], ["#b8860b", "Gold"], ["#2f6b3a", "Green"], ["#1f3a5f", "Navy"], ["#6b2d5c", "Plum"], ["#c2185b", "Pink"], ["#111111", "Black"]];
+const PAGE_COLORS = [["#ffffff", "Standard white"], ["#f6efe6", "Cream"], ["#fff6d6", "Butter"], ["#eaf2ec", "Sage"], ["#e6eef8", "Sky"], ["#f8e8ec", "Blush"], ["#3b2417", "Espresso"], ["#0f1b2d", "Midnight"], ["#111111", "Black"]];
+function swatchRow(id, list, key, std){
+  const cur = FT[key] || std, inList = list.some(([c]) => c === cur);
+  $(id).innerHTML = list.map(([c, n]) => `<button type="button" class="sw" style="background:${c}" data-sw="${key}" data-c="${c}" aria-label="${esc(n)}" aria-pressed="${c === cur}"></button>`).join("")
+    + `<label class="swc" data-on="${inList ? "" : "1"}" ${inList ? "" : `style="background:${cur}"`} title="Pick any color"><input type="color" data-swc="${key}" value="${cur}" aria-label="Pick any color"></label>`;
+}
+const formTheme = () => { const two = $("f-two").checked; return cleanTheme({ ...FT, page: FT.page || (two ? "#ffffff" : ""), page2: two ? (FT.page2 || "#f6efe6") : "" }); };
+function renderLook(){
+  if (!$("f-faces")) return;
+  const imgs = formFiles.filter(f => !f.busy && isImg(f)), face = imgs[0];
+  $("f-faces").innerHTML = imgs.length ? imgs.map((f, i) => `<button type="button" data-face="${formFiles.indexOf(f)}" aria-pressed="${f === face}" aria-label="Use ${esc(f.name)} as the face"><img src="${esc(f.url)}" alt="">${f === face ? '<span class="chip">Face</span>' : ""}</button>`).join("")
+    : '<p class="note" style="grid-column:1/-1">Add a photo or flyer above, then pick your face here.</p>';
+  $("f-fill").checked = !!FT.fill; $("f-fill").closest("label").hidden = !imgs.length;
+  swatchRow("sw-button", BTN_COLORS, "button", "#8a4b22");
+  swatchRow("sw-page", PAGE_COLORS, "page", "#ffffff");
+  $("sw-page2").hidden = !$("f-two").checked;
+  if ($("f-two").checked) swatchRow("sw-page2", PAGE_COLORS, "page2", FT.page2 || "#f6efe6");
+  renderPreview();
+}
+function renderPreview(){
+  const t = formTheme();
+  const fake = { id: "preview", title: $("f-title").value.trim() || "Your event name", date: $("f-date").value || todayIso, time: $("f-time").value, event_type: $("f-type").value, price: $("f-price").value.trim(),
+    location: $("f-place").value.trim(), city: $("f-city").value.trim(), state: $("f-state").value.trim().toUpperCase(), host_name: (PROFILE && PROFILE.name) || "", files: formFiles.filter(f => !f.busy), theme: t, tickets_on: $("f-tix").checked, ticket_price: Number($("f-tprice").value) || 0 };
+  const pv = themeVars(t, false), btn = styleOf(themeVars({ button: t.button }, false));
+  $("f-preview").innerHTML = `<p class="note" style="margin:0">On the event list</p>${card(fake)}
+    <p class="note" style="margin:0">On your event page</p>
+    <div class="pvpage" style="${t.page ? `--pv-grad:${pageGrad(t)};` : ""}${pv["--page-muted"] ? "--page-muted:" + pv["--page-muted"] : ""}">
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;${btn}"><h3>${esc(fake.title)}</h3>
+        <div class="row"><span class="btn">Get tickets</span><span class="ghost saved">${HEART(true)}Saved</span><span class="tag" style="margin:0">${esc(fake.event_type)}</span></div></div>
+      <p class="note">The page behind your event uses your page color.</p></div>`;
+}
+$("ev-form").addEventListener("click", e => {
+  const sw = e.target.closest("[data-sw]");
+  if (sw) { const k = sw.dataset.sw, c = sw.dataset.c; FT[k] = (k === "button" && c === "#8a4b22") || (k === "page" && c === "#ffffff") ? "" : c; renderLook(); $(`sw-${k}`).querySelector(`[data-c="${c}"]`).focus(); return; }
+  const fc = e.target.closest("[data-face]");
+  if (fc) { const i = +fc.dataset.face, f = formFiles.splice(i, 1)[0]; formFiles.unshift(f); renderFileList(); const b = $("f-faces").querySelector('[aria-pressed="true"]'); if (b) b.focus(); }
+});
+$("ev-form").addEventListener("input", e => {
+  const c = e.target.closest("[data-swc]");
+  if (c) { const k = c.dataset.swc; FT[k] = hexOk(c.value); const l = c.closest("label"); l.style.background = FT[k]; l.dataset.on = "1"; $(`sw-${k}`).querySelectorAll("[data-sw]").forEach(b => b.setAttribute("aria-pressed", "false")); renderPreview(); return; }
+  if (!e.target.closest("#f-preview")) renderPreview();
+});
+$("ev-form").addEventListener("change", e => { if (e.target.closest("[data-swc]")) renderLook(); });
+$("f-fill").addEventListener("change", () => { FT.fill = $("f-fill").checked; renderPreview(); });
+$("f-two").addEventListener("change", () => { if ($("f-two").checked && !FT.page2) FT.page2 = "#f6efe6"; renderLook(); });
+$("f-look-reset").addEventListener("click", () => { FT = { button: "", page: "", page2: "", fill: false }; $("f-two").checked = false; renderLook(); });
 function shrinkImage(file, maxSide, quality){
   return new Promise((res, rej) => {
     const url = URL.createObjectURL(file), img = new Image();
