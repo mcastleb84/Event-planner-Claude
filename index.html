@@ -9,8 +9,8 @@
 <style>
 /* Layout: one column. Sticky top bar; views (home, event, post, my events, review) swap below it; profile panel opens under the bar */
 :root{
-  --bg:#FFFFFF; --check:#C6EBE7; --surface:#FFFFFF; --field:#F7F7F7; --ink:#2A1E16; --muted:#6B6460; --line:#E2E0DE;
-  --accent:#FF8243; --accent-ink:#2A1E16; --accent-soft:#FFE8DC; --accent-text:#B14A12;
+  --bg:#FF8243; --check:#40C4B8; --page-ink:#2A1E16; --page-muted:#3D2B20; --surface:#FFFFFF; --field:#F7F7F7; --ink:#2A1E16; --muted:#6B6460; --line:#E2E0DE;
+  --accent:#8A4B22; --accent-ink:#FFFFFF; --accent-soft:#F2E3D5; --accent-text:#8A4B22;
   --ok:#2F6B3A; --ok-soft:#E1EFE2; --wait:#8A6100; --wait-soft:#F8EDCF; --no:#A2342A; --no-soft:#F8E3E0;
   --display:"Fraunces", Georgia, "Times New Roman", serif;
   --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -27,7 +27,7 @@ h1{font-family:var(--display);font-weight:900;font-size:clamp(32px,8vw,46px);lin
 h2{font-family:var(--display);font-weight:800;font-size:24px;line-height:1.15;margin:0;text-wrap:balance;overflow-wrap:anywhere}
 h3{font-family:var(--display);font-weight:900;font-size:20px;line-height:1.2;margin:0;overflow-wrap:anywhere}
 p{margin:0}
-.lede{color:var(--muted);font-size:17px;max-width:54ch}
+.lede{color:var(--page-muted);font-size:17px;max-width:54ch}
 .note{font-size:13px;color:var(--muted)}
 .card{color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
 button,a.btn,a.ghost,span.btn,span.ghost{font:inherit;cursor:pointer;border-radius:10px;color:var(--ink)}
@@ -172,7 +172,7 @@ footer{color:var(--page-muted,var(--muted));font-size:12px;text-align:center}
 /* host colors and face photo */
 body.themed{background:none}
 body.themed::after{content:"";position:fixed;inset:0;z-index:-1;background:var(--page-grad,var(--bg))}
-body.themed #status{color:var(--page-muted)}
+#status,#save-note,#share-note,#v-review > div .note,#list > .label{color:var(--page-muted)!important}
 .face{grid-column:1/-1;position:relative;display:block;height:clamp(180px,52vw,300px);margin:-18px -18px 0;border:0;border-bottom:1px solid var(--line);border-radius:13px 13px 0 0;overflow:hidden;padding:0;background:#1f1610;cursor:pointer}
 .face img{position:relative;display:block;width:100%;height:100%;object-fit:contain}
 .face img.fill,.bn-slide img.fill{object-fit:cover}
@@ -187,7 +187,7 @@ body.themed #status{color:var(--page-muted)}
 .faces button[aria-pressed="true"]{border-color:var(--accent)}
 .faces img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover}
 .faces .chip,.fcard .chip{position:absolute;left:4px;bottom:4px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:800;padding:1px 8px;border-radius:999px}
-.pvpage{border-radius:12px;border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--pv-grad,#fff)}
+.pvpage{border-radius:12px;border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--pv-grad,conic-gradient(var(--check) 25%,var(--bg) 0 50%,var(--check) 0 75%,var(--bg) 0) 0 0/36px 36px)}
 .pvpage .note{color:var(--page-muted,var(--muted))}
 /* photo editor */
 .fcard .ed{position:absolute;right:4px;bottom:4px;border:0;border-radius:999px;background:rgba(20,12,6,.75);color:#fff;font-size:12px;font-weight:800;padding:4px 10px}
@@ -748,7 +748,7 @@ function shareTargets(e){
     { n: "Instagram", c: "#D6247A", l: "IG", href: "https://www.instagram.com/", copy: true },
     { n: "TikTok", c: "#111111", l: "T", href: "https://www.tiktok.com/", copy: true },
     { n: "Text message", c: "#2F6B3A", l: "✉", href: "sms:?&body=" + both },
-    { n: "Email", c: "#B14A12", l: "@", href: "mailto:?subject=" + encodeURIComponent(e.title) + "&body=" + encodeURIComponent(text + "\n\n" + url) }
+    { n: "Email", c: "#8A4B22", l: "@", href: "mailto:?subject=" + encodeURIComponent(e.title) + "&body=" + encodeURIComponent(text + "\n\n" + url) }
   ];
 }
 function shareBox(e, fresh){
@@ -1309,22 +1309,22 @@ function renderFileList(){
 
 /* ---------- Look of your ad: face photo, button color, page color(s), live preview ---------- */
 let FT = { button: "", page: "", page2: "", fill: false };
-const BTN_COLORS = [["#ff8243", "Standard orange"], ["#8a4b22", "Brown"], ["#a2342a", "Red"], ["#b8860b", "Gold"], ["#2f6b3a", "Green"], ["#1f3a5f", "Navy"], ["#6b2d5c", "Plum"], ["#c2185b", "Pink"], ["#111111", "Black"]];
-const PAGE_COLORS = [["#ffffff", "Standard white"], ["#f6efe6", "Cream"], ["#fff6d6", "Butter"], ["#eaf2ec", "Sage"], ["#e6eef8", "Sky"], ["#f8e8ec", "Blush"], ["#3b2417", "Espresso"], ["#0f1b2d", "Midnight"], ["#111111", "Black"]];
+const BTN_COLORS = [["#8a4b22", "Standard brown"], ["#a2342a", "Red"], ["#d35400", "Orange"], ["#b8860b", "Gold"], ["#2f6b3a", "Green"], ["#1f3a5f", "Navy"], ["#6b2d5c", "Plum"], ["#c2185b", "Pink"], ["#111111", "Black"]];
+const PAGE_COLORS = [["#ff8243", "Standard orange with teal checks"], ["#ffffff", "White"], ["#f6efe6", "Cream"], ["#fff6d6", "Butter"], ["#eaf2ec", "Sage"], ["#e6eef8", "Sky"], ["#f8e8ec", "Blush"], ["#3b2417", "Espresso"], ["#0f1b2d", "Midnight"], ["#111111", "Black"]];
 function swatchRow(id, list, key, std){
   const cur = FT[key] || std, inList = list.some(([c]) => c === cur);
-  $(id).innerHTML = list.map(([c, n]) => `<button type="button" class="sw" style="background:${c}" data-sw="${key}" data-c="${c}" aria-label="${esc(n)}" aria-pressed="${c === cur}"></button>`).join("")
+  $(id).innerHTML = list.map(([c, n]) => `<button type="button" class="sw" style="background:${key === "page" && c === "#ff8243" ? "conic-gradient(#40c4b8 25%,#ff8243 0 50%,#40c4b8 0 75%,#ff8243 0) 0 0/16px 16px" : c}" data-sw="${key}" data-c="${c}" aria-label="${esc(n)}" aria-pressed="${c === cur}"></button>`).join("")
     + `<label class="swc" data-on="${inList ? "" : "1"}" ${inList ? "" : `style="background:${cur}"`} title="Pick any color"><input type="color" data-swc="${key}" value="${cur}" aria-label="Pick any color"></label>`;
 }
-const formTheme = () => { const two = $("f-two").checked; return cleanTheme({ ...FT, page: FT.page || (two ? "#ffffff" : ""), page2: two ? (FT.page2 || "#f6efe6") : "" }); };
+const formTheme = () => { const two = $("f-two").checked; return cleanTheme({ ...FT, page: FT.page || (two ? "#ff8243" : ""), page2: two ? (FT.page2 || "#f6efe6") : "" }); };
 function renderLook(){
   if (!$("f-faces")) return;
   const imgs = formFiles.filter(f => !f.busy && isImg(f)), face = imgs[0];
   $("f-faces").innerHTML = imgs.length ? imgs.map((f, i) => `<button type="button" data-face="${formFiles.indexOf(f)}" aria-pressed="${f === face}" aria-label="Use ${esc(f.name)} as the face"><img src="${esc(f.url)}" alt="">${f === face ? '<span class="chip">Face</span>' : ""}</button>`).join("")
     : '<p class="note" style="grid-column:1/-1">Add a photo or flyer above, then pick your face here.</p>';
   $("f-fill").checked = !!FT.fill; $("f-fill").closest("label").hidden = !imgs.length; $("f-face-edit-row").hidden = !imgs.length;
-  swatchRow("sw-button", BTN_COLORS, "button", "#ff8243");
-  swatchRow("sw-page", PAGE_COLORS, "page", "#ffffff");
+  swatchRow("sw-button", BTN_COLORS, "button", "#8a4b22");
+  swatchRow("sw-page", PAGE_COLORS, "page", "#ff8243");
   $("sw-page2").hidden = !$("f-two").checked;
   if ($("f-two").checked) swatchRow("sw-page2", PAGE_COLORS, "page2", FT.page2 || "#f6efe6");
   renderPreview();
@@ -1343,7 +1343,7 @@ function renderPreview(){
 }
 $("ev-form").addEventListener("click", e => {
   const sw = e.target.closest("[data-sw]");
-  if (sw) { const k = sw.dataset.sw, c = sw.dataset.c; FT[k] = (k === "button" && c === "#ff8243") || (k === "page" && c === "#ffffff") ? "" : c; renderLook(); $(`sw-${k}`).querySelector(`[data-c="${c}"]`).focus(); return; }
+  if (sw) { const k = sw.dataset.sw, c = sw.dataset.c; FT[k] = (k === "button" && c === "#8a4b22") || (k === "page" && c === "#ff8243") ? "" : c; renderLook(); $(`sw-${k}`).querySelector(`[data-c="${c}"]`).focus(); return; }
   const fc = e.target.closest("[data-face]");
   if (fc) { const i = +fc.dataset.face, f = formFiles.splice(i, 1)[0]; formFiles.unshift(f); renderFileList(); const b = $("f-faces").querySelector('[aria-pressed="true"]'); if (b) b.focus(); }
 });
