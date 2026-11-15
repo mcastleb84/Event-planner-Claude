@@ -9,8 +9,8 @@
 <style>
 /* Layout: one column. Sticky top bar; views (home, event, post, my events, review) swap below it; profile panel opens under the bar */
 :root{
-  --bg:#FFFFFF; --check:#F7F7F7; --surface:#FFFFFF; --field:#F7F7F7; --ink:#2A1E16; --muted:#6B6460; --line:#E2E0DE;
-  --accent:#8A4B22; --accent-ink:#FFFFFF; --accent-soft:#F2E3D5; --accent-text:#8A4B22;
+  --bg:#FFFFFF; --check:#C6EBE7; --surface:#FFFFFF; --field:#F7F7F7; --ink:#2A1E16; --muted:#6B6460; --line:#E2E0DE;
+  --accent:#FF8243; --accent-ink:#2A1E16; --accent-soft:#FFE8DC; --accent-text:#B14A12;
   --ok:#2F6B3A; --ok-soft:#E1EFE2; --wait:#8A6100; --wait-soft:#F8EDCF; --no:#A2342A; --no-soft:#F8E3E0;
   --display:"Fraunces", Georgia, "Times New Roman", serif;
   --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -748,7 +748,7 @@ function shareTargets(e){
     { n: "Instagram", c: "#D6247A", l: "IG", href: "https://www.instagram.com/", copy: true },
     { n: "TikTok", c: "#111111", l: "T", href: "https://www.tiktok.com/", copy: true },
     { n: "Text message", c: "#2F6B3A", l: "✉", href: "sms:?&body=" + both },
-    { n: "Email", c: "#8A4B22", l: "@", href: "mailto:?subject=" + encodeURIComponent(e.title) + "&body=" + encodeURIComponent(text + "\n\n" + url) }
+    { n: "Email", c: "#B14A12", l: "@", href: "mailto:?subject=" + encodeURIComponent(e.title) + "&body=" + encodeURIComponent(text + "\n\n" + url) }
   ];
 }
 function shareBox(e, fresh){
@@ -1309,7 +1309,7 @@ function renderFileList(){
 
 /* ---------- Look of your ad: face photo, button color, page color(s), live preview ---------- */
 let FT = { button: "", page: "", page2: "", fill: false };
-const BTN_COLORS = [["#8a4b22", "Standard brown"], ["#a2342a", "Red"], ["#d35400", "Orange"], ["#b8860b", "Gold"], ["#2f6b3a", "Green"], ["#1f3a5f", "Navy"], ["#6b2d5c", "Plum"], ["#c2185b", "Pink"], ["#111111", "Black"]];
+const BTN_COLORS = [["#ff8243", "Standard orange"], ["#8a4b22", "Brown"], ["#a2342a", "Red"], ["#b8860b", "Gold"], ["#2f6b3a", "Green"], ["#1f3a5f", "Navy"], ["#6b2d5c", "Plum"], ["#c2185b", "Pink"], ["#111111", "Black"]];
 const PAGE_COLORS = [["#ffffff", "Standard white"], ["#f6efe6", "Cream"], ["#fff6d6", "Butter"], ["#eaf2ec", "Sage"], ["#e6eef8", "Sky"], ["#f8e8ec", "Blush"], ["#3b2417", "Espresso"], ["#0f1b2d", "Midnight"], ["#111111", "Black"]];
 function swatchRow(id, list, key, std){
   const cur = FT[key] || std, inList = list.some(([c]) => c === cur);
@@ -1323,7 +1323,7 @@ function renderLook(){
   $("f-faces").innerHTML = imgs.length ? imgs.map((f, i) => `<button type="button" data-face="${formFiles.indexOf(f)}" aria-pressed="${f === face}" aria-label="Use ${esc(f.name)} as the face"><img src="${esc(f.url)}" alt="">${f === face ? '<span class="chip">Face</span>' : ""}</button>`).join("")
     : '<p class="note" style="grid-column:1/-1">Add a photo or flyer above, then pick your face here.</p>';
   $("f-fill").checked = !!FT.fill; $("f-fill").closest("label").hidden = !imgs.length; $("f-face-edit-row").hidden = !imgs.length;
-  swatchRow("sw-button", BTN_COLORS, "button", "#8a4b22");
+  swatchRow("sw-button", BTN_COLORS, "button", "#ff8243");
   swatchRow("sw-page", PAGE_COLORS, "page", "#ffffff");
   $("sw-page2").hidden = !$("f-two").checked;
   if ($("f-two").checked) swatchRow("sw-page2", PAGE_COLORS, "page2", FT.page2 || "#f6efe6");
@@ -1343,7 +1343,7 @@ function renderPreview(){
 }
 $("ev-form").addEventListener("click", e => {
   const sw = e.target.closest("[data-sw]");
-  if (sw) { const k = sw.dataset.sw, c = sw.dataset.c; FT[k] = (k === "button" && c === "#8a4b22") || (k === "page" && c === "#ffffff") ? "" : c; renderLook(); $(`sw-${k}`).querySelector(`[data-c="${c}"]`).focus(); return; }
+  if (sw) { const k = sw.dataset.sw, c = sw.dataset.c; FT[k] = (k === "button" && c === "#ff8243") || (k === "page" && c === "#ffffff") ? "" : c; renderLook(); $(`sw-${k}`).querySelector(`[data-c="${c}"]`).focus(); return; }
   const fc = e.target.closest("[data-face]");
   if (fc) { const i = +fc.dataset.face, f = formFiles.splice(i, 1)[0]; formFiles.unshift(f); renderFileList(); const b = $("f-faces").querySelector('[aria-pressed="true"]'); if (b) b.focus(); }
 });
