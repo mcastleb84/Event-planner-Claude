@@ -30,7 +30,7 @@ p{margin:0}
 .lede{color:var(--muted);font-size:17px;max-width:54ch}
 .note{font-size:13px;color:var(--muted)}
 .card{color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
-button,a.btn,a.ghost{font:inherit;cursor:pointer;border-radius:10px;color:var(--ink)}
+button,a.btn,a.ghost,span.btn,span.ghost{font:inherit;cursor:pointer;border-radius:10px;color:var(--ink)}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .btn,a.btn{background:var(--accent);color:var(--accent-ink);border:0;padding:11px 18px;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .ghost,a.ghost{background:var(--surface);border:1px solid var(--line);padding:9px 14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
@@ -384,8 +384,20 @@ body.themed #status{color:var(--page-muted)}
         </div>
       </div>
       <div class="err" id="f-err" role="alert"></div>
-      <div class="row"><button class="btn" type="submit" id="f-save">Publish event</button></div>
+      <div class="row"><button class="ghost" type="button" id="f-preview-btn">Preview</button><button class="btn" type="submit" id="f-save">Publish event</button></div>
     </form>
+    <section id="post-pv" hidden style="display:flex;flex-direction:column;gap:14px" aria-labelledby="post-pv-h">
+      <div class="card" style="display:flex;flex-direction:column;gap:10px">
+        <h2 id="post-pv-h" tabindex="-1">Preview</h2>
+        <p class="note" style="font-size:15px">This is how your event will look. Nothing is posted until you tap <b data-pv-word>Publish</b>.</p>
+        <div class="row"><button class="btn" type="button" data-pv-go>Publish event</button><button class="ghost" type="button" data-pv-back>Keep editing</button></div>
+      </div>
+      <p class="note" style="margin:0">On the event list</p>
+      <div id="pv-list" inert></div>
+      <p class="note" style="margin:0">Your event page</p>
+      <div class="pvpage" id="pv-page" inert></div>
+      <div class="row"><button class="btn" type="button" data-pv-go>Publish event</button><button class="ghost" type="button" data-pv-back>Keep editing</button></div>
+    </section>
   </section>
 
   <!-- MY EVENTS -->
@@ -901,23 +913,32 @@ async function renderDetail(id){
   if (location.hash.slice(1) !== "event-" + id) return;
   if (e) { applyPageTheme(e.theme); Object.entries(themeVars({ button: cleanTheme(e.theme).button }, false)).forEach(([k, x]) => $("v-event").style.setProperty(k, x)); }
   if (!e) { box.innerHTML = '<h2>Event not found</h2><p class="note" style="font-size:15px">It may have been removed. <button type="button" class="ghost" data-go="">See all events</button></p>'; return; }
-  const fa = fullAddr(e), mine = USER && e.host_id === USER.id, saved = SAVES.has(e.id), imgs = images(e), dcs = docs(e);
+  const mine = USER && e.host_id === USER.id;
   document.title = e.title + (SITE_TITLE ? " · " + SITE_TITLE : "");
-  box.innerHTML = `
+  box.innerHTML = detailHTML(e, false);
+  renderDetailDone(e, mine);
+}
+/* The event page body. pv = preview before posting: nothing to tap, no comments. */
+function detailHTML(e, pv){
+  const fa = fullAddr(e), mine = !pv && USER && e.host_id === USER.id, saved = !pv && SAVES.has(e.id), imgs = images(e), dcs = docs(e);
+  const price = Number(e.ticket_price) || 0;
+  return `
     ${e.admin_hidden ? '<div class="confirm">This event is hidden from the public.</div>' : ""}
     ${imgs.length ? `<a class="cover" href="${esc(imgs[0].url)}" target="_blank" rel="noopener"><img src="${esc(imgs[0].url)}" alt="${esc(imgs[0].name || "Flyer for " + e.title)}"></a>` : ""}
     <div><h2 style="font-size:28px">${esc(e.title)}</h2>
       <p class="meta" style="font-size:16px"><b>${esc(longDate(e.date))}</b> · ${esc(whenTime(e))}</p>
       ${e.status === "cancelled" ? '<span class="tag cx">Cancelled</span>' : ""}${e.event_type ? `<span class="tag">${esc(e.event_type)}</span>` : ""}${e.price ? `<span class="tag">${esc(e.price)}</span>` : ""}</div>
-    <div id="ev-tix" hidden></div>
+    ${pv ? (e.tickets_on ? `<div class="tix"><div class="row between"><h3>Tickets</h3><span class="tixprice">${price ? esc(money(price)) : "Free"}<small> ${price ? "each" : ""}</small></span></div>
+      ${e.ticket_limit ? `<p class="meta" style="margin:-6px 0 0"><b>${esc(e.ticket_limit)} left</b></p>` : ""}${price ? `<p class="meta" style="margin:-6px 0 0">Pay with: ${esc(payList(payOpts(e)).join(" · "))}</p>` : ""}
+      <span class="btn" style="width:100%">${price ? "Get tickets" : "Reserve free tickets"}</span></div>` : "") : '<div id="ev-tix" hidden></div>'}
     <div class="row">
       <button type="button" class="${saved ? "ghost saved" : "btn"}" data-save="${esc(e.id)}" aria-pressed="${saved}">${HEART(saved)}${saved ? "Saved" : "Save"}</button>
       ${fa ? `<a class="ghost" href="${navUrl(e)}" target="_blank" rel="noopener">${NAV_SVG}Navigate</a>` : ""}
       <a class="ghost" href="${gcal(e)}" target="_blank" rel="noopener">Add to calendar</a>
-      <button type="button" class="ghost" id="ev-share" aria-expanded="false" aria-controls="ev-sharebox">Share</button>
+      ${pv ? '<span class="ghost">Share</span>' : '<button type="button" class="ghost" id="ev-share" aria-expanded="false" aria-controls="ev-sharebox">Share</button>'}
       ${mine ? `<button type="button" class="ghost" data-go="edit-${esc(e.id)}">${PENCIL}Edit</button>` : ""}
     </div>
-    <div id="ev-sharebox" ${JUST_POSTED === e.id ? "" : "hidden"}>${shareBox(e, JUST_POSTED === e.id)}</div>
+    ${pv ? "" : `<div id="ev-sharebox" ${JUST_POSTED === e.id ? "" : "hidden"}>${shareBox(e, JUST_POSTED === e.id)}</div>`}
     ${imgs.length > 1 ? `<div class="gallery">${imgs.slice(1).map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener"><img src="${esc(f.url)}" alt="${esc(f.name || "Event photo")}" loading="lazy"></a>`).join("")}</div>` : ""}
     ${e.description ? `<p class="desc">${esc(e.description)}</p>` : ""}
     <dl class="kv">
@@ -926,12 +947,14 @@ async function renderDetail(id){
       ${e.contact ? `<dt>Contact</dt><dd style="user-select:all">${esc(e.contact)}</dd>` : ""}
     </dl>
     ${dcs.length ? `<div><label>Documents</label><div class="files">${dcs.map(f => `<div class="fcard"><a href="${esc(f.url)}" target="_blank" rel="noopener" ${String(f.url).startsWith("data:") ? `download="${esc(f.name)}"` : ""}><div class="doc"><b>${esc((String(f.name).split(".").pop() || "FILE").toUpperCase().slice(0, 5))}</b><span>${esc(f.name)}</span></div></a></div>`).join("")}</div></div>` : ""}
-    ${mine || IS_ADMIN ? `<div style="border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px">
+    ${!pv && (mine || IS_ADMIN) ? `<div style="border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px">
       <label style="margin:0">${mine ? "Your event" : "Owner tools"}</label>
       <div class="row"><button type="button" class="ghost" data-go="edit-${esc(e.id)}">Edit event</button><button type="button" class="ghost" id="ev-email">Email people who saved it</button></div>
       <p class="note" id="ev-email-note"></p>
       <div id="ev-host-tix" style="display:flex;flex-direction:column;gap:10px"></div></div>` : ""}
-    <section id="ev-comments" style="border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px" aria-labelledby="cmt-h"></section>`;
+    ${pv ? '<p class="note" style="border-top:1px solid var(--line);padding-top:14px">Comments will show here once your event is live.</p>' : '<section id="ev-comments" style="border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px" aria-labelledby="cmt-h"></section>'}`;
+}
+function renderDetailDone(e, mine){
   $("ev-share").addEventListener("click", () => { const box = $("ev-sharebox"); box.hidden = !box.hidden; $("ev-share").setAttribute("aria-expanded", String(!box.hidden)); });
   wireShareBox($("ev-sharebox"), e);
   if (JUST_POSTED === e.id) { JUST_POSTED = null; $("ev-share").setAttribute("aria-expanded", "true"); }
@@ -1128,6 +1151,7 @@ function openForm(e){
   $("form-h").textContent = e ? "Edit event" : "Post an event";
   $("form-lede").textContent = e ? "Changes show up right away." : "Your event goes live as soon as you publish it. Anyone can find it, and people with a profile can save it.";
   $("f-save").textContent = e ? "Save changes" : "Publish event";
+  $("post-pv").hidden = true; $("ev-form").hidden = false;
   Object.entries(FF).forEach(([k, id]) => { const el = $(id); const v = e ? e[k] : ""; if (el.tagName === "SELECT") el.value = v || el.options[0].value; else el.value = v || ""; });
   $("f-date").min = todayIso;
   $("f-banner").checked = !e || e.in_banner !== false;
@@ -1168,11 +1192,11 @@ document.querySelectorAll("[data-pay]").forEach(c => c.addEventListener("change"
 $("form-cancel").addEventListener("click", () => history.length > 1 ? history.back() : go(""));
 Object.values(FF).concat(["f-tprice", "f-tlimit", "f-tlink", "f-pay-cashapp", "f-pay-venmo", "f-pay-paypal", "f-pay-zelle"]).forEach(id => $(id).addEventListener("input", () => $("f-err").textContent = ""));
 $("f-tix").addEventListener("change", () => { $("f-tix-box").hidden = !$("f-tix").checked; if ($("f-tix").checked && !$("f-tprice").value) { const m = $("f-price").value.match(/\d+(\.\d{1,2})?/); if (m) $("f-tprice").value = m[0]; $("f-tprice").focus(); } });
-$("ev-form").addEventListener("submit", async ev => {
-  ev.preventDefault();
+/* Reads and checks the form. Returns the event row, or nothing after showing what to fix. */
+function readForm(){
   const v = {}; Object.entries(FF).forEach(([k, id]) => v[k] = $(id).value.trim());
   v.state = v.state.toUpperCase();
-  const err = (m, id) => { $("f-err").textContent = m; if (id) $(id).focus(); };
+  const err = (m, id) => { $("f-err").textContent = m; if (id) $(id).focus(); else $("f-err").scrollIntoView({ block: "center" }); };
   if (!v.title) return err("Give your event a name.", "f-title");
   if (!v.date) return err("Pick a date.", "f-date");
   if (!editingId && v.date < todayIso) return err("Pick a date from today on.", "f-date");
@@ -1214,6 +1238,12 @@ $("ev-form").addEventListener("submit", async ev => {
   v.files = formFiles.filter(f => !f.busy).map(({ name, type, size, url, path }) => ({ name, type, size, url, path }));
   v.theme = formTheme();
   if (!editingId) v.host_name = (PROFILE && PROFILE.name) || "";
+  return v;
+}
+$("ev-form").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const v = readForm(); if (!v) return;
+  const pay = v.pay_options, err = m => { $("f-err").textContent = m; $("f-err").scrollIntoView({ block: "center" }); };
   $("f-save").disabled = true;
   try {
     const save = row => editingId ? api.updateEvent(editingId, row) : api.createEvent(row);
@@ -1242,6 +1272,26 @@ $("ev-form").addEventListener("submit", async ev => {
     err(/pay_setup/.test(m) ? "Cash App, Venmo, PayPal and Zelle aren't turned on yet. The site owner needs to run card-payments-setup.sql in Supabase. Card links and pay at the door work now." : /20 events/.test(m) ? "You can post up to 20 events a day." : /ticket|in_banner/i.test(m) ? "Ticket sales aren't set up yet. Run tickets-comments-setup.sql in Supabase, then try again." : /relation|does not exist|schema cache/i.test(m) ? "The website's database isn't set up yet. Run supabase-setup.sql in Supabase." : "Your event didn't save. Try again.");
   } finally { $("f-save").disabled = false; }
 });
+
+/* Preview before posting */
+$("f-preview-btn").addEventListener("click", () => {
+  $("f-err").textContent = "";
+  const v = readForm(); if (!v) return;
+  const e = { ...v, id: "preview", host_id: USER && USER.id, host_name: v.host_name || (PROFILE && PROFILE.name) || "", status: "live", created_at: new Date().toISOString() };
+  if (editingId) { const cur = EVENTS.find(x => x.id === editingId); if (cur) { e.host_name = cur.host_name; e.status = cur.status; } }
+  const t = cleanTheme(e.theme), pv = themeVars(t, false);
+  $("pv-list").innerHTML = card({ ...e, host_id: null });
+  const page = $("pv-page");
+  page.style.cssText = (t.page ? "--pv-grad:" + pageGrad(t) + ";" : "") + (pv["--page-muted"] ? "--page-muted:" + pv["--page-muted"] : "");
+  page.innerHTML = `<article class="card" style="display:flex;flex-direction:column;gap:16px;${styleOf(themeVars({ button: t.button }, false))}">${detailHTML(e, true)}</article>`;
+  const word = editingId ? "Save changes" : "Publish event";
+  document.querySelectorAll("[data-pv-go]").forEach(b => b.textContent = word);
+  document.querySelector("[data-pv-word]").textContent = editingId ? "Save changes" : "Publish";
+  $("ev-form").hidden = true; $("post-pv").hidden = false;
+  window.scrollTo(0, 0); $("post-pv-h").focus({ preventScroll: true });
+});
+document.querySelectorAll("[data-pv-back]").forEach(b => b.addEventListener("click", () => { $("post-pv").hidden = true; $("ev-form").hidden = false; $("f-preview-btn").scrollIntoView({ block: "center" }); $("f-preview-btn").focus({ preventScroll: true }); }));
+document.querySelectorAll("[data-pv-go]").forEach(b => b.addEventListener("click", () => { $("post-pv").hidden = true; $("ev-form").hidden = false; $("f-save").click(); }));
 
 /* uploads */
 const MAX_BYTES = 10 * 1024 * 1024, MAX_FILES = 8;
