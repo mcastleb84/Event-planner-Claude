@@ -417,7 +417,16 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
             <div class="note">Pick as many as you like. Buyers see each one as a Pay button after they get their ticket code. Money goes straight to you.</div>
             <label class="check"><input type="checkbox" data-pay="card"> Debit or credit card</label>
             <div class="payin" id="pay-card-box" hidden><input id="f-tlink" type="url" maxlength="300" placeholder="https://buy.stripe.com/... or a Square or PayPal checkout link" autocomplete="off" aria-label="Card payment link">
-              <div class="note">Make a free payment link in Stripe, Square or PayPal for one ticket at your price, with "let customers adjust quantity" turned on. Paste it here. Buyers pay by card on that page.</div></div>
+              <div class="row" id="f-square-row" hidden style="margin-top:2px"><button type="button" class="ghost" id="f-use-square">Use my Square link</button></div>
+              <details class="note"><summary style="cursor:pointer;font-weight:800">How to get a Square payment link</summary>
+                <ol style="margin:6px 0 0;padding-left:18px">
+                  <li>Open the Square app or log in at squareup.com.</li>
+                  <li>Find <b>Payment links</b> (in the Square Dashboard it's under <b>Online</b>) and create a new link.</li>
+                  <li>Name it after your event and set the price of one ticket. If Square lets buyers change the amount or quantity, turn that on so people can buy more than one.</li>
+                  <li>Copy the link (it starts with https://square.link/) and paste it in the box above.</li>
+                </ol>
+                <p style="margin:6px 0 0">Stripe and PayPal payment links work the same way. Buyers tap <b>Pay by debit or credit card</b> and pay on Square's secure page, and the money goes to your Square account.</p>
+              </details></div>
             <label class="check"><input type="checkbox" data-pay="cashapp"> Cash App</label>
             <div class="payin" hidden><input id="f-pay-cashapp" maxlength="21" placeholder="$YourCashtag" autocomplete="off" aria-label="Cash App cashtag"></div>
             <label class="check"><input type="checkbox" data-pay="venmo"> Venmo</label>
@@ -1353,6 +1362,7 @@ function openForm(e){
   $("f-pay-paypal").value = po.paypal || "";
   $("f-pay-zelle").value = po.zelle || "";
   document.querySelectorAll("[data-pay]").forEach(c => { c.checked = !!po[c.dataset.pay]; payToggle(c); });
+  $("f-square-row").hidden = !(IS_ADMIN && safeLink(CFG.SQUARE_LINK));
   formFiles = e && Array.isArray(e.files) ? e.files.slice() : [];
   FT = { button: "", page: "", page2: "", pattern: "", fill: false, font: "", tlight: false, tcolor: "", ...cleanTheme(e && e.theme) };
   if (FT.page2 && !FT.pattern) FT.pattern = "fade";
@@ -1375,6 +1385,7 @@ function openForm(e){
   }
   updateNav();
 }
+$("f-use-square").addEventListener("click", () => { $("f-tlink").value = safeLink(CFG.SQUARE_LINK); $("f-err").textContent = ""; toast("Your Square link is filled in."); });
 function payToggle(c){ const box = c.closest("label").nextElementSibling; if (box && box.classList.contains("payin")) box.hidden = !c.checked; }
 document.querySelectorAll("[data-pay]").forEach(c => c.addEventListener("change", () => { payToggle(c); $("f-err").textContent = ""; const box = c.closest("label").nextElementSibling; if (c.checked && box && box.classList.contains("payin")) box.querySelector("input").focus(); }));
 $("form-cancel").addEventListener("click", () => history.length > 1 ? history.back() : go(""));
