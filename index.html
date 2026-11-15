@@ -55,7 +55,7 @@ textarea{min-height:110px;resize:vertical}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion: reduce){.icon.spin svg{animation:none}}
 .toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:70;background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:700;max-width:min(92vw,420px);text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.2)}
-.brand{color:var(--page-ink,var(--ink))!important;font-family:var(--display);font-weight:900;font-size:18px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;border:0;padding:4px 0;text-align:left}
+.brand{color:var(--bar-ink,var(--page-ink,var(--ink)))!important;font-family:var(--display);font-weight:900;font-size:18px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;border:0;padding:4px 0;text-align:left}
 .pill{border-radius:999px;padding:7px 14px}
 .badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--no);color:#fff;font-size:12px;font-weight:800}
 /* search */
@@ -199,6 +199,7 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
 .bgpick img{display:block;width:100%;aspect-ratio:3/4;object-fit:cover}
 .bgnow{display:flex;gap:12px;align-items:center}
 .bgnow img{width:64px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--line);flex:none}
+.card.busy > div:last-child{background:var(--glow);border-radius:12px;padding:12px;box-shadow:0 0 0 1px var(--line)}
 /* photo editor */
 .fcard .ed{position:absolute;right:4px;bottom:4px;border:0;border-radius:999px;background:rgba(20,12,6,.75);color:#fff;font-size:12px;font-weight:800;padding:4px 10px}
 .pe{position:fixed;inset:0;z-index:80;background:rgba(20,12,6,.62);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:max(12px,env(safe-area-inset-top,0px)) 10px calc(24px + env(safe-area-inset-bottom,0px))}
@@ -397,8 +398,9 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
           <div class="note" style="margin-top:6px">If a color is hard to read on your page, we darken or lighten it a little so people can still read it.</div></div>
         <div class="full"><label id="sw-button-l">Button color</label><div class="swatches" id="sw-button" role="group" aria-labelledby="sw-button-l"></div></div>
         <div class="full"><label id="sw-page-l">Page color</label><div class="swatches" id="sw-page" role="group" aria-labelledby="sw-page-l"></div>
-          <label class="check" style="margin-top:12px"><input id="f-two" type="checkbox"> Blend in a second page color</label>
-          <div class="swatches" id="sw-page2" role="group" aria-label="Second page color" hidden style="margin-top:10px"></div>
+          <label id="f-pat-l" style="margin-top:14px">Page style</label>
+          <div class="chips" id="f-patterns" role="group" aria-labelledby="f-pat-l"></div>
+          <div id="sw-page2-wrap" hidden style="margin-top:12px"><label id="sw-page2-l">Second color</label><div class="swatches" id="sw-page2" role="group" aria-labelledby="sw-page2-l"></div></div>
         </div>
         <div class="full" style="display:flex;flex-direction:column;gap:10px">
           <label style="margin:0">Preview</label>
@@ -733,7 +735,8 @@ const hexOk = c => /^#[0-9a-f]{6}$/i.test(String(c || "")) ? String(c).toLowerCa
 function cleanTheme(t){
   t = t && typeof t === "object" ? t : {}; const o = {};
   if (hexOk(t.button)) o.button = hexOk(t.button);
-  if (hexOk(t.page)) { o.page = hexOk(t.page); if (hexOk(t.page2) && hexOk(t.page2) !== o.page) o.page2 = hexOk(t.page2); }
+  if (hexOk(t.page) && t.pattern !== "solid") { o.page = hexOk(t.page); if (hexOk(t.page2) && hexOk(t.page2) !== o.page) { o.page2 = hexOk(t.page2); if (HOST_PATTERNS.includes(t.pattern) && t.pattern !== "fade") o.pattern = t.pattern; } }
+  else if (hexOk(t.page)) o.page = hexOk(t.page);
   if (t.fill === true) o.fill = true;
   if (FONTS[t.font] && t.font !== "std") o.font = t.font;
   if (t.tlight === true) o.tlight = true;
@@ -789,7 +792,16 @@ const mix = (a, b, t) => { const A = rgbOf(a), B = rgbOf(b); return "#" + A.map(
 const INK = "#2a1e16";
 const inkOn = c => contrast(c, "#ffffff") >= contrast(c, INK) ? "#ffffff" : INK;
 function readableOn(c, bg, min){ let x = c; const to = lum(bg) > 0.4 ? "#000000" : "#ffffff"; for (let i = 0; i < 12 && contrast(x, bg) < (min || 4.5); i++) x = mix(x, to, 0.18); return x; }
-const pageGrad = t => t.page2 ? `linear-gradient(165deg,${t.page},${t.page2})` : t.page;
+const HOST_PATTERNS = ["checks", "bigchecks", "stripes", "diagonal", "dots", "fade", "plaid"];
+/* Background for a host's page: one color, a fade, or a pattern of the second color over the first. */
+function pageGrad(t){
+  if (!t.page2) return t.page;
+  const p = t.pattern || "fade";
+  if (p === "fade" || !PATTERNS[p]) return `linear-gradient(165deg,${t.page},${t.page2})`;
+  const [img, size] = PATTERNS[p][1](t.page2);
+  return img.split(/,(?=(?:repeating-|conic-|radial-|linear-))/).map(l => l + (size !== "auto" ? " 0 0/" + size : "")).join(",") + "," + t.page;
+}
+const isBusy = t => !!(t.page2 && t.pattern && t.pattern !== "fade");
 /* CSS variables for a host's colors. Only checked #rrggbb values ever reach a style. */
 function themeVars(raw, onCard){
   const t = cleanTheme(raw), v = {};
@@ -798,14 +810,19 @@ function themeVars(raw, onCard){
     const mid = t.page2 ? mix(t.page, t.page2, 0.5) : t.page, ink = inkOn(mid);
     Object.assign(v, { "--page-ink": ink, "--page-muted": mix(ink, mid, 0.32) });
     if (onCard) Object.assign(v, { "--surface": t.page, "--ink": ink, "--muted": mix(ink, mid, 0.3), "--line": mix(mid, ink, 0.2), "--field": mix(mid, ink, 0.07) });
-    else Object.assign(v, { "--bg": t.page, "--page-grad": pageGrad(t) });
+    else Object.assign(v, { "--bg": t.page, "--page-grad": pageGrad(t), "--bar-ink": inkOn(t.page) });
   }
   return v;
 }
 const styleOf = v => Object.entries(v).map(([k, x]) => k + ":" + x).join(";");
-function cardStyle(e){ const t = cleanTheme(e.theme), v = themeVars(t, true); if (t.page2) v.background = pageGrad(t); return styleOf(v); }
+function cardStyle(e){
+  const t = cleanTheme(e.theme), v = themeVars(t, true);
+  if (t.page2) v.background = pageGrad(t);
+  if (isBusy(t)) { const ink = v["--ink"], g = contrast(ink, t.page) >= contrast(ink, t.page2) ? t.page : t.page2; Object.assign(v, { "--glow": g, "--muted": ink, "--surface": g, "--field": mix(g, ink, 0.07), "--line": mix(g, ink, 0.25) }); }
+  return styleOf(v);
+}
 const ACCENT_KEYS = ["--accent", "--accent-ink", "--accent-text", "--accent-soft"];
-const PAGE_KEYS = ["--bg", "--page-grad", "--page-ink", "--page-muted"];
+const PAGE_KEYS = ["--bg", "--page-grad", "--page-ink", "--page-muted", "--bar-ink"];
 /* Visitor's own background choice: stored on this device, applied as page defaults (a host's event colors still win on that event's page). */
 const clampN = (v, a, b, d) => Number.isFinite(+v) ? Math.min(b, Math.max(a, +v)) : d;
 const UBG_KEY = "ce.bg.v1", STD_BG = "#ff8243", STD_CHECK = "#40c4b8";
@@ -837,7 +854,7 @@ function applyUserBg(){
   const [pimg, psize] = PATTERNS[pat][1](check);
   const busy = pat !== "solid" && (contrast(ink, bg) < 4.5 || contrast(ink, check) < 4.5), glow = contrast(ink, bg) >= contrast(ink, check) ? bg : check;
   document.body.classList.toggle("busy-bg", busy);
-  let css = UBG.bg || UBG.check || pat !== "checks" ? `:root{--bg:${bg};--check:${check};--page-ink:${ink};--page-muted:${busy ? ink : muted};--glow:${glow}}body{--pattern:${pimg};--pattern-size:${psize}}` : "";
+  let css = UBG.bg || UBG.check || pat !== "checks" ? `:root{--bg:${bg};--check:${check};--page-ink:${ink};--page-muted:${busy ? ink : muted};--glow:${glow};--bar-ink:${inkOn(bg)}}body{--pattern:${pimg};--pattern-size:${psize}}` : "";
   if (UBG.font) { loadFonts([UBG.font]); css += `:root{--display:${fontStack(UBG.font)}${UBG.all ? ";--body:" + fontStack(UBG.font) : ""}}`; }
   if (UBG.tlight) css += `h1,h2,h3,.brand,.bn-cap b{font-weight:500}${UBG.all ? "body,.btn,.ghost,label,.tag,.meta b{font-weight:400}" : ""}`;
   if (UBG.tcolor) {
@@ -993,7 +1010,7 @@ function requireProfile(fn, why){
 function card(e){
   const d = dt(e.date), place = placeLine(e), fa = fullAddr(e), flyer = images(e)[0], saved = SAVES.has(e.id);
   const fill = cleanTheme(e.theme).fill ? ' class="fill"' : "";
-  return `<article class="card ev" style="${cardStyle(e)}">
+  return `<article class="card ev${isBusy(cleanTheme(e.theme)) ? " busy" : ""}" style="${cardStyle(e)}">
     ${flyer ? `<button type="button" class="face" data-go="event-${esc(e.id)}" aria-label="See ${esc(e.title)}"><span class="bn-bg" style="background-image:url(&quot;${esc(flyer.url)}&quot;)" aria-hidden="true"></span><img src="${esc(flyer.url)}"${fill} alt="Flyer for ${esc(e.title)}" loading="lazy"></button>` : ""}
     <div class="cal" aria-hidden="true"><span class="mo">${d.toLocaleDateString(undefined, { month: "short" }).toUpperCase()}</span><span class="dy">${d.getDate()}</span><span class="wd">${d.toLocaleDateString(undefined, { weekday: "short" })}</span></div>
     <div style="min-width:0">
@@ -1337,8 +1354,8 @@ function openForm(e){
   $("f-pay-zelle").value = po.zelle || "";
   document.querySelectorAll("[data-pay]").forEach(c => { c.checked = !!po[c.dataset.pay]; payToggle(c); });
   formFiles = e && Array.isArray(e.files) ? e.files.slice() : [];
-  FT = { button: "", page: "", page2: "", fill: false, font: "", tlight: false, tcolor: "", ...cleanTheme(e && e.theme) };
-  $("f-two").checked = !!FT.page2;
+  FT = { button: "", page: "", page2: "", pattern: "", fill: false, font: "", tlight: false, tcolor: "", ...cleanTheme(e && e.theme) };
+  if (FT.page2 && !FT.pattern) FT.pattern = "fade";
   renderFileList(); $("f-err").textContent = ""; $("f-file-err").textContent = "";
   $("form-extra") && $("form-extra").remove();
   if (e) {
@@ -1479,7 +1496,7 @@ function renderFileList(){
 }
 
 /* ---------- Look of your ad: face photo, button color, page color(s), live preview ---------- */
-let FT = { button: "", page: "", page2: "", fill: false, font: "", tlight: false, tcolor: "" };
+let FT = { button: "", page: "", page2: "", pattern: "", fill: false, font: "", tlight: false, tcolor: "" };
 const TEXT_COLORS = [["", "Standard"], ["#111111", "Black"], ["#ffffff", "White"], ["#8a4b22", "Brown"], ["#a2342a", "Red"], ["#d35400", "Orange"], ["#b8860b", "Gold"], ["#2f6b3a", "Green"], ["#1f3a5f", "Navy"], ["#6b2d5c", "Plum"], ["#c2185b", "Pink"]];
 function fontChips(id, cur, attr){
   loadFonts(Object.keys(FONTS));
@@ -1496,7 +1513,7 @@ function swatchRow(id, list, key, std){
   $(id).innerHTML = list.map(([c, n]) => `<button type="button" class="sw" style="background:${key === "page" && c === "#ff8243" ? "conic-gradient(#40c4b8 25%,#ff8243 0 50%,#40c4b8 0 75%,#ff8243 0) 0 0/16px 16px" : c}" data-sw="${key}" data-c="${c}" aria-label="${esc(n)}" aria-pressed="${c === cur}"></button>`).join("")
     + `<label class="swc" data-on="${inList ? "" : "1"}" ${inList ? "" : `style="background:${cur}"`} title="Pick any color"><input type="color" data-swc="${key}" value="${cur}" aria-label="Pick any color"></label>`;
 }
-const formTheme = () => { const two = $("f-two").checked; return cleanTheme({ ...FT, page: FT.page || (two ? "#ff8243" : ""), page2: two ? (FT.page2 || "#f6efe6") : "" }); };
+const formTheme = () => { const two = !!FT.pattern; return cleanTheme({ ...FT, page: FT.page || (two ? "#ff8243" : ""), page2: two ? (FT.page2 || "#40c4b8") : "", pattern: FT.pattern || "solid" }); };
 function renderLook(){
   if (!$("f-faces")) return;
   const imgs = formFiles.filter(f => !f.busy && isImg(f)), face = imgs[0];
@@ -1507,8 +1524,13 @@ function renderLook(){
   textSwatches("sw-text", FT.tcolor, "data-ftc");
   swatchRow("sw-button", BTN_COLORS, "button", "#8a4b22");
   swatchRow("sw-page", PAGE_COLORS, "page", "#ff8243");
-  $("sw-page2").hidden = !$("f-two").checked;
-  if ($("f-two").checked) swatchRow("sw-page2", PAGE_COLORS, "page2", FT.page2 || "#f6efe6");
+  const ft = formTheme(), base = ft.page || "#ff8243", c2 = FT.page2 || "#40c4b8";
+  $("f-patterns").innerHTML = [["", "Solid color"]].concat(HOST_PATTERNS.map(k => [k, PATTERNS[k][0]])).map(([k, n]) => {
+    const look = k ? pageGrad({ page: base, page2: c2, pattern: k }) : base;
+    return `<button type="button" data-fpat="${k}" aria-pressed="${(FT.pattern || "") === k}" style="display:inline-flex;align-items:center;gap:8px;padding-left:8px"><span aria-hidden="true" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--line);flex:none;background:${look};background-size:${k === "checks" ? "12px 12px" : k === "bigchecks" ? "26px 26px" : k === "dots" ? "10px 10px" : "auto"}"></span>${esc(n)}</button>`;
+  }).join("");
+  $("sw-page2-wrap").hidden = !FT.pattern;
+  if (FT.pattern) swatchRow("sw-page2", PAGE_COLORS, "page2", c2);
   renderPreview();
 }
 function renderPreview(){
@@ -1540,8 +1562,8 @@ $("ev-form").addEventListener("input", e => {
 $("ev-form").addEventListener("change", e => { if (e.target.closest("[data-swc],[data-ftc-any]")) renderLook(); });
 $("f-fill").addEventListener("change", () => { FT.fill = $("f-fill").checked; renderPreview(); });
 $("f-tbold").addEventListener("change", () => { FT.tlight = !$("f-tbold").checked; renderPreview(); });
-$("f-two").addEventListener("change", () => { if ($("f-two").checked && !FT.page2) FT.page2 = "#f6efe6"; renderLook(); });
-$("f-look-reset").addEventListener("click", () => { FT = { button: "", page: "", page2: "", fill: false, font: "", tlight: false, tcolor: "" }; $("f-two").checked = false; renderLook(); });
+$("f-patterns").addEventListener("click", e => { const b = e.target.closest("[data-fpat]"); if (!b) return; FT.pattern = b.dataset.fpat; if (FT.pattern && !FT.page2) FT.page2 = "#40c4b8"; renderLook(); $("f-patterns").querySelector(`[data-fpat="${b.dataset.fpat}"]`).focus(); });
+$("f-look-reset").addEventListener("click", () => { FT = { button: "", page: "", page2: "", pattern: "", fill: false, font: "", tlight: false, tcolor: "" }; renderLook(); });
 /* ============================================================
    PHOTO EDITOR: crop, rotate, light, filters and words on the photo.
    Saves a new JPEG and swaps it in. The original stays as the starting point for later edits.
