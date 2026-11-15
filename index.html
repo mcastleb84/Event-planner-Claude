@@ -218,7 +218,7 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
 <header class="topbar">
   <button class="ghost icon" type="button" id="nav-back" aria-label="Back" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
   <button class="brand" type="button" id="brand" data-go="">Events</button>
-  <button class="ghost icon" type="button" id="bg-open" aria-label="Change background" aria-controls="bgpanel" aria-expanded="false"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.9 0-.5-.2-.9-.5-1.2-.3-.3-.5-.8-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10" cy="7" r="1.2" fill="currentColor"/><circle cx="14.5" cy="7" r="1.2" fill="currentColor"/></svg></button>
+  <button class="ghost icon" type="button" id="bg-open" aria-label="Change colors and text" aria-controls="bgpanel" aria-expanded="false"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.9 0-.5-.2-.9-.5-1.2-.3-.3-.5-.8-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10" cy="7" r="1.2" fill="currentColor"/><circle cx="14.5" cy="7" r="1.2" fill="currentColor"/></svg></button>
   <button class="ghost icon" type="button" id="nav-refresh" aria-label="Refresh"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
   <button class="ghost pill" type="button" id="review-btn" hidden>Review <span class="badge" id="review-count">0</span></button>
   <button class="ghost pill" type="button" id="acct-open" aria-controls="acct">Sign in</button>
@@ -241,10 +241,18 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
 
   <!-- BACKGROUND COLOR PANEL (saved on this device) -->
   <section class="card" id="bgpanel" hidden style="display:flex;flex-direction:column;gap:14px;scroll-margin-top:80px" aria-labelledby="bg-h">
-    <div class="row between"><h2 id="bg-h" tabindex="-1">Background</h2><button class="ghost" type="button" id="bg-close">Close</button></div>
-    <p class="note" style="font-size:15px">Pick the colors you like, or put a photo or an event's ad behind the page. This only changes the site for you, on this device.</p>
+    <div class="row between"><h2 id="bg-h" tabindex="-1">Colors and text</h2><button class="ghost" type="button" id="bg-close">Close</button></div>
+    <p class="note" style="font-size:15px">Pick your colors and text style, or put a photo or an event's ad behind the page. This only changes the site for you, on this device.</p>
     <div><label id="bgc-l">Background</label><div class="swatches" id="bg-sw-bg" role="group" aria-labelledby="bgc-l"></div></div>
     <div><label id="bgk-l">Checks</label><div class="swatches" id="bg-sw-check" role="group" aria-labelledby="bgk-l"></div></div>
+    <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px">
+      <label style="margin:0" id="ut-font-l">Text style</label>
+      <div class="chips" id="ut-fonts" role="group" aria-labelledby="ut-font-l"></div>
+      <label class="check"><input id="ut-all" type="checkbox"> Use this style for all words, not just titles</label>
+      <label class="check"><input id="ut-bold" type="checkbox" checked> Bold words</label>
+      <div><label id="ut-col-l">Text color</label><div class="swatches" id="ut-colors" role="group" aria-labelledby="ut-col-l"></div>
+        <p class="note" style="margin-top:6px">Changes the words on the background and the titles on event cards. Hosts who styled their own event keep their look.</p></div>
+    </div>
     <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px">
       <label style="margin:0">Photo or ad behind the page</label>
       <div class="bgnow" id="bg-now" hidden><img id="bg-now-img" alt="Your background photo"><div style="display:flex;flex-direction:column;gap:6px"><b>Your background photo</b><button class="ghost danger" type="button" id="bg-photo-rm" style="align-self:flex-start">Remove photo</button></div></div>
@@ -382,6 +390,10 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
           <div class="row" style="margin-top:10px" id="f-face-edit-row" hidden><button type="button" class="ghost" id="f-face-edit">Edit the face photo</button><span class="note">Crop it or add your event name on top.</span></div>
           <label class="check" style="margin-top:10px"><input id="f-fill" type="checkbox"> Fill the whole frame with the photo (trims the edges)</label>
         </div>
+        <div class="full"><label id="f-font-l">Text style for your event name and description</label><div class="chips" id="f-fonts" role="group" aria-labelledby="f-font-l"></div>
+          <label class="check" style="margin-top:12px"><input id="f-tbold" type="checkbox" checked> Bold words</label></div>
+        <div class="full"><label id="sw-text-l">Text color</label><div class="swatches" id="sw-text" role="group" aria-labelledby="sw-text-l"></div>
+          <div class="note" style="margin-top:6px">If a color is hard to read on your page, we darken or lighten it a little so people can still read it.</div></div>
         <div class="full"><label id="sw-button-l">Button color</label><div class="swatches" id="sw-button" role="group" aria-labelledby="sw-button-l"></div></div>
         <div class="full"><label id="sw-page-l">Page color</label><div class="swatches" id="sw-page" role="group" aria-labelledby="sw-page-l"></div>
           <label class="check" style="margin-top:12px"><input id="f-two" type="checkbox"> Blend in a second page color</label>
@@ -390,7 +402,7 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
         <div class="full" style="display:flex;flex-direction:column;gap:10px">
           <label style="margin:0">Preview</label>
           <div id="f-preview" inert style="display:flex;flex-direction:column;gap:10px"></div>
-          <div class="row"><button type="button" class="ghost" id="f-look-reset">Use the standard colors</button></div>
+          <div class="row"><button type="button" class="ghost" id="f-look-reset">Use the standard look</button></div>
         </div>
         <div class="sec">Tickets</div>
         <label class="full check"><input id="f-tix" type="checkbox"> Sell tickets on this site</label>
@@ -722,15 +734,60 @@ function cleanTheme(t){
   if (hexOk(t.button)) o.button = hexOk(t.button);
   if (hexOk(t.page)) { o.page = hexOk(t.page); if (hexOk(t.page2) && hexOk(t.page2) !== o.page) o.page2 = hexOk(t.page2); }
   if (t.fill === true) o.fill = true;
+  if (FONTS[t.font] && t.font !== "std") o.font = t.font;
+  if (t.tlight === true) o.tlight = true;
+  if (hexOk(t.tcolor)) o.tcolor = hexOk(t.tcolor);
   return o;
 }
+/* 20 text styles. Fonts load from Google Fonts only when someone uses or browses them. */
+const FONTS = {
+  std: ["Standard", "", ""],
+  playfair: ["Playfair", "'Playfair Display', Georgia, serif", "Playfair+Display:wght@400;700;900"],
+  lora: ["Lora", "'Lora', Georgia, serif", "Lora:wght@400;700"],
+  merri: ["Merriweather", "'Merriweather', Georgia, serif", "Merriweather:wght@400;900"],
+  abril: ["Abril Fatface", "'Abril Fatface', Georgia, serif", "Abril+Fatface"],
+  cinzel: ["Cinzel", "'Cinzel', Georgia, serif", "Cinzel:wght@400;800"],
+  bebas: ["Bebas Neue", "'Bebas Neue', Impact, sans-serif", "Bebas+Neue"],
+  oswald: ["Oswald", "'Oswald', Impact, sans-serif", "Oswald:wght@400;700"],
+  anton: ["Anton", "'Anton', Impact, sans-serif", "Anton"],
+  montserrat: ["Montserrat", "'Montserrat', system-ui, sans-serif", "Montserrat:wght@400;800"],
+  poppins: ["Poppins", "'Poppins', system-ui, sans-serif", "Poppins:wght@400;800"],
+  raleway: ["Raleway", "'Raleway', system-ui, sans-serif", "Raleway:wght@400;800"],
+  josefin: ["Josefin Sans", "'Josefin Sans', system-ui, sans-serif", "Josefin+Sans:wght@400;700"],
+  righteous: ["Righteous", "'Righteous', system-ui, sans-serif", "Righteous"],
+  lobster: ["Lobster", "'Lobster', cursive", "Lobster"],
+  pacifico: ["Pacifico", "'Pacifico', cursive", "Pacifico"],
+  dancing: ["Dancing Script", "'Dancing Script', cursive", "Dancing+Script:wght@400;700"],
+  vibes: ["Great Vibes", "'Great Vibes', cursive", "Great+Vibes"],
+  marker: ["Marker", "'Permanent Marker', cursive", "Permanent+Marker"],
+  typewriter: ["Typewriter", "'Courier Prime', 'Courier New', monospace", "Courier+Prime:wght@400;700"]
+};
+const fontStack = k => (FONTS[k] && FONTS[k][1]) || "";
+const LOADED_FONTS = new Set();
+function loadFonts(keys){
+  const need = keys.filter(k => FONTS[k] && FONTS[k][2] && !LOADED_FONTS.has(k)); if (!need.length) return;
+  need.forEach(k => LOADED_FONTS.add(k));
+  const l = document.createElement("link"); l.rel = "stylesheet";
+  l.href = "https://fonts.googleapis.com/css2?" + need.map(k => "family=" + FONTS[k][2]).join("&") + "&display=swap";
+  document.head.appendChild(l);
+}
+/* Host's text style for their event's words. min = contrast needed against the surface. */
+function hostText(e, surface, min, fontOnly){
+  const t = cleanTheme(e && e.theme), out = [];
+  if (t.font) { loadFonts([t.font]); out.push("font-family:" + fontStack(t.font)); }
+  if (fontOnly) return out.join(";");
+  if (t.tlight) out.push("font-weight:500");
+  if (t.tcolor) out.push("color:" + readableOn(t.tcolor, surface || "#ffffff", min || 3));
+  return out.join(";");
+}
+const cardSurface = e => { const t = cleanTheme(e.theme); return t.page ? (t.page2 ? mix(t.page, t.page2, 0.5) : t.page) : "#ffffff"; };
 const rgbOf = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
 const lum = h => rgbOf(h).map(v => (v /= 255) <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)).reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0);
 const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
 const mix = (a, b, t) => { const A = rgbOf(a), B = rgbOf(b); return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join(""); };
 const INK = "#2a1e16";
 const inkOn = c => contrast(c, "#ffffff") >= contrast(c, INK) ? "#ffffff" : INK;
-function readableOn(c, bg){ let x = c; const to = lum(bg) > 0.4 ? "#000000" : "#ffffff"; for (let i = 0; i < 12 && contrast(x, bg) < 4.5; i++) x = mix(x, to, 0.18); return x; }
+function readableOn(c, bg, min){ let x = c; const to = lum(bg) > 0.4 ? "#000000" : "#ffffff"; for (let i = 0; i < 12 && contrast(x, bg) < (min || 4.5); i++) x = mix(x, to, 0.18); return x; }
 const pageGrad = t => t.page2 ? `linear-gradient(165deg,${t.page},${t.page2})` : t.page;
 /* CSS variables for a host's colors. Only checked #rrggbb values ever reach a style. */
 function themeVars(raw, onCard){
@@ -753,18 +810,26 @@ const clampN = (v, a, b, d) => Number.isFinite(+v) ? Math.min(b, Math.max(a, +v)
 const UBG_KEY = "ce.bg.v1", STD_BG = "#ff8243", STD_CHECK = "#40c4b8";
 const UBG_BGS = [["#ff8243", "Standard orange"], ["#ffffff", "White"], ["#f6efe6", "Cream"], ["#fff6d6", "Butter"], ["#eaf2ec", "Sage"], ["#e6eef8", "Sky"], ["#f8e8ec", "Blush"], ["#3b2417", "Espresso"], ["#0f1b2d", "Midnight"], ["#111111", "Black"]];
 const UBG_CHECKS = [["none", "No checks"], ["#40c4b8", "Standard teal"], ["#ffffff", "White"], ["#ff8243", "Orange"], ["#e3b341", "Gold"], ["#f2a7b8", "Pink"], ["#7fb2e5", "Blue"], ["#2f6b3a", "Green"], ["#111111", "Black"]];
-let UBG = { bg: "", check: "", fade: 45 }, UBG_PHOTO = "";
+let UBG = { bg: "", check: "", fade: 45, font: "", all: false, tlight: false, tcolor: "" }, UBG_PHOTO = "";
 const PHOTO_KEY = "ce.bgphoto.v1";
 const photoOk = u => /^data:image\/(jpeg|png|webp|svg\+xml)[;,][^"'()\s]*$/i.test(u) || /^https:\/\/[^\s"'()<>]+$/.test(u) ? u : "";
 try { UBG_PHOTO = photoOk(localStorage.getItem(PHOTO_KEY) || ""); } catch (e) {}
-try { const x = JSON.parse(localStorage.getItem(UBG_KEY) || "null"); if (x) UBG = { bg: hexOk(x.bg), check: x.check === "none" ? "none" : hexOk(x.check), fade: clampN(x.fade, 0, 85, 45) }; } catch (e) {}
+try { const x = JSON.parse(localStorage.getItem(UBG_KEY) || "null"); if (x) UBG = { bg: hexOk(x.bg), check: x.check === "none" ? "none" : hexOk(x.check), fade: clampN(x.fade, 0, 85, 45), font: FONTS[x.font] && x.font !== "std" ? x.font : "", all: x.all === true, tlight: x.tlight === true, tcolor: hexOk(x.tcolor) }; } catch (e) {}
 function applyUserBg(){
   const bg = UBG.bg || STD_BG, check = UBG.check === "none" ? bg : (UBG.check || STD_CHECK), mid = mix(bg, check, 0.5);
   let ink = inkOn(mid); if (ink === INK) ink = contrast(INK, bg) >= 4.5 && contrast(INK, check) >= 4.5 ? INK : "#000000";
   else ink = contrast("#ffffff", bg) >= 4.5 && contrast("#ffffff", check) >= 4.5 ? "#ffffff" : (contrast("#000000", bg) > contrast("#ffffff", bg) ? "#000000" : "#ffffff");
   const muted = readableOn(mix(ink, mid, 0.15), lum(bg) < lum(check) ? check : bg);
   let el = $("user-bg"); if (!el) { el = document.createElement("style"); el.id = "user-bg"; document.head.appendChild(el); }
-  el.textContent = UBG.bg || UBG.check ? `:root{--bg:${bg};--check:${check};--page-ink:${ink};--page-muted:${muted}}` : "";
+  let css = UBG.bg || UBG.check ? `:root{--bg:${bg};--check:${check};--page-ink:${ink};--page-muted:${muted}}` : "";
+  if (UBG.font) { loadFonts([UBG.font]); css += `:root{--display:${fontStack(UBG.font)}${UBG.all ? ";--body:" + fontStack(UBG.font) : ""}}`; }
+  if (UBG.tlight) css += `h1,h2,h3,.brand,.bn-cap b{font-weight:500}${UBG.all ? "body,.btn,.ghost,label,.tag,.meta b{font-weight:400}" : ""}`;
+  if (UBG.tcolor) {
+    const lo = lum(bg) < lum(check) ? bg : check, hi = lum(bg) < lum(check) ? check : bg;
+    let tc = UBG.tcolor; if (contrast(tc, lo) < 3 || contrast(tc, hi) < 3) tc = readableOn(tc, contrast(tc, lo) < contrast(tc, hi) ? lo : hi, 3);
+    css += `:root{--page-ink:${tc}}.card h2,.card h3{color:${readableOn(UBG.tcolor, "#ffffff", 3)}}`;
+  }
+  el.textContent = css;
   let ph = $("ubg-photo");
   if (UBG_PHOTO) {
     if (!ph) { ph = document.createElement("div"); ph.id = "ubg-photo"; ph.setAttribute("aria-hidden", "true"); document.body.prepend(ph); }
@@ -778,6 +843,8 @@ function renderBgPanel(){
     + `<label class="swc" ${list.some(([c]) => c === cur) ? "" : `data-on="1" style="background:${cur}"`} title="Pick any color"><input type="color" data-ubg-any="${key}" value="${cur === "none" ? "#ffffff" : cur}" aria-label="Pick any color"></label>`;
   row("bg-sw-bg", UBG_BGS, "bg", UBG.bg || STD_BG);
   row("bg-sw-check", UBG_CHECKS, "check", UBG.check || STD_CHECK);
+  fontChips("ut-fonts", UBG.font, "data-ufont"); $("ut-all").checked = UBG.all; $("ut-bold").checked = !UBG.tlight;
+  textSwatches("ut-colors", UBG.tcolor, "data-utc");
   $("bg-now").hidden = $("bg-fade-wrap").hidden = !UBG_PHOTO;
   if (UBG_PHOTO) { $("bg-now-img").src = UBG_PHOTO; $("bg-fade").value = UBG.fade; $("bg-fade-v").textContent = UBG.fade + "%"; }
   if (!$("bg-ads").hidden) renderBgAds();
@@ -911,7 +978,7 @@ function card(e){
     ${flyer ? `<button type="button" class="face" data-go="event-${esc(e.id)}" aria-label="See ${esc(e.title)}"><span class="bn-bg" style="background-image:url(&quot;${esc(flyer.url)}&quot;)" aria-hidden="true"></span><img src="${esc(flyer.url)}"${fill} alt="Flyer for ${esc(e.title)}" loading="lazy"></button>` : ""}
     <div class="cal" aria-hidden="true"><span class="mo">${d.toLocaleDateString(undefined, { month: "short" }).toUpperCase()}</span><span class="dy">${d.getDate()}</span><span class="wd">${d.toLocaleDateString(undefined, { weekday: "short" })}</span></div>
     <div style="min-width:0">
-      <button type="button" class="ev-title" data-go="event-${esc(e.id)}"><h3>${esc(e.title)}</h3></button>
+      <button type="button" class="ev-title" data-go="event-${esc(e.id)}"><h3 style="${hostText(e, cardSurface(e), 3)}">${esc(e.title)}</h3></button>
       <p class="meta"><b>${esc(longDate(e.date))}</b> · ${esc(whenTime(e))}</p>
       ${place ? `<p class="meta">${esc(place)}</p>` : ""}
       ${e.host_name ? `<p class="meta">Hosted by ${esc(e.host_name)}</p>` : ""}
@@ -943,7 +1010,7 @@ function renderBanner(){
     .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || ""))).slice(0, 10);
   $("banner").hidden = !items.length;
   if (!items.length) { $("bn-track").innerHTML = ""; $("bn-dots").innerHTML = ""; return; }
-  $("bn-track").innerHTML = items.map((e, i) => { const u = images(e)[0].url; return `<button type="button" class="bn-slide" data-go="event-${esc(e.id)}" aria-label="${esc(e.title)}, ${esc(longDate(e.date))} (${i + 1} of ${items.length})"><span class="bn-bg" style="background-image:url(&quot;${esc(u)}&quot;)" aria-hidden="true"></span><img src="${esc(u)}" alt=""${cleanTheme(e.theme).fill ? ' class="fill"' : ""} ${i ? 'loading="lazy"' : ""}><span class="bn-cap"><b>${esc(e.title)}</b><span>${esc(longDate(e.date))} · ${esc(whenTime(e))}${e.city ? " · " + esc(e.city) : ""}</span></span></button>`; }).join("");
+  $("bn-track").innerHTML = items.map((e, i) => { const u = images(e)[0].url; return `<button type="button" class="bn-slide" data-go="event-${esc(e.id)}" aria-label="${esc(e.title)}, ${esc(longDate(e.date))} (${i + 1} of ${items.length})"><span class="bn-bg" style="background-image:url(&quot;${esc(u)}&quot;)" aria-hidden="true"></span><img src="${esc(u)}" alt=""${cleanTheme(e.theme).fill ? ' class="fill"' : ""} ${i ? 'loading="lazy"' : ""}><span class="bn-cap"><b style="${hostText(e, "", 0, true)}">${esc(e.title)}</b><span>${esc(longDate(e.date))} · ${esc(whenTime(e))}${e.city ? " · " + esc(e.city) : ""}</span></span></button>`; }).join("");
   $("bn-dots").innerHTML = items.length > 1 ? items.map((e, i) => `<button type="button" data-bn="${i}" aria-label="Show flyer ${i + 1}" aria-current="${i === 0}"></button>`).join("") : "";
   bnStart();
 }
@@ -1010,7 +1077,7 @@ function detailHTML(e, pv){
   return `
     ${e.admin_hidden ? '<div class="confirm">This event is hidden from the public.</div>' : ""}
     ${imgs.length ? `<a class="cover" href="${esc(imgs[0].url)}" target="_blank" rel="noopener"><img src="${esc(imgs[0].url)}" alt="${esc(imgs[0].name || "Flyer for " + e.title)}"></a>` : ""}
-    <div><h2 style="font-size:28px">${esc(e.title)}</h2>
+    <div><h2 style="font-size:28px;${hostText(e, "#ffffff", 3)}">${esc(e.title)}</h2>
       <p class="meta" style="font-size:16px"><b>${esc(longDate(e.date))}</b> · ${esc(whenTime(e))}</p>
       ${e.status === "cancelled" ? '<span class="tag cx">Cancelled</span>' : ""}${e.event_type ? `<span class="tag">${esc(e.event_type)}</span>` : ""}${e.price ? `<span class="tag">${esc(e.price)}</span>` : ""}</div>
     ${pv ? (e.tickets_on ? `<div class="tix"><div class="row between"><h3>Tickets</h3><span class="tixprice">${price ? esc(money(price)) : "Free"}<small> ${price ? "each" : ""}</small></span></div>
@@ -1025,7 +1092,7 @@ function detailHTML(e, pv){
     </div>
     ${pv ? "" : `<div id="ev-sharebox" ${JUST_POSTED === e.id ? "" : "hidden"}>${shareBox(e, JUST_POSTED === e.id)}</div>`}
     ${imgs.length > 1 ? `<div class="gallery">${imgs.slice(1).map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener"><img src="${esc(f.url)}" alt="${esc(f.name || "Event photo")}" loading="lazy"></a>`).join("")}</div>` : ""}
-    ${e.description ? `<p class="desc">${esc(e.description)}</p>` : ""}
+    ${e.description ? `<p class="desc" style="${hostText(e, "#ffffff", 4.5)}">${esc(e.description)}</p>` : ""}
     <dl class="kv">
       ${fa ? `<dt>Where</dt><dd>${esc(fa)}</dd>` : ""}
       ${e.host_name ? `<dt>Host</dt><dd>${esc(e.host_name)}</dd>` : ""}
@@ -1251,7 +1318,7 @@ function openForm(e){
   $("f-pay-zelle").value = po.zelle || "";
   document.querySelectorAll("[data-pay]").forEach(c => { c.checked = !!po[c.dataset.pay]; payToggle(c); });
   formFiles = e && Array.isArray(e.files) ? e.files.slice() : [];
-  FT = { button: "", page: "", page2: "", fill: false, ...cleanTheme(e && e.theme) };
+  FT = { button: "", page: "", page2: "", fill: false, font: "", tlight: false, tcolor: "", ...cleanTheme(e && e.theme) };
   $("f-two").checked = !!FT.page2;
   renderFileList(); $("f-err").textContent = ""; $("f-file-err").textContent = "";
   $("form-extra") && $("form-extra").remove();
@@ -1349,7 +1416,7 @@ $("ev-form").addEventListener("submit", async ev => {
       const { pay_options, ...rest } = v; saved = await saveRow(rest);
     }
     if (noEnd && v.end_time) toast("Your event saved, but the end time didn't. The site owner needs to run end-time-setup.sql in Supabase.", 6000);
-    else if (noTheme && Object.keys(v.theme).some(k => k !== "fill")) toast("Your event saved, but your colors didn't. The site owner needs to run event-colors-setup.sql in Supabase.", 6000);
+    else if (noTheme && Object.keys(v.theme).some(k => k !== "fill")) toast("Your event saved, but your colors and text style didn't. The site owner needs to run event-colors-setup.sql in Supabase.", 6000);
     if (!editingId) JUST_POSTED = saved.id;
     await loadEvents(); go("event-" + saved.id);
   } catch (e2) {
@@ -1393,7 +1460,16 @@ function renderFileList(){
 }
 
 /* ---------- Look of your ad: face photo, button color, page color(s), live preview ---------- */
-let FT = { button: "", page: "", page2: "", fill: false };
+let FT = { button: "", page: "", page2: "", fill: false, font: "", tlight: false, tcolor: "" };
+const TEXT_COLORS = [["", "Standard"], ["#111111", "Black"], ["#ffffff", "White"], ["#8a4b22", "Brown"], ["#a2342a", "Red"], ["#d35400", "Orange"], ["#b8860b", "Gold"], ["#2f6b3a", "Green"], ["#1f3a5f", "Navy"], ["#6b2d5c", "Plum"], ["#c2185b", "Pink"]];
+function fontChips(id, cur, attr){
+  loadFonts(Object.keys(FONTS));
+  $(id).innerHTML = Object.entries(FONTS).map(([k, [n, stack]]) => `<button type="button" ${attr}="${k}" aria-pressed="${(cur || "std") === k}" style="${stack ? "font-family:" + stack + ";" : ""}font-size:16px">${esc(n)}</button>`).join("");
+}
+function textSwatches(id, cur, attr){
+  $(id).innerHTML = TEXT_COLORS.map(([c, n]) => `<button type="button" class="sw" ${attr}="${c}" aria-label="${esc(n)}" aria-pressed="${(cur || "") === c}" style="background:${c || "conic-gradient(#2a1e16 0 50%,#ffffff 0)"}"></button>`).join("")
+    + `<label class="swc" ${!cur || TEXT_COLORS.some(([c]) => c === cur) ? "" : `data-on="1" style="background:${cur}"`} title="Pick any color"><input type="color" ${attr}-any value="${cur || "#2a1e16"}" aria-label="Pick any color"></label>`;
+}
 const BTN_COLORS = [["#8a4b22", "Standard brown"], ["#a2342a", "Red"], ["#d35400", "Orange"], ["#b8860b", "Gold"], ["#2f6b3a", "Green"], ["#1f3a5f", "Navy"], ["#6b2d5c", "Plum"], ["#c2185b", "Pink"], ["#111111", "Black"]];
 const PAGE_COLORS = [["#ff8243", "Standard orange with teal checks"], ["#ffffff", "White"], ["#f6efe6", "Cream"], ["#fff6d6", "Butter"], ["#eaf2ec", "Sage"], ["#e6eef8", "Sky"], ["#f8e8ec", "Blush"], ["#3b2417", "Espresso"], ["#0f1b2d", "Midnight"], ["#111111", "Black"]];
 function swatchRow(id, list, key, std){
@@ -1408,6 +1484,8 @@ function renderLook(){
   $("f-faces").innerHTML = imgs.length ? imgs.map((f, i) => `<button type="button" data-face="${formFiles.indexOf(f)}" aria-pressed="${f === face}" aria-label="Use ${esc(f.name)} as the face"><img src="${esc(f.url)}" alt="">${f === face ? '<span class="chip">Face</span>' : ""}</button>`).join("")
     : '<p class="note" style="grid-column:1/-1">Add a photo or flyer above, then pick your face here.</p>';
   $("f-fill").checked = !!FT.fill; $("f-fill").closest("label").hidden = !imgs.length; $("f-face-edit-row").hidden = !imgs.length;
+  fontChips("f-fonts", FT.font, "data-ffont"); $("f-tbold").checked = !FT.tlight;
+  textSwatches("sw-text", FT.tcolor, "data-ftc");
   swatchRow("sw-button", BTN_COLORS, "button", "#8a4b22");
   swatchRow("sw-page", PAGE_COLORS, "page", "#ff8243");
   $("sw-page2").hidden = !$("f-two").checked;
@@ -1427,20 +1505,24 @@ function renderPreview(){
       <p class="note">The page behind your event uses your page color.</p></div>`;
 }
 $("ev-form").addEventListener("click", e => {
+  const ff = e.target.closest("[data-ffont]"); if (ff) { FT.font = ff.dataset.ffont === "std" ? "" : ff.dataset.ffont; renderLook(); $("f-fonts").querySelector(`[data-ffont="${ff.dataset.ffont}"]`).focus(); return; }
+  const tc = e.target.closest("[data-ftc]"); if (tc) { FT.tcolor = tc.dataset.ftc; renderLook(); $("sw-text").querySelector(`[data-ftc="${tc.dataset.ftc}"]`).focus(); return; }
   const sw = e.target.closest("[data-sw]");
   if (sw) { const k = sw.dataset.sw, c = sw.dataset.c; FT[k] = (k === "button" && c === "#8a4b22") || (k === "page" && c === "#ff8243") ? "" : c; renderLook(); $(`sw-${k}`).querySelector(`[data-c="${c}"]`).focus(); return; }
   const fc = e.target.closest("[data-face]");
   if (fc) { const i = +fc.dataset.face, f = formFiles.splice(i, 1)[0]; formFiles.unshift(f); renderFileList(); const b = $("f-faces").querySelector('[aria-pressed="true"]'); if (b) b.focus(); }
 });
 $("ev-form").addEventListener("input", e => {
+  const ta = e.target.closest("[data-ftc-any]"); if (ta) { FT.tcolor = hexOk(ta.value); const l = ta.closest("label"); l.dataset.on = "1"; l.style.background = FT.tcolor; $("sw-text").querySelectorAll("[data-ftc]").forEach(b => b.setAttribute("aria-pressed", "false")); renderPreview(); return; }
   const c = e.target.closest("[data-swc]");
   if (c) { const k = c.dataset.swc; FT[k] = hexOk(c.value); const l = c.closest("label"); l.style.background = FT[k]; l.dataset.on = "1"; $(`sw-${k}`).querySelectorAll("[data-sw]").forEach(b => b.setAttribute("aria-pressed", "false")); renderPreview(); return; }
   if (!e.target.closest("#f-preview")) renderPreview();
 });
-$("ev-form").addEventListener("change", e => { if (e.target.closest("[data-swc]")) renderLook(); });
+$("ev-form").addEventListener("change", e => { if (e.target.closest("[data-swc],[data-ftc-any]")) renderLook(); });
 $("f-fill").addEventListener("change", () => { FT.fill = $("f-fill").checked; renderPreview(); });
+$("f-tbold").addEventListener("change", () => { FT.tlight = !$("f-tbold").checked; renderPreview(); });
 $("f-two").addEventListener("change", () => { if ($("f-two").checked && !FT.page2) FT.page2 = "#f6efe6"; renderLook(); });
-$("f-look-reset").addEventListener("click", () => { FT = { button: "", page: "", page2: "", fill: false }; $("f-two").checked = false; renderLook(); });
+$("f-look-reset").addEventListener("click", () => { FT = { button: "", page: "", page2: "", fill: false, font: "", tlight: false, tcolor: "" }; $("f-two").checked = false; renderLook(); });
 /* ============================================================
    PHOTO EDITOR: crop, rotate, light, filters and words on the photo.
    Saves a new JPEG and swaps it in. The original stays as the starting point for later edits.
@@ -1749,8 +1831,16 @@ $("bg-open").addEventListener("click", () => $("bgpanel").hidden ? openBg() : cl
 $("bg-close").addEventListener("click", () => { closeBg(); $("bg-open").focus(); });
 $("bgpanel").addEventListener("click", e => { const b = e.target.closest("[data-ubg]"); if (!b) return; setUserBg(b.dataset.ubg, b.dataset.c); renderBgPanel(); $(b.dataset.ubg === "bg" ? "bg-sw-bg" : "bg-sw-check").querySelector(`[data-c="${b.dataset.c}"]`).focus(); });
 $("bgpanel").addEventListener("input", e => { const i = e.target.closest("[data-ubg-any]"); if (!i) return; const c = hexOk(i.value); if (!c) return; setUserBg(i.dataset.ubgAny, c); const l = i.closest("label"); l.dataset.on = "1"; l.style.background = c; l.parentElement.querySelectorAll("[data-ubg]").forEach(x => x.setAttribute("aria-pressed", "false")); });
-$("bgpanel").addEventListener("change", e => { if (e.target.closest("[data-ubg-any]")) renderBgPanel(); });
-$("bg-reset").addEventListener("click", () => { UBG = { bg: "", check: "", fade: 45 }; try { localStorage.removeItem(UBG_KEY); } catch (e) {} setPhoto(""); });
+$("bgpanel").addEventListener("change", e => { if (e.target.closest("[data-ubg-any],[data-utc-any]")) renderBgPanel(); });
+const saveUBG = () => { try { localStorage.setItem(UBG_KEY, JSON.stringify(UBG)); } catch (e) {} applyUserBg(); };
+$("bgpanel").addEventListener("click", e => {
+  const f = e.target.closest("[data-ufont]"); if (f) { UBG.font = f.dataset.ufont === "std" ? "" : f.dataset.ufont; saveUBG(); renderBgPanel(); $("ut-fonts").querySelector(`[data-ufont="${f.dataset.ufont}"]`).focus(); return; }
+  const c = e.target.closest("[data-utc]"); if (c) { UBG.tcolor = c.dataset.utc; saveUBG(); renderBgPanel(); $("ut-colors").querySelector(`[data-utc="${c.dataset.utc}"]`).focus(); }
+});
+$("bgpanel").addEventListener("input", e => { const i = e.target.closest("[data-utc-any]"); if (!i) return; UBG.tcolor = hexOk(i.value); const l = i.closest("label"); l.dataset.on = "1"; l.style.background = UBG.tcolor; $("ut-colors").querySelectorAll("[data-utc]").forEach(b => b.setAttribute("aria-pressed", "false")); saveUBG(); });
+$("ut-all").addEventListener("change", () => { UBG.all = $("ut-all").checked; saveUBG(); });
+$("ut-bold").addEventListener("change", () => { UBG.tlight = !$("ut-bold").checked; saveUBG(); });
+$("bg-reset").addEventListener("click", () => { UBG = { bg: "", check: "", fade: 45, font: "", all: false, tlight: false, tcolor: "" }; try { localStorage.removeItem(UBG_KEY); } catch (e) {} setPhoto(""); });
 $("bg-photo-rm").addEventListener("click", () => { setPhoto(""); $("bg-file").previousElementSibling.focus(); });
 $("bg-ads-btn").addEventListener("click", () => { const box = $("bg-ads"); box.hidden = !box.hidden; $("bg-ads-btn").setAttribute("aria-expanded", String(!box.hidden)); if (!box.hidden) renderBgAds(); });
 $("bg-ads").addEventListener("click", e => { const b = e.target.closest("[data-bg-ad]"); if (b) setPhoto(b.dataset.bgAd); });
