@@ -189,6 +189,18 @@ body.themed #status{color:var(--page-muted)}
 .faces .chip,.fcard .chip{position:absolute;left:4px;bottom:4px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:800;padding:1px 8px;border-radius:999px}
 .pvpage{border-radius:12px;border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--pv-grad,#fff)}
 .pvpage .note{color:var(--page-muted,var(--muted))}
+/* photo editor */
+.fcard .ed{position:absolute;right:4px;bottom:4px;border:0;border-radius:999px;background:rgba(20,12,6,.75);color:#fff;font-size:12px;font-weight:800;padding:4px 10px}
+.pe{position:fixed;inset:0;z-index:80;background:rgba(20,12,6,.62);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:max(12px,env(safe-area-inset-top,0px)) 10px calc(24px + env(safe-area-inset-bottom,0px))}
+.pe-box{background:var(--surface);color:var(--ink);border-radius:16px;padding:16px;width:100%;max-width:560px;display:flex;flex-direction:column;gap:12px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+.pe-stage{border-radius:12px;overflow:hidden;display:flex;justify-content:center;background:conic-gradient(#2a2420 25%,#1f1a17 0 50%,#2a2420 0 75%,#1f1a17 0);background-size:20px 20px}
+.pe-stage canvas{display:block;max-width:100%;max-height:50vh;touch-action:none;cursor:grab}
+.pe-panel{display:flex;flex-direction:column;gap:12px}
+.pe input[type=range]{padding:0;border:0;background:none;height:32px;accent-color:var(--accent)}
+.pe .slab{display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:800}
+.chips button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
 @media (max-width:460px){.fields{grid-template-columns:1fr}.ev{grid-template-columns:56px minmax(0,1fr);gap:12px}}
 </style>
 </head>
@@ -201,6 +213,17 @@ body.themed #status{color:var(--page-muted)}
   <button class="ghost pill" type="button" id="acct-open" aria-controls="acct">Sign in</button>
 </header>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<div class="pe" id="pe" hidden>
+  <div class="pe-box" role="dialog" aria-modal="true" aria-labelledby="pe-h">
+    <div class="row between"><h2 id="pe-h" tabindex="-1">Edit photo</h2><button class="ghost" type="button" id="pe-cancel">Cancel</button></div>
+    <div class="pe-stage"><canvas id="pe-cv" aria-label="Photo being edited"></canvas></div>
+    <p class="note" id="pe-hint" style="margin-top:-4px"></p>
+    <div class="tabs" id="pe-tabs"><button type="button" data-pe-tab="crop" aria-pressed="true">Crop</button><button type="button" data-pe-tab="adjust" aria-pressed="false">Light</button><button type="button" data-pe-tab="look" aria-pressed="false">Filter</button><button type="button" data-pe-tab="text" aria-pressed="false">Text</button></div>
+    <div class="pe-panel" id="pe-panel"></div>
+    <div class="err" id="pe-err" role="alert"></div>
+    <div class="row"><button class="btn" type="button" id="pe-save">Save photo</button><button class="ghost" type="button" id="pe-reset">Start over</button></div>
+  </div>
+</div>
 
 <main class="wrap">
   <div class="demo" id="demo-note" hidden>Demo mode: nothing is shared yet. Everything saves on this device only. Add your Supabase settings to config.js to go live.</div>
@@ -311,7 +334,7 @@ body.themed #status{color:var(--page-muted)}
           <label for="f-files">Photos, flyers and documents</label>
           <label class="upl" for="f-files"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><span>Add a photo, flyer or document</span></label>
           <input id="f-files" type="file" multiple accept="image/*,application/pdf,.pdf,.doc,.docx,.txt" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
-          <div class="note" style="margin-top:6px">Photos, PDF, Word or text files, up to 10 MB each, 8 per event. Everything you add here is public.</div>
+          <div class="note" style="margin-top:6px">Photos, PDF, Word or text files, up to 10 MB each, 8 per event. Everything you add here is public. Tap <b>Edit</b> on a photo to crop it, fix the light, add a filter or put words on it.</div>
           <div class="files" id="f-filelist"></div>
           <div class="err" id="f-file-err" role="alert"></div>
         </div>
@@ -321,6 +344,7 @@ body.themed #status{color:var(--page-muted)}
           <label id="f-face-l">Face of your ad</label>
           <div class="note" style="margin-bottom:8px">Tap the photo people should see first. It shows on the event list, in the Featured banner and at the top of your event page.</div>
           <div class="faces" id="f-faces" role="group" aria-labelledby="f-face-l"></div>
+          <div class="row" style="margin-top:10px" id="f-face-edit-row" hidden><button type="button" class="ghost" id="f-face-edit">Edit the face photo</button><span class="note">Crop it or add your event name on top.</span></div>
           <label class="check" style="margin-top:10px"><input id="f-fill" type="checkbox"> Fill the whole frame with the photo (trims the edges)</label>
         </div>
         <div class="full"><label id="sw-button-l">Button color</label><div class="swatches" id="sw-button" role="group" aria-labelledby="sw-button-l"></div></div>
@@ -468,6 +492,7 @@ const sbApi = {
   async cancelMyTicket(id){ const { data, error } = await SB.rpc("cancel_my_ticket", { p_id: id }); if (error) throw error; if (data !== true) throw new Error("not allowed"); },
   async comments(eid){ const { data, error } = await SB.from("ce_comments").select("*").eq("event_id", eid).order("created_at").limit(300); if (error) throw error; return data; },
   async addComment(eid, body){ const { data, error } = await SB.from("ce_comments").insert({ event_id: eid, body }).select().single(); if (error) throw error; return data; },
+  async editComment(id, body){ const { data, error } = await SB.rpc("edit_my_comment", { p_id: String(id), p_body: body }); if (error) throw error; if (data !== true) throw new Error("not allowed"); },
   async deleteComment(id){ const { data, error } = await SB.from("ce_comments").delete().eq("id", id).select("id"); if (error) throw error; if (!data || !data.length) throw new Error("not allowed"); },
   subscribe(cb){ try { SB.channel("ce-events").on("postgres_changes", { event: "*", schema: "public", table: "ce_events" }, cb).subscribe(); } catch (e) {} }
 };
@@ -557,6 +582,7 @@ const demoApi = {
     const c = { id: uuid(), event_id: eid, user_id: d.session, name: (d.profiles[d.session] || {}).name || "Guest", body: String(body).slice(0, 1000), created_at: new Date().toISOString() };
     d.comments.push(c); dSave(d); return c;
   },
+  async editComment(id, body){ const d = dDb(), c = d.comments.find(x => x.id === id); if (!c || c.user_id !== d.session) throw new Error("not allowed"); c.body = String(body).slice(0, 1000); c.edited_at = new Date().toISOString(); dSave(d); },
   async deleteComment(id){ const d = dDb(), c = d.comments.find(x => x.id === id); if (!c || !(c.user_id === d.session || dHosts(d, c.event_id))) throw new Error("not allowed"); d.comments = d.comments.filter(x => x.id !== id); dSave(d); },
   subscribe(cb){ addEventListener("storage", e => { if (e.key === DKEY) cb(); }); }
 };
@@ -610,6 +636,7 @@ const isImg = f => /^image\//.test(f.type || "");
 const images = e => (Array.isArray(e.files) ? e.files : []).filter(isImg);
 const docs = e => (Array.isArray(e.files) ? e.files : []).filter(f => !isImg(f));
 const eventLink = e => location.href.split("#")[0].split("?")[0] + "#event-" + e.id;
+const PENCIL = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>';
 const NAV_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-8z"/></svg>';
 const HEART = on => `<svg viewBox="0 0 24 24" width="18" height="18" fill="${on ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.6-9 9-9 9z"/></svg>`;
 function locMatch(e, q){ const hay = [e.title, e.event_type, e.host_name, e.location, e.address, e.city, e.state, e.zip].join(" ").toLowerCase(); return q.split(/[\s,]+/).filter(Boolean).every(w => hay.includes(w)); }
@@ -788,6 +815,7 @@ function card(e){
         <button type="button" class="ghost ${saved ? "saved" : ""}" data-save="${esc(e.id)}" aria-pressed="${saved}">${HEART(saved)}${saved ? "Saved" : "Save"}</button>
         ${fa ? `<a class="ghost" href="${navUrl(e)}" target="_blank" rel="noopener">${NAV_SVG}Navigate</a>` : ""}
         <a class="ghost" href="${gcal(e)}" target="_blank" rel="noopener">Add to calendar</a>
+        ${USER && e.host_id === USER.id ? `<button type="button" class="ghost" data-go="edit-${esc(e.id)}">${PENCIL}Edit</button>` : ""}
       </div>
     </div></article>`;
 }
@@ -879,6 +907,7 @@ async function renderDetail(id){
       ${fa ? `<a class="ghost" href="${navUrl(e)}" target="_blank" rel="noopener">${NAV_SVG}Navigate</a>` : ""}
       <a class="ghost" href="${gcal(e)}" target="_blank" rel="noopener">Add to calendar</a>
       <button type="button" class="ghost" id="ev-share" aria-expanded="false" aria-controls="ev-sharebox">Share</button>
+      ${mine ? `<button type="button" class="ghost" data-go="edit-${esc(e.id)}">${PENCIL}Edit</button>` : ""}
     </div>
     <div id="ev-sharebox" ${JUST_POSTED === e.id ? "" : "hidden"}>${shareBox(e, JUST_POSTED === e.id)}</div>
     ${imgs.length > 1 ? `<div class="gallery">${imgs.slice(1).map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener"><img src="${esc(f.url)}" alt="${esc(f.name || "Event photo")}" loading="lazy"></a>`).join("")}</div>` : ""}
@@ -1032,9 +1061,9 @@ async function renderComments(e){
   const canDel = c => USER && (c.user_id === USER.id || e.host_id === USER.id || IS_ADMIN);
   box.innerHTML = `<h3 id="cmt-h">Comments${list.length ? ` <span class="note" style="font-family:var(--body)">${list.length}</span>` : ""}</h3>
     <div class="cmts">${list.map(c => `<div class="cmt">
-      <div class="row between" style="gap:6px"><b style="overflow-wrap:anywhere">${esc(c.name || "Guest")}${c.user_id === e.host_id ? '<span class="tag">Host</span>' : ""}</b><span class="note">${esc(ago(c.created_at))}</span></div>
-      <p class="desc" style="font-size:15px">${esc(c.body)}</p>
-      ${canDel(c) ? `<button type="button" class="linkbtn" data-cdel="${esc(c.id)}">Delete</button>` : ""}</div>`).join("") || '<p class="note">No comments yet. Ask the host a question or tell people you\'re going.</p>'}</div>
+      <div class="row between" style="gap:6px"><b style="overflow-wrap:anywhere">${esc(c.name || "Guest")}${c.user_id === e.host_id ? '<span class="tag">Host</span>' : ""}</b><span class="note">${esc(ago(c.created_at))}${c.edited_at ? " · edited" : ""}</span></div>
+      <p class="desc" style="font-size:15px" data-cbody>${esc(c.body)}</p>
+      ${canDel(c) ? `<div class="row" style="gap:16px">${USER && c.user_id === USER.id ? `<button type="button" class="linkbtn" data-cedit="${esc(c.id)}">Edit</button>` : ""}<button type="button" class="linkbtn" data-cdel="${esc(c.id)}">Delete</button></div>` : ""}</div>`).join("") || '<p class="note">No comments yet. Ask the host a question or tell people you\'re going.</p>'}</div>
     ${USER ? `<form id="cmt-form" novalidate style="display:flex;flex-direction:column;gap:8px">
         <label for="cmt-body" style="margin:0">Add a comment</label>
         <textarea id="cmt-body" maxlength="1000" placeholder="Ask a question or share something" style="min-height:84px"></textarea>
@@ -1044,6 +1073,22 @@ async function renderComments(e){
   box.querySelectorAll("[data-cdel]").forEach(b => b.addEventListener("click", async () => {
     if (b.textContent !== "Tap again to delete") { b.textContent = "Tap again to delete"; return; }
     try { await api.deleteComment(b.dataset.cdel); renderComments(e); } catch (err) { b.textContent = "Didn't delete. Try again"; }
+  }));
+  box.querySelectorAll("[data-cedit]").forEach(b => b.addEventListener("click", () => {
+    const c = list.find(x => String(x.id) === b.dataset.cedit), wrap = b.closest(".cmt"); if (!c || wrap.querySelector("form")) return;
+    const p = wrap.querySelector("[data-cbody]"), row = b.parentElement; p.hidden = true; row.hidden = true;
+    const f = document.createElement("form"); f.noValidate = true; f.style.cssText = "display:flex;flex-direction:column;gap:8px";
+    f.innerHTML = `<label for="ce-${esc(c.id)}" style="margin:0">Edit your comment</label><textarea id="ce-${esc(c.id)}" maxlength="1000" style="min-height:84px">${esc(c.body)}</textarea><div class="err" role="alert"></div><div class="row"><button class="btn" type="submit">Save</button><button class="ghost" type="button" data-cx>Cancel</button></div>`;
+    p.after(f); const ta = f.querySelector("textarea"), er = f.querySelector(".err"); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+    f.querySelector("[data-cx]").addEventListener("click", () => { f.remove(); p.hidden = false; row.hidden = false; b.focus(); });
+    f.addEventListener("submit", async ev => {
+      ev.preventDefault(); const body = ta.value.trim();
+      if (!body) { er.textContent = "Write something, or tap Delete instead."; return; }
+      if (body === c.body) { f.remove(); p.hidden = false; row.hidden = false; return; }
+      f.querySelector("[type=submit]").disabled = true;
+      try { await api.editComment(c.id, body); await renderComments(e); }
+      catch (err) { const m = String(err && err.message || ""); er.textContent = /function|schema cache|does not exist/i.test(m) ? "Editing comments isn't set up yet. The site owner needs to run comment-edits-setup.sql." : "Your change didn't save. Try again."; f.querySelector("[type=submit]").disabled = false; }
+    });
   }));
   if ($("cmt-signin")) $("cmt-signin").addEventListener("click", () => { pendingAfterLogin = () => { go("event-" + e.id); setTimeout(() => $("cmt-body") && $("cmt-body").focus(), 400); }; openAcct("new", "Create a free profile to comment. It takes a minute."); });
   if ($("cmt-form")) $("cmt-form").addEventListener("submit", async ev => {
@@ -1190,7 +1235,7 @@ function renderFileList(){
     if (f.busy) return `<div class="fcard"><div class="busy">Uploading…</div></div>`;
     const inner = isImg(f) ? `<img src="${esc(f.url)}" alt="${esc(f.name)}">` : `<div class="doc"><b>${esc((String(f.name).split(".").pop() || "FILE").toUpperCase().slice(0, 5))}</b><span>${esc(f.name)}</span><span class="note" style="font-size:11px">${kb(f.size || 0)}</span></div>`;
     const face = isImg(f) && formFiles.find(x => !x.busy && isImg(x)) === f ? '<span class="chip">Face</span>' : "";
-    return `<div class="fcard"><a href="${esc(f.url)}" target="_blank" rel="noopener">${inner}</a>${face}<button type="button" class="rm" data-rm="${i}" aria-label="Remove ${esc(f.name)}">×</button></div>`;
+    return `<div class="fcard"><a href="${esc(f.url)}" target="_blank" rel="noopener">${inner}</a>${face}${isImg(f) ? `<button type="button" class="ed" data-edit="${i}" aria-label="Edit ${esc(f.name)}">Edit</button>` : ""}<button type="button" class="rm" data-rm="${i}" aria-label="Remove ${esc(f.name)}">×</button></div>`;
   }).join("");
   renderLook();
 }
@@ -1210,7 +1255,7 @@ function renderLook(){
   const imgs = formFiles.filter(f => !f.busy && isImg(f)), face = imgs[0];
   $("f-faces").innerHTML = imgs.length ? imgs.map((f, i) => `<button type="button" data-face="${formFiles.indexOf(f)}" aria-pressed="${f === face}" aria-label="Use ${esc(f.name)} as the face"><img src="${esc(f.url)}" alt="">${f === face ? '<span class="chip">Face</span>' : ""}</button>`).join("")
     : '<p class="note" style="grid-column:1/-1">Add a photo or flyer above, then pick your face here.</p>';
-  $("f-fill").checked = !!FT.fill; $("f-fill").closest("label").hidden = !imgs.length;
+  $("f-fill").checked = !!FT.fill; $("f-fill").closest("label").hidden = !imgs.length; $("f-face-edit-row").hidden = !imgs.length;
   swatchRow("sw-button", BTN_COLORS, "button", "#8a4b22");
   swatchRow("sw-page", PAGE_COLORS, "page", "#ffffff");
   $("sw-page2").hidden = !$("f-two").checked;
@@ -1244,6 +1289,189 @@ $("ev-form").addEventListener("change", e => { if (e.target.closest("[data-swc]"
 $("f-fill").addEventListener("change", () => { FT.fill = $("f-fill").checked; renderPreview(); });
 $("f-two").addEventListener("change", () => { if ($("f-two").checked && !FT.page2) FT.page2 = "#f6efe6"; renderLook(); });
 $("f-look-reset").addEventListener("click", () => { FT = { button: "", page: "", page2: "", fill: false }; $("f-two").checked = false; renderLook(); });
+/* ============================================================
+   PHOTO EDITOR: crop, rotate, light, filters and words on the photo.
+   Saves a new JPEG and swaps it in. The original stays as the starting point for later edits.
+   ============================================================ */
+const PE = { f: null, img: null, base: null, s: null, tab: "crop", sel: -1, boxes: [], drag: null, raf: 0, opener: null };
+const peNew = () => ({ rot: 0, aspect: "orig", zoom: 1, ux: 0.5, uy: 0.5, br: 0, ct: 0, sat: 0, look: "none", texts: [] });
+const ASPECTS = { orig: ["Original", 0], square: ["Square", 1], tall: ["Tall 4:5", 0.8], wide: ["Wide 16:9", 16 / 9] };
+const LOOKS = { none: "None", warm: "Warm", cool: "Cool", bw: "Black and white", vintage: "Vintage", bold: "Bold" };
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+function loadImg(src){
+  return new Promise((res, rej) => {
+    const i = new Image();
+    if (/^https?:/i.test(src)) { i.crossOrigin = "anonymous"; src += (src.includes("?") ? "&" : "?") + "edit=" + Date.now(); }
+    i.onload = () => res(i); i.onerror = () => rej(new Error("load")); i.src = src;
+  });
+}
+function peBase(){
+  const i = PE.img, turn = PE.s.rot % 180 !== 0, w0 = i.naturalWidth || 1200, h0 = i.naturalHeight || 1200;
+  const k = Math.min(1, 2400 / Math.max(w0, h0)), w = Math.round(w0 * k), h = Math.round(h0 * k);
+  const c = document.createElement("canvas"); c.width = turn ? h : w; c.height = turn ? w : h;
+  const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
+  x.translate(c.width / 2, c.height / 2); x.rotate(PE.s.rot * Math.PI / 180); x.drawImage(i, -w / 2, -h / 2, w, h);
+  PE.base = c;
+}
+function peCrop(){
+  const B = PE.base, s = PE.s, a = ASPECTS[s.aspect][1] || B.width / B.height;
+  let cw = B.width, ch = cw / a; if (ch > B.height) { ch = B.height; cw = ch * a; }
+  cw /= s.zoom; ch /= s.zoom;
+  const cx = clamp(s.ux * B.width, cw / 2, B.width - cw / 2), cy = clamp(s.uy * B.height, ch / 2, B.height - ch / 2);
+  s.ux = cx / B.width; s.uy = cy / B.height;
+  return { x: cx - cw / 2, y: cy - ch / 2, w: cw, h: ch };
+}
+function peTone(x, W, H){
+  const s = PE.s; let br = s.br / 100, ct = s.ct / 100, sat = s.sat / 100, warm = 0, sep = 0;
+  if (s.look === "warm") warm = 18; if (s.look === "cool") warm = -18; if (s.look === "bw") sat = -1;
+  if (s.look === "vintage") { sep = 0.55; ct -= 0.08; } if (s.look === "bold") { sat += 0.35; ct += 0.18; }
+  if (!br && !ct && !sat && !warm && !sep) return;
+  const d = x.getImageData(0, 0, W, H), p = d.data, bf = 1 + br, cf = 1 + ct, sf = 1 + Math.max(-1, sat);
+  for (let i = 0; i < p.length; i += 4) {
+    let r = (p[i] * bf - 128) * cf + 128, g = (p[i + 1] * bf - 128) * cf + 128, b = (p[i + 2] * bf - 128) * cf + 128;
+    const y = 0.299 * r + 0.587 * g + 0.114 * b; r = y + (r - y) * sf; g = y + (g - y) * sf; b = y + (b - y) * sf;
+    if (sep) { const sr = 0.393 * r + 0.769 * g + 0.189 * b, sg = 0.349 * r + 0.686 * g + 0.168 * b, sb = 0.272 * r + 0.534 * g + 0.131 * b; r += (sr - r) * sep; g += (sg - g) * sep; b += (sb - b) * sep; }
+    p[i] = r + warm; p[i + 1] = g; p[i + 2] = b - warm;
+  }
+  x.putImageData(d, 0, 0);
+}
+function wrapLines(x, text, max){
+  const out = [];
+  String(text).split("\n").forEach(par => { let line = ""; par.split(/\s+/).filter(Boolean).forEach(w => { const t = line ? line + " " + w : w; if (line && x.measureText(t).width > max) { out.push(line); line = w; } else line = t; }); out.push(line); });
+  return out;
+}
+function peText(x, t, W, H){
+  const fs = Math.max(10, Math.round(W * t.size)), col = hexOk(t.color) || "#ffffff", light = lum(col) > 0.4;
+  x.save(); x.font = t.font === "body" ? `800 ${fs}px Figtree, system-ui, sans-serif` : `900 ${fs}px Fraunces, Georgia, serif`;
+  x.textAlign = "center"; x.textBaseline = "middle";
+  const lines = wrapLines(x, t.text || " ", W * 0.9), lh = fs * 1.15, bw = Math.max(fs, ...lines.map(l => x.measureText(l).width)), bh = lh * lines.length;
+  const cx = t.x * W, cy = t.y * H;
+  if (t.style === "band") { const pad = fs * 0.4; x.fillStyle = light ? "rgba(0,0,0,.58)" : "rgba(255,255,255,.8)"; x.fillRect(cx - bw / 2 - pad, cy - bh / 2 - pad * 0.6, bw + pad * 2, bh + pad * 1.2); }
+  if (t.style === "shadow") { x.shadowColor = light ? "rgba(0,0,0,.7)" : "rgba(255,255,255,.8)"; x.shadowBlur = fs * 0.28; x.shadowOffsetY = fs * 0.04; }
+  x.fillStyle = col; lines.forEach((l, i) => x.fillText(l, cx, cy - bh / 2 + lh * (i + 0.5)));
+  x.restore();
+  return { x: cx - bw / 2, y: cy - bh / 2, w: bw, h: bh };
+}
+function peDraw(cv, maxSide, preview){
+  const r = peCrop(), k = Math.min(maxSide / Math.max(r.w, r.h), preview ? 8 : 1.5);
+  const W = Math.max(1, Math.round(r.w * k)), H = Math.max(1, Math.round(r.h * k));
+  cv.width = W; cv.height = H;
+  const x = cv.getContext("2d"); x.imageSmoothingQuality = "high"; x.drawImage(PE.base, r.x, r.y, r.w, r.h, 0, 0, W, H);
+  peTone(x, W, H);
+  PE.s.texts.forEach((t, i) => { const b = peText(x, t, W, H); if (preview) PE.boxes[i] = b; });
+  if (preview && PE.tab === "text" && PE.boxes[PE.sel]) { const b = PE.boxes[PE.sel], m = W / 80; x.save(); x.setLineDash([m, m * 0.7]); x.lineWidth = Math.max(2, W / 320); x.strokeStyle = "#fff"; x.shadowColor = "#000"; x.shadowBlur = 3; x.strokeRect(b.x - m, b.y - m, b.w + m * 2, b.h + m * 2); x.restore(); }
+}
+function peRender(){ cancelAnimationFrame(PE.raf); PE.raf = requestAnimationFrame(() => { try { PE.boxes = []; peDraw($("pe-cv"), 900, true); } catch (e) { $("pe-err").textContent = "This photo can't be changed here. Remove it and add it again, then edit it."; } }); }
+const HINTS = { crop: "Pick a shape or zoom in, then drag the photo to move it.", adjust: "Slide to make the photo brighter, punchier or more colorful.", look: "Pick a filter. You can still change the light after.", text: "Add words, then drag them on the photo to move them." };
+function pePanel(){
+  const s = PE.s, P = $("pe-panel");
+  document.querySelectorAll("[data-pe-tab]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.peTab === PE.tab)));
+  $("pe-hint").textContent = HINTS[PE.tab];
+  const slider = (k, label, min, max, step, val, show) => `<div><div class="slab"><label for="pe-${k}" style="margin:0">${label}</label><span id="pe-${k}-v">${show}</span></div><input type="range" id="pe-${k}" data-ps="${k}" min="${min}" max="${max}" step="${step}" value="${val}"></div>`;
+  if (PE.tab === "crop") P.innerHTML = `<div class="chips" role="group" aria-label="Shape">${Object.entries(ASPECTS).map(([k, [n]]) => `<button type="button" data-pa="${k}" aria-pressed="${s.aspect === k}">${n}</button>`).join("")}</div>
+    ${slider("zoom", "Zoom", 1, 3, 0.01, s.zoom, Math.round(s.zoom * 100) + "%")}
+    <div class="row"><button type="button" class="ghost" data-prot="1">Rotate ↻</button></div>`;
+  if (PE.tab === "adjust") P.innerHTML = slider("br", "Brightness", -50, 50, 1, s.br, s.br) + slider("ct", "Contrast", -50, 50, 1, s.ct, s.ct) + slider("sat", "Color", -100, 60, 1, s.sat, s.sat);
+  if (PE.tab === "look") P.innerHTML = `<div class="chips" role="group" aria-label="Filter">${Object.entries(LOOKS).map(([k, n]) => `<button type="button" data-pl="${k}" aria-pressed="${s.look === k}">${n}</button>`).join("")}</div>`;
+  if (PE.tab === "text") {
+    const t = s.texts[PE.sel];
+    const cols = [["#ffffff", "White"], ["#111111", "Black"], ["#f6efe6", "Cream"], ["#e3b341", "Gold"]].concat(FT.button ? [[FT.button, "Your button color"]] : [], FT.page && FT.page !== "#ffffff" ? [[FT.page, "Your page color"]] : []);
+    P.innerHTML = `<div class="chips"><button type="button" data-pt-add="name">+ Event name</button><button type="button" data-pt-add="when">+ Date and time</button><button type="button" data-pt-add="own">+ Your own words</button></div>
+      ${s.texts.length > 1 ? `<div class="chips" role="group" aria-label="Pick words to change">${s.texts.map((x, i) => `<button type="button" data-pt-sel="${i}" aria-pressed="${i === PE.sel}">${esc((x.text || "Words").split("\n")[0].slice(0, 18))}</button>`).join("")}</div>` : ""}
+      ${t ? `<div><label for="pe-txt">Words</label><textarea id="pe-txt" data-pt-text maxlength="160" style="min-height:70px">${esc(t.text)}</textarea></div>
+      ${slider("size", "Size", 0.03, 0.2, 0.005, t.size, Math.round(t.size * 500) + "")}
+      <div><label id="pe-col-l">Color</label><div class="swatches" role="group" aria-labelledby="pe-col-l">${cols.map(([c, n]) => `<button type="button" class="sw" style="background:${c}" data-ptc="${c}" aria-label="${esc(n)}" aria-pressed="${t.color === c}"></button>`).join("")}<label class="swc" title="Pick any color"><input type="color" data-ptc-any value="${hexOk(t.color) || "#ffffff"}" aria-label="Pick any color"></label></div></div>
+      <div><label>Font</label><div class="chips"><button type="button" data-ptf="display" aria-pressed="${t.font !== "body"}" style="font-family:var(--display)">Fancy</button><button type="button" data-ptf="body" aria-pressed="${t.font === "body"}">Bold</button></div></div>
+      <div><label>Style</label><div class="chips"><button type="button" data-pts="shadow" aria-pressed="${t.style === "shadow"}">Shadow</button><button type="button" data-pts="band" aria-pressed="${t.style === "band"}">Band behind</button><button type="button" data-pts="plain" aria-pressed="${t.style === "plain"}">Plain</button></div></div>
+      <div><button type="button" class="ghost danger" data-pt-del>Remove these words</button></div>` : '<p class="note">Tap a button above to put words on your photo.</p>'}`;
+  }
+  peRender();
+}
+async function openEditor(f, opener){
+  PE.f = f; PE.opener = opener || null; PE.tab = "crop"; PE.sel = -1; $("pe-err").textContent = "";
+  $("pe").hidden = false; document.body.style.overflow = "hidden"; $("pe-panel").innerHTML = '<p class="note">Opening your photo…</p>'; $("pe-h").focus();
+  try { await Promise.all([loadImg(f.src || f.url).then(i => PE.img = i), document.fonts ? Promise.all([document.fonts.load("900 40px Fraunces"), document.fonts.load("800 40px Figtree")]).catch(() => {}) : 0]); }
+  catch (e) { $("pe-panel").innerHTML = ""; $("pe-err").textContent = "This photo didn't open. Check your connection and try again."; return; }
+  PE.s = f.edit ? JSON.parse(JSON.stringify(f.edit)) : peNew();
+  peBase(); pePanel();
+}
+function closeEditor(){ $("pe").hidden = true; document.body.style.overflow = ""; PE.drag = null; if (PE.opener && PE.opener.isConnected) PE.opener.focus(); }
+$("pe-cancel").addEventListener("click", closeEditor);
+$("pe").addEventListener("keydown", e => { if (e.key === "Escape") closeEditor(); });
+$("pe").addEventListener("click", e => { if (e.target === $("pe")) closeEditor(); });
+$("pe-tabs").addEventListener("click", e => { const b = e.target.closest("[data-pe-tab]"); if (b && PE.s) { PE.tab = b.dataset.peTab; pePanel(); } });
+$("pe-reset").addEventListener("click", () => { if (!PE.s) return; PE.s = peNew(); PE.sel = -1; peBase(); pePanel(); });
+$("pe-panel").addEventListener("click", e => {
+  const s = PE.s, t = s && s.texts[PE.sel], b = e.target.closest("button"); if (!b || !s) return;
+  const d = b.dataset;
+  if (d.pa) { s.aspect = d.pa; s.zoom = 1; }
+  else if (d.prot) { s.rot = (s.rot + 90) % 360; s.ux = s.uy = 0.5; peBase(); }
+  else if (d.pl) s.look = d.pl;
+  else if (d.ptAdd) {
+    const when = $("f-date").value ? longDate($("f-date").value) + ($("f-time").value ? " · " + fmtTime($("f-time").value) : "") : "Saturday, 8 PM";
+    const txt = d.ptAdd === "name" ? ($("f-title").value.trim() || "Your event name") : d.ptAdd === "when" ? when : "Your words here";
+    const ys = [0.16, 0.84, 0.5, 0.3, 0.7], y = ys[s.texts.length % ys.length];
+    s.texts.push({ text: txt, size: d.ptAdd === "name" ? 0.1 : 0.06, color: "#ffffff", font: d.ptAdd === "name" ? "display" : "body", style: "shadow", x: 0.5, y });
+    PE.sel = s.texts.length - 1; pePanel(); if (d.ptAdd === "own") { $("pe-txt").focus(); $("pe-txt").select(); } return;
+  }
+  else if (d.ptSel) PE.sel = +d.ptSel;
+  else if (d.ptc && t) t.color = d.ptc;
+  else if (d.ptf && t) t.font = d.ptf;
+  else if (d.pts && t) t.style = d.pts;
+  else if ("ptDel" in d && t) { s.texts.splice(PE.sel, 1); PE.sel = s.texts.length - 1; }
+  else return;
+  pePanel();
+});
+$("pe-panel").addEventListener("input", e => {
+  const s = PE.s, t = s && s.texts[PE.sel], el = e.target; if (!s) return;
+  if (el.dataset.ps === "size" && t) { t.size = +el.value; $("pe-size-v").textContent = Math.round(t.size * 500); }
+  else if (el.dataset.ps) { const k = el.dataset.ps; s[k] = +el.value; $("pe-" + k + "-v").textContent = k === "zoom" ? Math.round(s.zoom * 100) + "%" : s[k]; }
+  else if ("ptText" in el.dataset && t) t.text = el.value;
+  else if ("ptcAny" in el.dataset && t) { t.color = hexOk(el.value) || t.color; el.closest(".swatches").querySelectorAll("[data-ptc]").forEach(x => x.setAttribute("aria-pressed", "false")); }
+  peRender();
+});
+$("pe-panel").addEventListener("change", e => { if (e.target.dataset.ptText !== undefined && PE.s.texts.length > 1) pePanel(); });
+const pePt = e => { const cv = $("pe-cv"), r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height }; };
+$("pe-cv").addEventListener("pointerdown", e => {
+  if (!PE.s) return; const p = pePt(e), cv = $("pe-cv");
+  if (PE.tab === "text") {
+    const pad = cv.width / 30; let hit = -1;
+    PE.boxes.forEach((b, i) => { if (b && p.x >= b.x - pad && p.x <= b.x + b.w + pad && p.y >= b.y - pad && p.y <= b.y + b.h + pad) hit = i; });
+    if (hit < 0) return;
+    if (hit !== PE.sel) { PE.sel = hit; pePanel(); }
+    const t = PE.s.texts[hit]; PE.drag = { text: true, sx: p.x, sy: p.y, ox: t.x, oy: t.y };
+  } else PE.drag = { sx: p.x, sy: p.y, ox: PE.s.ux, oy: PE.s.uy, r: peCrop() };
+  cv.setPointerCapture(e.pointerId); e.preventDefault();
+});
+$("pe-cv").addEventListener("pointermove", e => {
+  const g = PE.drag; if (!g) return; const p = pePt(e), cv = $("pe-cv"), dx = p.x - g.sx, dy = p.y - g.sy;
+  if (g.text) { const t = PE.s.texts[PE.sel]; t.x = clamp(g.ox + dx / cv.width, 0.05, 0.95); t.y = clamp(g.oy + dy / cv.height, 0.04, 0.96); }
+  else { PE.s.ux = g.ox - dx * (g.r.w / cv.width) / PE.base.width; PE.s.uy = g.oy - dy * (g.r.h / cv.height) / PE.base.height; }
+  peRender();
+});
+["pointerup", "pointercancel"].forEach(ev => $("pe-cv").addEventListener(ev, () => PE.drag = null));
+$("pe-save").addEventListener("click", async () => {
+  if (!PE.s || !PE.base) return;
+  const btn = $("pe-save"); btn.disabled = true; btn.textContent = "Saving…"; $("pe-err").textContent = ""; uploading++;
+  try {
+    const out = document.createElement("canvas"); const sel = PE.sel; PE.sel = -1; peDraw(out, api.demo ? 1100 : 2000, false); PE.sel = sel;
+    const blob = await new Promise((res, rej) => { try { out.toBlob(b => b ? res(b) : rej(new Error("convert")), "image/jpeg", api.demo ? 0.72 : 0.88); } catch (e) { rej(e); } });
+    const name = String(PE.f.name || "photo").replace(/(-edited)?\.[^.]+$/, "") + "-edited.jpg";
+    const r = await api.upload(USER.id, blob, name, "image/jpeg");
+    const old = PE.f, i = formFiles.indexOf(old);
+    const fresh = { name, type: "image/jpeg", size: blob.size, url: r.url, path: r.path, fresh: true, src: old.src || old.url, edit: JSON.parse(JSON.stringify(PE.s)) };
+    if (i < 0) { api.removeFile(r.path); throw new Error("gone"); }
+    formFiles[i] = fresh;
+    if (old.fresh && old.edit && old.path) api.removeFile(old.path);
+    renderFileList(); closeEditor(); toast("Photo updated. Publish or save your event to keep it.", 3000);
+  } catch (e) {
+    const m = String(e && e.message || "");
+    $("pe-err").textContent = m === "local-too-big" ? "That's too big for demo mode. Try a smaller zoom or crop." : /secur|taint/i.test(m + (e && e.name)) ? "This photo can't be changed here. Remove it and add it again, then edit it." : "Your photo didn't save. Try again.";
+  } finally { uploading--; btn.disabled = false; btn.textContent = "Save photo"; }
+});
+$("f-filelist").addEventListener("click", e => { const b = e.target.closest("[data-edit]"); if (b) { e.preventDefault(); openEditor(formFiles[+b.dataset.edit], b); } });
+$("f-face-edit").addEventListener("click", e => { const f = formFiles.find(x => !x.busy && isImg(x)); if (f) openEditor(f, e.currentTarget); });
+
 function shrinkImage(file, maxSide, quality){
   return new Promise((res, rej) => {
     const url = URL.createObjectURL(file), img = new Image();
@@ -1264,7 +1492,7 @@ $("f-files").addEventListener("change", async e => {
       let blob = file, type = file.type || "", name = file.name || "file";
       if (isImg(file) && !/gif$/.test(type)) { blob = await shrinkImage(file, api.demo ? 1100 : 2000, api.demo ? 0.72 : 0.86); type = "image/jpeg"; name = name.replace(/\.[^.]+$/, "") + ".jpg"; }
       const r = await api.upload(USER.id, blob, name, type);
-      formFiles[formFiles.indexOf(slot)] = { name, type, size: blob.size, url: r.url, path: r.path };
+      formFiles[formFiles.indexOf(slot)] = { name, type, size: blob.size, url: r.url, path: r.path, fresh: true };
     } catch (err) {
       formFiles.splice(formFiles.indexOf(slot), 1);
       const m = String(err && err.message || "");
