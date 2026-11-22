@@ -221,22 +221,6 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chips button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:800}
 .chips button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
-.pp{display:flex;flex-direction:column;gap:14px}
-.pp-card{background:linear-gradient(135deg,#1F3A5F,#2C4F7C);color:#fff;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
-.pp-card .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.78;font-weight:800}
-.pp-card .v{font-size:17px;font-weight:800;overflow-wrap:anywhere}
-.pp-card .tag{margin:0}
-.pp-card .ghost{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35);color:#fff}
-.pp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.pp-num{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:22px;letter-spacing:.12em}
-.pp-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
-.pp-ph{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--field);aspect-ratio:4/3;padding:0;width:100%}
-.pp-ph img{width:100%;height:100%;object-fit:cover;display:block}
-.pp-ph span{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.62);color:#fff;font-size:12px;font-weight:800;border-radius:999px;padding:2px 8px}
-.pp-edit-ph{display:flex;flex-direction:column;gap:6px}
-.pp-view{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:max(16px,env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px))}
-.pp-view img{max-width:100%;max-height:78vh;object-fit:contain;border-radius:8px;background:#fff}
-.pp-view p{color:#fff;font-weight:800}
 @media (max-width:460px){.fields{grid-template-columns:1fr}.ev{grid-template-columns:56px minmax(0,1fr);gap:12px}}
 </style>
 </head>
@@ -247,7 +231,6 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
   <button class="ghost icon" type="button" id="bg-open" aria-label="Change colors and text" aria-controls="bgpanel" aria-expanded="false"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.9 0-.5-.2-.9-.5-1.2-.3-.3-.5-.8-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10" cy="7" r="1.2" fill="currentColor"/><circle cx="14.5" cy="7" r="1.2" fill="currentColor"/></svg></button>
   <button class="ghost icon" type="button" id="nav-refresh" aria-label="Refresh"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
   <button class="ghost pill" type="button" id="review-btn" hidden>Review <span class="badge" id="review-count">0</span></button>
-  <button class="ghost icon" type="button" id="pp-open" data-go="passport" aria-label="My passport" title="My passport" hidden><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2"/><circle cx="12" cy="10" r="3.2"/><path d="M8.8 10h6.4M12 6.8c-1 1-1.4 2-1.4 3.2s.4 2.2 1.4 3.2M12 6.8c1 1 1.4 2 1.4 3.2s-.4 2.2-1.4 3.2M9 17h6"/></svg></button>
   <button class="ghost pill" type="button" id="acct-open" aria-controls="acct">Sign in</button>
 </header>
 <div class="agebar" id="agebar" hidden role="region" aria-label="Age notice"><span>This site lists cigar events for adults <b>21 and over</b>.</span><button class="btn" type="button" id="age-ok">I'm 21 or older</button></div>
@@ -330,7 +313,6 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
       <div class="row">
         <button class="btn" type="button" data-go="post">+ Post an event</button>
         <button class="ghost" type="button" data-go="mine">My events</button>
-        <button class="ghost" type="button" data-go="passport">My passport</button>
       </div>
       <form id="prof-form" novalidate class="fields">
         <div class="full"><label for="p-name">Name</label><input id="p-name" autocomplete="name"></div>
@@ -346,7 +328,7 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
         <button class="ghost danger" type="button" id="a-remove" style="margin-left:auto">Remove my profile</button>
       </div>
       <div class="confirm" id="rm-confirm" hidden>
-        <span style="flex:1;min-width:160px">Remove your profile, passport info, saved events and saved searches? Events you posted stay up until you delete them.</span>
+        <span style="flex:1;min-width:160px">Remove your profile, saved events and saved searches? Events you posted stay up until you delete them.</span>
         <button class="ghost danger" type="button" id="rm-yes">Remove</button>
         <button class="ghost" type="button" id="rm-no">Keep it</button>
       </div>
@@ -504,45 +486,6 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
     <div class="list" id="mine-list"></div>
   </section>
 
-  <!-- MY PASSPORT (private: only the signed-in person sees their own) -->
-  <section id="v-passport" hidden class="pp" aria-labelledby="pp-h">
-    <div class="row between"><h2 id="pp-h">My passport</h2><button class="ghost" type="button" id="pp-edit" hidden>Edit</button></div>
-    <p class="note" style="font-size:14px;color:var(--page-muted)">Only you can see this, and only while you're signed in. Hosts and the site owner can't see it. Tap the passport button at the top of any page to get back here fast.</p>
-    <div id="pp-show" class="pp" hidden></div>
-    <form id="pp-form" class="card" novalidate hidden style="display:flex;flex-direction:column;gap:16px">
-      <div class="fields">
-        <div class="full"><label for="pp-name">Full name (as on passport)</label><input id="pp-name" maxlength="120" autocomplete="name" placeholder="Marcus Reed"></div>
-        <div class="full"><label for="pp-num-in">Passport number</label><input id="pp-num-in" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="A12345678" style="text-transform:uppercase;letter-spacing:.06em"></div>
-        <div><label for="pp-country">Issuing country</label><input id="pp-country" maxlength="80" placeholder="United States" autocomplete="country-name"></div>
-        <div><label for="pp-nat">Nationality</label><input id="pp-nat" maxlength="80" placeholder="American" autocomplete="off"></div>
-        <div class="full"><label for="pp-dob">Date of birth</label><input id="pp-dob" type="date" autocomplete="bday"></div>
-        <div><label for="pp-issued">Issue date</label><input id="pp-issued" type="date"></div>
-        <div><label for="pp-expires">Expiration date</label><input id="pp-expires" type="date"></div>
-        <div class="full"><label for="pp-notes">Notes (optional)</label><textarea id="pp-notes" maxlength="500" placeholder="Passport card number, Global Entry number, renewal reminders"></textarea></div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <label style="margin:0">Photos (optional, up to 4)</label>
-        <p class="note">Add a picture of your passport photo page, a photo of yourself, or both.</p>
-        <div class="row">
-          <label class="upl" for="pp-cam" style="flex:1;min-width:150px"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Take a photo</span></label>
-          <label class="upl" for="pp-pick" style="flex:1;min-width:150px"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><span>Choose from phone</span></label>
-          <input id="pp-cam" type="file" accept="image/*" capture="environment" hidden>
-          <input id="pp-pick" type="file" accept="image/*" multiple hidden>
-        </div>
-        <div class="pp-photos" id="pp-form-photos"></div>
-        <div class="err" id="pp-ph-err" role="alert"></div>
-      </div>
-      <div class="err" id="pp-err" role="alert"></div>
-      <div class="row"><button class="btn" type="submit" id="pp-save">Save passport</button><button class="ghost" type="button" id="pp-cancel" hidden>Cancel</button></div>
-    </form>
-  </section>
-
-  <div class="pp-view" id="pp-view" hidden role="dialog" aria-modal="true" aria-label="Passport photo">
-    <p id="pp-view-cap"></p>
-    <img id="pp-view-img" alt="">
-    <button class="btn" type="button" id="pp-view-close">Close</button>
-  </div>
-
   <!-- OWNER REVIEW -->
   <section id="v-review" hidden style="display:flex;flex-direction:column;gap:14px">
     <div><button class="ghost" type="button" data-go="">← All events</button></div>
@@ -566,7 +509,6 @@ body.has-photo:not(.themed) .wrap > section > h1,body.has-photo:not(.themed) .le
       <li><b>Tickets:</b> the name and email you give, how many tickets and the total. The event's host sees these so they can confirm your payment, check you in and email you about the event.</li>
       <li><b>Things you post:</b> events, photos, flyers and comments. These are public.</li>
       <li><b>Saved events and searches:</b> kept with your profile so you can find them again. If you save an event, its host can see your name and email so they can send you updates about it.</li>
-      <li><b>Passport (optional):</b> if you add it, your passport details and photos are kept with your profile in a private space only you can open while signed in. Hosts and the site owner can't see them through the site. You can delete them at any time on the My passport page, and removing your profile deletes them too.</li>
       <li><b>On your device:</b> your color and text choices, and the ticket codes you bought without a profile.</li>
     </ul>
     <p>We don't sell your information or show ads based on it. We don't handle your card number. Payments go straight to the host through the payment service they chose (like Square, Cash App, Venmo, PayPal or Zelle), and that service's own privacy policy applies.</p>
@@ -602,7 +544,6 @@ const CFG = window.CIGAR_CONFIG || {};
 const CAME_FOR_RESET = /type=recovery/.test(location.hash); // read before Supabase clears the link
 const SB = (CFG.SUPABASE_URL && CFG.SUPABASE_ANON_KEY && window.supabase) ? window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY) : null;
 const BUCKET = "ce-event-files";
-const PP_BUCKET = "ce-passports"; // private bucket, see passport-setup.sql
 const pad = n => String(n).padStart(2, "0");
 const isoOf = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
 const todayIso = isoOf(new Date());
@@ -679,21 +620,6 @@ const sbApi = {
     return { path, url: SB.storage.from(BUCKET).getPublicUrl(path).data.publicUrl };
   },
   async removeFile(path){ try { await SB.storage.from(BUCKET).remove([path]); } catch (e) {} },
-  async getPassport(uid){ const { data, error } = await SB.from("ce_passports").select("*").eq("user_id", uid).maybeSingle(); if (error) throw error; return data; },
-  async savePassport(uid, row){ const { data, error } = await SB.from("ce_passports").upsert({ ...row, user_id: uid, updated_at: new Date().toISOString() }).select().single(); if (error) throw error; return data; },
-  async deletePassport(uid){
-    const p = await this.getPassport(uid);
-    if (p && Array.isArray(p.photos) && p.photos.length) await SB.storage.from(PP_BUCKET).remove(p.photos.map(x => x.path).filter(Boolean));
-    const { error } = await SB.from("ce_passports").delete().eq("user_id", uid); if (error) throw error;
-  },
-  async uploadPassportPhoto(uid, blob){
-    const path = uid + "/" + uuid() + ".jpg";
-    const { error } = await SB.storage.from(PP_BUCKET).upload(path, blob, { contentType: "image/jpeg", upsert: false });
-    if (error) throw error;
-    return { path, url: await this.passportPhotoUrl(path) };
-  },
-  async passportPhotoUrl(path){ const { data, error } = await SB.storage.from(PP_BUCKET).createSignedUrl(path, 3600); if (error) throw error; return data.signedUrl; },
-  async removePassportPhoto(path){ try { if (path) await SB.storage.from(PP_BUCKET).remove([path]); } catch (e) {} },
   async ticketsLeft(eid){ const { data, error } = await SB.rpc("tickets_left", { p_event: eid }); if (error) throw error; return data; },
   async buyTicketsGuest(eid, name, email, qty){ const { data, error } = await SB.rpc("buy_tickets_guest", { p_event: eid, p_name: name, p_email: email, p_qty: qty }); if (error) throw error; return Array.isArray(data) ? data[0] : data; },
   async buyTickets(eid, name, qty){ const { data, error } = await SB.rpc("buy_tickets", { p_event: eid, p_name: name, p_qty: qty }); if (error) throw error; return Array.isArray(data) ? data[0] : data; },
@@ -766,16 +692,6 @@ const demoApi = {
   async setPassword(password){ const d = dDb(); const u = d.users.find(x => x.id === d.session); if (u) { u.password = password; dSave(d); } },
   async reportEvent(eid, reason, details, email){ const d = dDb(); d.reports = d.reports || []; d.reports.push({ id: uuid(), event_id: eid, reason, details, email, created_at: new Date().toISOString(), resolved: false }); const e = d.events.find(x => x.id === eid); if (e) e.reviewed = false; dSave(d); },
   async resolveReports(eid){ const d = dDb(); (d.reports || []).forEach(r => { if (r.event_id === eid) r.resolved = true; }); dSave(d); },
-  async getPassport(uid){ return (dDb().passports || {})[uid] || null; },
-  async savePassport(uid, row){ const d = dDb(); d.passports = d.passports || {}; d.passports[uid] = { ...row, user_id: uid, updated_at: new Date().toISOString() }; dSave(d); return d.passports[uid]; },
-  async deletePassport(uid){ const d = dDb(); if (d.passports) delete d.passports[uid]; dSave(d); },
-  async uploadPassportPhoto(uid, blob){
-    if (blob.size > 900 * 1024) throw new Error("local-too-big");
-    const url = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
-    return { path: "", url };
-  },
-  async passportPhotoUrl(){ return ""; },
-  async removePassportPhoto(){},
   async getTitle(){ return dDb().site.title || ""; },
   async setTitle(t){ const d = dDb(); if (!d.admins.includes(d.session)) throw new Error("not allowed"); d.site.title = t; dSave(d); },
   async upload(uid, blob, name, type){
@@ -1141,7 +1057,7 @@ function wireShareBox(box, e){
 /* ============================================================
    ROUTING (#event-<id>, #post, #edit-<id>, #mine, #review)
    ============================================================ */
-const VIEWS = ["v-home", "v-event", "v-post", "v-mine", "v-passport", "v-review", "v-terms"];
+const VIEWS = ["v-home", "v-event", "v-post", "v-mine", "v-review", "v-terms"];
 function showView(id){ VIEWS.forEach(v => $(v).hidden = v !== id); }
 let navDepth = 0;
 function go(hash){ if ((hash ? "#" + hash : "") !== location.hash) navDepth++; const t = hash ? "#" + hash : ""; if (location.hash === t) { route(); return; } if (!hash) { history.pushState(null, "", location.pathname + location.search); route(); } else location.hash = hash; }
@@ -1154,7 +1070,6 @@ async function route(){
   if (h === "post") return requireProfile(() => { openForm(null); showView("v-post"); }, "post");
   if (h.startsWith("edit-")) return requireProfile(async () => { const e = await api.getEvent(h.slice(5)); if (!e || e.host_id !== USER.id && !IS_ADMIN) { go(""); return; } openForm(e); showView("v-post"); }, "post");
   if (h === "mine") return requireProfile(() => { showView("v-mine"); renderMine(); }, "mine");
-  if (h === "passport") return requireProfile(() => { document.title = "My passport" + (SITE_TITLE ? " · " + SITE_TITLE : ""); showView("v-passport"); renderPassport(); }, "passport");
   if (h === "review") { if (!IS_ADMIN) { go(""); return; } showView("v-review"); return renderReview(); }
   if (h === "terms") { closeAcct(); document.title = "Privacy and terms" + (SITE_TITLE ? " · " + SITE_TITLE : ""); showView("v-terms"); return; }
   showView("v-home"); renderList();
@@ -1164,7 +1079,7 @@ let toastT; function toast(t, ms){ const el = $("toast"); el.textContent = t; el
 $("nav-back").addEventListener("click", () => { closeAcct(); if (navDepth > 0) { navDepth--; history.back(); } else go(""); });
 $("nav-refresh").addEventListener("click", async () => {
   const b = $("nav-refresh"), h = location.hash.slice(1);
-  if ((h === "post" || h.startsWith("edit-") || (h === "passport" && !$("pp-form").hidden)) && b.dataset.sure !== "1") {
+  if ((h === "post" || h.startsWith("edit-")) && b.dataset.sure !== "1") {
     b.dataset.sure = "1"; toast("Tap refresh again to reload. Anything you haven't saved will be lost.", 4000);
     setTimeout(() => { b.dataset.sure = ""; }, 4000); return;
   }
@@ -1180,7 +1095,7 @@ function requireProfile(fn, why){
   if (USER) return fn();
   pendingAfterLogin = fn;
   showView("v-home"); renderList();
-  openAcct("new", why === "post" ? "Create a free profile to post your event. It takes a minute." : why === "passport" ? "Sign in to see your passport. Only you can open it." : "Create a free profile or sign in to continue.");
+  openAcct("new", why === "post" ? "Create a free profile to post your event. It takes a minute." : "Create a free profile or sign in to continue.");
 }
 
 /* ============================================================
@@ -2203,7 +2118,6 @@ $("acct-form").addEventListener("submit", async e => {
 function renderAcct(){
   const first = PROFILE && PROFILE.name ? PROFILE.name.split(" ")[0] : "";
   $("acct-open").textContent = USER ? (first ? "Hi, " + first : "Your profile") : "Sign in";
-  $("pp-open").hidden = !USER;
   $("acct-out").hidden = !!USER || RESETTING; $("acct-in").hidden = !USER || RESETTING;
   if (USER) {
     $("p-name").value = PROFILE ? PROFILE.name : ""; $("p-email").textContent = USER.email || ""; $("p-opt").checked = !!(PROFILE && PROFILE.email_updates);
@@ -2247,177 +2161,13 @@ $("a-logout").addEventListener("click", async () => { try { await api.signOut();
 $("a-remove").addEventListener("click", () => $("rm-confirm").hidden = false);
 $("rm-no").addEventListener("click", () => $("rm-confirm").hidden = true);
 $("rm-yes").addEventListener("click", async () => {
-  try { try { await api.deletePassport(USER.id); } catch (e) {} await api.removeProfileData(USER.id); await api.signOut(); closeAcct(); setStatus("Your profile, passport info, saved events and saved searches were removed."); }
+  try { await api.removeProfileData(USER.id); await api.signOut(); closeAcct(); setStatus("Your profile, saved events and saved searches were removed."); }
   catch (e) { $("p-err").textContent = "Your profile couldn't be removed. Try again."; }
 });
 
-
-/* ============================================================
-   MY PASSPORT (#passport): private to the signed-in person
-   ============================================================ */
-const PP_MAX = 4, PP_KINDS = ["Passport page", "Photo of me", "Other"];
-let PASSPORT = null, PP_URLS = {}, ppPhotos = [], ppNew = [], ppGone = [], ppUploading = 0, ppShowNum = false;
-const ppDate = d => d ? new Date(d + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "—";
-const ppMask = n => n ? "•".repeat(Math.max(n.length - 4, 3)) + n.slice(-4) : "—";
-const ppUrl = p => p.url || PP_URLS[p.path] || "";
-function ppExpiry(d){
-  if (!d) return "";
-  const days = Math.round((new Date(d + "T00:00:00") - new Date(todayIso + "T00:00:00")) / 864e5);
-  if (days < 0) return '<span class="tag cx">Expired</span>';
-  if (days < 183) return `<span class="tag wait">Expires in ${days < 62 ? days + " day" + (days === 1 ? "" : "s") : Math.round(days / 30.4) + " months"}</span>`;
-  return '<span class="tag ok">Valid</span>';
-}
-async function ppLoadUrls(list){
-  await Promise.all((list || []).filter(p => p.path && !PP_URLS[p.path]).map(async p => { try { PP_URLS[p.path] = await api.passportPhotoUrl(p.path); } catch (e) {} }));
-}
-async function renderPassport(){
-  const show = $("pp-show");
-  $("pp-form").hidden = true; $("pp-edit").hidden = true; show.hidden = false;
-  show.innerHTML = '<div class="card empty">Loading your passport…</div>';
-  try { PASSPORT = await api.getPassport(USER.id); }
-  catch (e) { show.innerHTML = /relation|does not exist|schema cache/i.test(String(e.message)) ? '<div class="card empty">Run passport-setup.sql in Supabase first.</div>' : '<div class="card empty">Your passport couldn\'t load. Tap refresh to try again.</div>'; return; }
-  if (!PASSPORT) { show.hidden = true; openPassportForm(null); return; }
-  await ppLoadUrls(PASSPORT.photos);
-  ppShowNum = false; showPassport();
-}
-function showPassport(){
-  const p = PASSPORT, photos = Array.isArray(p.photos) ? p.photos : [];
-  $("pp-form").hidden = true; $("pp-edit").hidden = false;
-  const soon = p.expiry_date && Math.round((new Date(p.expiry_date + "T00:00:00") - new Date(todayIso + "T00:00:00")) / 864e5) < 183;
-  $("pp-show").hidden = false;
-  $("pp-show").innerHTML = `
-    <div class="pp-card" aria-label="Passport details">
-      <div class="row between"><span class="k">Passport${p.country ? " · " + esc(p.country) : ""}</span>${ppExpiry(p.expiry_date)}</div>
-      <div><div class="k">Name</div><div class="v" style="font-size:20px">${esc(p.full_name) || "—"}</div></div>
-      <div><div class="k">Passport number</div>
-        <div class="row" style="margin-top:4px"><span class="v pp-num" id="pp-num">${esc(ppShowNum ? p.number : ppMask(p.number))}</span>
-          ${p.number ? `<button type="button" class="ghost" data-pp="reveal">${ppShowNum ? "Hide" : "Show"}</button><button type="button" class="ghost" data-pp="copy">Copy</button>` : ""}</div></div>
-      <div class="pp-grid">
-        <div><div class="k">Nationality</div><div class="v">${esc(p.nationality) || "—"}</div></div>
-        <div><div class="k">Date of birth</div><div class="v">${ppDate(p.birth_date)}</div></div>
-        <div><div class="k">Issued</div><div class="v">${ppDate(p.issue_date)}</div></div>
-        <div><div class="k">Expires</div><div class="v">${ppDate(p.expiry_date)}</div></div>
-      </div>
-      ${p.notes ? `<div><div class="k">Notes</div><div style="white-space:pre-wrap;font-weight:700">${esc(p.notes)}</div></div>` : ""}
-    </div>
-    ${soon ? '<p class="note" style="font-size:14px;color:var(--page-muted)">Many countries want at least 6 months left on your passport when you arrive. Check before you book travel.</p>' : ""}
-    <div class="card" style="display:flex;flex-direction:column;gap:12px">
-      <h3 style="font-size:18px">Photos</h3>
-      ${photos.length ? `<div class="pp-photos">${photos.map((x, i) => `<button type="button" class="pp-ph" data-pp-view="${i}" aria-label="Open ${esc(x.kind || "photo")}"><img src="${esc(ppUrl(x))}" alt=""><span>${esc(x.kind || "Photo")}</span></button>`).join("")}</div>` : '<p class="note">No photos yet. Tap <b>Edit</b> to add a picture of your passport page or a photo of yourself.</p>'}
-    </div>
-    <div class="row" style="justify-content:flex-end"><button type="button" class="ghost danger" data-pp="del">Delete my passport info</button></div>
-    <div class="confirm" id="pp-del-confirm" hidden>
-      <span style="flex:1;min-width:160px">Delete your passport details and photos? This can't be undone.</span>
-      <button class="ghost danger" type="button" data-pp="del-yes">Delete</button>
-      <button class="ghost" type="button" data-pp="del-no">Keep it</button>
-    </div>`;
-}
-$("pp-show").addEventListener("click", async e => {
-  const v = e.target.closest("[data-pp-view]");
-  if (v) { const x = PASSPORT.photos[+v.dataset.ppView]; openPPView(ppUrl(x), x.kind || "Photo", v); return; }
-  const b = e.target.closest("[data-pp]"); if (!b) return;
-  const a = b.dataset.pp;
-  if (a === "reveal") { ppShowNum = !ppShowNum; showPassport(); }
-  else if (a === "copy") toast(await copyText(PASSPORT.number) ? "Passport number copied" : "Couldn't copy. Tap Show and copy it by hand.");
-  else if (a === "del") $("pp-del-confirm").hidden = false;
-  else if (a === "del-no") $("pp-del-confirm").hidden = true;
-  else if (a === "del-yes") {
-    b.disabled = true;
-    try { await api.deletePassport(USER.id); PASSPORT = null; PP_URLS = {}; toast("Passport info deleted"); renderPassport(); }
-    catch (err) { b.disabled = false; toast("That didn't delete. Try again."); }
-  }
-});
-$("pp-edit").addEventListener("click", () => openPassportForm(PASSPORT));
-
-function openPassportForm(p){
-  p = p || {};
-  $("pp-show").hidden = true; $("pp-edit").hidden = true; $("pp-form").hidden = false;
-  $("pp-name").value = p.full_name || (PASSPORT ? "" : (PROFILE && PROFILE.name) || "");
-  $("pp-num-in").value = p.number || ""; $("pp-country").value = p.country || ""; $("pp-nat").value = p.nationality || "";
-  $("pp-dob").value = p.birth_date || ""; $("pp-issued").value = p.issue_date || ""; $("pp-expires").value = p.expiry_date || "";
-  $("pp-notes").value = p.notes || "";
-  ppPhotos = (Array.isArray(p.photos) ? p.photos : []).map(x => ({ ...x })); ppNew = []; ppGone = [];
-  $("pp-err").textContent = ""; $("pp-ph-err").textContent = "";
-  $("pp-cancel").hidden = !PASSPORT; $("pp-save").textContent = PASSPORT ? "Save changes" : "Save passport";
-  renderPPFormPhotos();
-}
-function renderPPFormPhotos(){
-  $("pp-form-photos").innerHTML = ppPhotos.map((x, i) => x.busy
-    ? '<div class="pp-ph" style="display:flex;align-items:center;justify-content:center"><span style="position:static">Uploading…</span></div>'
-    : `<div class="pp-edit-ph">
-        <button type="button" class="pp-ph" data-ppf-view="${i}" aria-label="Open photo ${i + 1}"><img src="${esc(ppUrl(x))}" alt=""></button>
-        <select data-ppf-kind="${i}" aria-label="What is photo ${i + 1}?">${PP_KINDS.map(k => `<option${k === x.kind ? " selected" : ""}>${k}</option>`).join("")}</select>
-        <button type="button" class="ghost danger" data-ppf-rm="${i}" style="justify-content:center">Remove</button>
-      </div>`).join("");
-  const full = ppPhotos.length >= PP_MAX;
-  document.querySelectorAll('label[for="pp-cam"],label[for="pp-pick"]').forEach(l => l.hidden = full);
-}
-$("pp-form-photos").addEventListener("click", e => {
-  const r = e.target.closest("[data-ppf-rm]");
-  if (r) { const [x] = ppPhotos.splice(+r.dataset.ppfRm, 1); if (x && x.path) ppGone.push(x.path); renderPPFormPhotos(); return; }
-  const v = e.target.closest("[data-ppf-view]");
-  if (v) { e.preventDefault(); const x = ppPhotos[+v.dataset.ppfView]; openPPView(ppUrl(x), x.kind || "Photo", v); }
-});
-$("pp-form-photos").addEventListener("change", e => { const s = e.target.closest("[data-ppf-kind]"); if (s) ppPhotos[+s.dataset.ppfKind].kind = s.value; });
-async function ppAddFiles(files){
-  $("pp-ph-err").textContent = ""; $("pp-err").textContent = "";
-  for (const file of files) {
-    if (ppPhotos.length >= PP_MAX) { $("pp-ph-err").textContent = `You can add up to ${PP_MAX} photos.`; break; }
-    if (!isImg(file)) { $("pp-ph-err").textContent = `${file.name || "That file"} isn't a photo.`; continue; }
-    const hasPage = ppPhotos.some(x => x.kind === "Passport page");
-    const slot = { busy: true, kind: hasPage ? "Photo of me" : "Passport page" }; ppPhotos.push(slot); ppUploading++; renderPPFormPhotos();
-    try {
-      const blob = await shrinkImage(file, api.demo ? 1100 : 2000, api.demo ? 0.72 : 0.86);
-      const r = await api.uploadPassportPhoto(USER.id, blob);
-      delete slot.busy; slot.path = r.path;
-      if (r.path) { PP_URLS[r.path] = r.url; ppNew.push(r.path); } else slot.url = r.url;
-    } catch (err) {
-      ppPhotos = ppPhotos.filter(x => x !== slot);
-      $("pp-ph-err").textContent = /local-too-big/.test(String(err.message)) ? "That photo is too big for preview mode." : /bucket|not found/i.test(String(err.message)) ? "Run passport-setup.sql in Supabase first." : "That photo didn't upload. Try again.";
-    }
-    ppUploading--; renderPPFormPhotos();
-  }
-}
-["pp-cam", "pp-pick"].forEach(id => $(id).addEventListener("change", e => { const f = [...e.target.files]; e.target.value = ""; ppAddFiles(f); }));
-$("pp-cancel").addEventListener("click", () => { ppNew.forEach(path => api.removePassportPhoto(path)); ppNew = []; showPassport(); });
-$("pp-form").addEventListener("submit", async e => {
-  e.preventDefault(); const err = $("pp-err"); err.textContent = "";
-  if (ppUploading) { err.textContent = "Wait for your photos to finish uploading."; return; }
-  const name = $("pp-name").value.trim(), num = $("pp-num-in").value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  const dob = $("pp-dob").value, issued = $("pp-issued").value, expires = $("pp-expires").value;
-  if (!name) { err.textContent = "Add your name as it shows on your passport."; $("pp-name").focus(); return; }
-  if (!num && !ppPhotos.length) { err.textContent = "Add your passport number or a photo of your passport page."; $("pp-num-in").focus(); return; }
-  if (dob && dob > todayIso) { err.textContent = "Your date of birth can't be in the future."; $("pp-dob").focus(); return; }
-  if (issued && expires && expires <= issued) { err.textContent = "The expiration date has to be after the issue date."; $("pp-expires").focus(); return; }
-  const row = {
-    full_name: name.slice(0, 120), number: num.slice(0, 20), country: $("pp-country").value.trim().slice(0, 80), nationality: $("pp-nat").value.trim().slice(0, 80),
-    birth_date: dob || null, issue_date: issued || null, expiry_date: expires || null, notes: $("pp-notes").value.trim().slice(0, 500),
-    photos: ppPhotos.map(x => api.demo ? { kind: x.kind, path: "", url: x.url } : { kind: x.kind, path: x.path })
-  };
-  const btn = $("pp-save"); btn.disabled = true;
-  try {
-    PASSPORT = await api.savePassport(USER.id, row);
-    ppGone.forEach(path => api.removePassportPhoto(path)); ppGone = []; ppNew = [];
-    ppShowNum = false; toast("Passport saved"); showPassport(); window.scrollTo(0, 0);
-  } catch (ex) {
-    err.textContent = /relation|does not exist|schema cache/i.test(String(ex.message)) ? "Run passport-setup.sql in Supabase first." : /browser won't let/.test(String(ex.message)) ? ex.message : "Your passport didn't save. Try again.";
-  }
-  btn.disabled = false;
-});
-
-let ppViewFrom = null;
-function openPPView(url, cap, from){
-  if (!url) { toast("That photo couldn't load. Tap refresh."); return; }
-  ppViewFrom = from || null; $("pp-view-img").src = url; $("pp-view-img").alt = cap; $("pp-view-cap").textContent = cap; $("pp-view").hidden = false; $("pp-view-close").focus();
-}
-function closePPView(){ if ($("pp-view").hidden) return; $("pp-view").hidden = true; $("pp-view-img").removeAttribute("src"); if (ppViewFrom) { try { ppViewFrom.focus(); } catch (e) {} ppViewFrom = null; } }
-$("pp-view-close").addEventListener("click", closePPView);
-$("pp-view").addEventListener("click", e => { if (e.target === $("pp-view")) closePPView(); });
-addEventListener("keydown", e => { if (e.key === "Escape") closePPView(); });
-
 async function onUser(u){
   if ((u && u.id) === (USER && USER.id) && PROFILE) return;
-  USER = u; PROFILE = null; SAVES = new Set(); SEARCHES = []; IS_ADMIN = false; MY_TIX = []; PASSPORT = null; PP_URLS = {}; closePPView();
+  USER = u; PROFILE = null; SAVES = new Set(); SEARCHES = []; IS_ADMIN = false; MY_TIX = [];
   if (USER) {
     try { PROFILE = await api.getProfile(USER); } catch (e) {}
     try { SAVES = new Set(await api.mySaves(USER.id)); } catch (e) {}
