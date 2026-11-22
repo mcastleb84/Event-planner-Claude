@@ -783,7 +783,10 @@ const dt = s => new Date(s + "T00:00:00");
 const longDate = s => dt(s).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: dt(s).getFullYear() !== new Date().getFullYear() ? "numeric" : undefined });
 function fullAddr(e){ const csz = [e.city, [e.state, e.zip].filter(Boolean).join(" ")].filter(Boolean).join(", "); return [e.location, e.address, csz].filter(Boolean).join(", "); }
 const placeLine = e => [e.location, [e.city, e.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ");
-const navUrl = e => "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(fullAddr(e));
+/* Maps lookup: use the street address only (the venue name confuses Google when it isn't listed there) */
+function mapAddr(e){ const csz = [e.city, [e.state, e.zip].filter(Boolean).join(" ")].filter(Boolean).join(", "); const street = [e.address, csz].map(x => (x || "").trim()).filter(Boolean).join(", "); return street || (e.location || "").trim(); }
+const hasGeo = e => e && e.lat != null && e.lng != null && isFinite(e.lat) && isFinite(e.lng);
+const navUrl = e => "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(hasGeo(e) ? (+e.lat).toFixed(6) + "," + (+e.lng).toFixed(6) : mapAddr(e));
 function gcal(e){
   const d = e.date.replace(/-/g, ""); let dates;
   if (e.time) { const s = new Date(e.date + "T" + hm(e.time)); let f = new Date(s.getTime() + 7200000);
@@ -1516,6 +1519,7 @@ function openForm(e){
       catch (err) { $("f-err").textContent = "That didn't delete. Try again."; }
     });
   }
+  FORM_GEO = e && hasGeo(e) ? { lat: +e.lat, lng: +e.lng, key: geoKey() } : null; GEO_FORCE = "";
   updateNav();
 }
 $("f-use-square").addEventListener("click", () => { $("f-tlink").value = safeLink(CFG.SQUARE_LINK); $("f-err").textContent = ""; toast("Your Square link is filled in."); });
@@ -1577,6 +1581,28 @@ $("ev-form").addEventListener("submit", async ev => {
   const v = readForm(); if (!v) return;
   const pay = v.pay_options, err = m => { $("f-err").textContent = m; $("f-err").scrollIntoView({ block: "center" }); };
   $("f-save").disabled = true;
+  if (v.address || v.city || v.zip) {
+    let g = formGeo();
+    if (!g) {
+      $("f-err").textContent = "Finding your address on the map…";
+      const hit = await geocodeOne(v);
+      if (hit) {
+        if (!v.city && hit.city) { v.city = hit.city; $("f-city").value = hit.city; }
+        if (!v.state && hit.state) { v.state = hit.state; $("f-state").value = hit.state; }
+        if (!v.zip && hit.zip) { v.zip = hit.zip; $("f-zip").value = hit.zip; }
+        g = FORM_GEO = { lat: hit.lat, lng: hit.lng, key: geoKey() }; updateNav();
+      }
+      $("f-err").textContent = "";
+    }
+    if (g) { v.lat = g.lat; v.lng = g.lng; }
+    else {
+      v.lat = null; v.lng = null;
+      if (v.address && GEO_FORCE !== geoKey()) {
+        GEO_FORCE = geoKey(); $("f-save").disabled = false;
+        return err("We couldn't find this address on the map, so Navigate may not work. Check the street spelling, add the city, state and ZIP, or pick it from the suggestions. To post it as typed, tap " + $("f-save").textContent + " again.");
+      }
+    }
+  }
   try {
     const save = row => editingId ? api.updateEvent(editingId, row) : api.createEvent(row);
     let saved, noTheme = false, noEnd = false;
@@ -1584,6 +1610,7 @@ $("ev-form").addEventListener("submit", async ev => {
       try { return await save(row); }
       catch (e0) {
         const m0 = String(e0 && e0.message || "");
+        if (/\b(lat|lng)\b/.test(m0) && ("lat" in row || "lng" in row)) { const { lat, lng, ...rest } = row; return await saveRow(rest); }
         if (/end_time/.test(m0)) { noEnd = true; const { end_time, ...rest } = row; return await saveRow(rest); }
         if (/theme/.test(m0)) { noTheme = true; const { theme, ...rest } = row; return await saveRow(rest); }
         throw e0;
@@ -1924,7 +1951,11 @@ $("f-filelist").addEventListener("click", e => { const b = e.target.closest("[da
 
 /* Navigate button on the form */
 function formAddr(){ return [$("f-place").value, $("f-addr").value, [$("f-city").value, [$("f-state").value, $("f-zip").value].filter(Boolean).join(" ")].filter(Boolean).join(", ")].map(x => x.trim()).filter(Boolean).join(", "); }
-function updateNav(){ const q = formAddr(); $("f-nav").href = q ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q) : "https://www.google.com/maps"; $("f-nav").dataset.empty = q ? "" : "1"; $("f-nav-note").textContent = q ? "Check this address in Google Maps." : "Add an address, city or ZIP first."; }
+let FORM_GEO = null, GEO_FORCE = "";
+function formLoc(){ return { location: $("f-place").value.trim(), address: $("f-addr").value.trim(), city: $("f-city").value.trim(), state: $("f-state").value.trim().toUpperCase(), zip: $("f-zip").value.trim() }; }
+function geoKey(){ const l = formLoc(); return [l.address, l.city, l.state, l.zip].join("|").toLowerCase(); }
+const formGeo = () => FORM_GEO && FORM_GEO.key === geoKey() ? FORM_GEO : null;
+function updateNav(){ const g = formGeo(), l = formLoc(), q = g ? g.lat.toFixed(6) + "," + g.lng.toFixed(6) : mapAddr(l); $("f-nav").href = q ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q) : "https://www.google.com/maps"; $("f-nav").dataset.empty = q ? "" : "1"; $("f-nav-note").textContent = !q ? "Add an address, city or ZIP first." : g ? "Address found on the map. Tap to double-check it." : "Pick your address from the suggestions so it's pinned on the map."; }
 ["f-place", "f-addr", "f-city", "f-state", "f-zip"].forEach(id => $(id).addEventListener("input", updateNav));
 $("f-nav").addEventListener("click", e => { if ($("f-nav").dataset.empty) { e.preventDefault(); $("f-addr").focus(); } });
 
@@ -2219,15 +2250,57 @@ async function placeSearch(q){
   const r = await fetch("https://photon.komoot.io/api/?q=" + encodeURIComponent(q) + "&limit=8&lang=en&bbox=-125,24,-66,50");
   if (!r.ok) throw new Error("lookup failed");
   const j = await r.json();
-  return (j.features || []).map(f => f.properties || {}).filter(p => p.countrycode === "US").map(p => {
+  return (j.features || []).map(f => ({ ...(f.properties || {}), _c: f.geometry && f.geometry.coordinates })).filter(p => p.countrycode === "US").map(p => {
     const street = [p.housenumber, p.street].filter(Boolean).join(" ");
     const city = p.city || p.town || p.village || p.district || p.county || "";
     const state = STATES[p.state] || p.state || "";
     const zip = String(p.postcode || "").slice(0, 5);
     const main = street || p.name || city;
     const sub = [main === city ? "" : city, [state, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-    return { main, sub, street, venue: street && p.name && p.name !== street ? p.name : "", city, state, zip };
+    const lng = p._c ? +p._c[0] : null, lat = p._c ? +p._c[1] : null;
+    return { main, sub, street, venue: street && p.name && p.name !== street ? p.name : "", city, state, zip, lat, lng };
   }).filter((x, i, a) => x.main && a.findIndex(y => y.main === x.main && y.sub === x.sub) === i);
+}
+
+/* US Census Bureau geocoder: free, no key, knows almost every US street address.
+   It doesn't allow normal cross-site requests, so it's called with JSONP. */
+let censusN = 0;
+function censusSearch(q){
+  return new Promise(resolve => {
+    const cb = "__census" + (++censusN), sc = document.createElement("script");
+    const done = res => { clearTimeout(t); try { delete window[cb]; } catch (e) { window[cb] = undefined; } sc.remove(); resolve(res); };
+    const t = setTimeout(() => done(null), 8000);
+    window[cb] = j => {
+      const tc = x => String(x || "").toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase());
+      const m = (j && j.result && j.result.addressMatches) || [];
+      done(m.map(a => {
+        const parts = String(a.matchedAddress || "").split(",").map(x => x.trim());
+        const c = a.addressComponents || {}, street = tc(parts[0]), city = tc(c.city || parts[1]), state = String(c.state || parts[2] || "").toUpperCase(), zip = String(c.zip || parts[3] || "").slice(0, 5);
+        return { main: street, sub: [city, [state, zip].filter(Boolean).join(" ")].filter(Boolean).join(", "), street, venue: "", city, state, zip, lat: +a.coordinates.y, lng: +a.coordinates.x };
+      }).filter(x => x.street && isFinite(x.lat) && isFinite(x.lng)));
+    };
+    sc.onerror = () => done(null);
+    sc.src = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?benchmark=Public_AR_Current&format=jsonp&callback=" + cb + "&address=" + encodeURIComponent(q);
+    document.head.appendChild(sc);
+  });
+}
+/* Address suggestions for the event form: OpenStreetMap and the Census list together */
+async function addrSearch(q){
+  const [a, b] = await Promise.all([placeSearch(q).catch(() => null), /^\d/.test(q) ? censusSearch(q) : Promise.resolve([])]);
+  if (a === null && b === null) return null;
+  const seen = new Set(), out = [];
+  [...(b || []), ...((a || []).filter(p => p.street))].forEach(p => { const k = (p.street + "|" + p.zip).toLowerCase(); if (!seen.has(k)) { seen.add(k); out.push(p); } });
+  return out.slice(0, 8);
+}
+/* Finds one map point for a typed address when the host didn't pick a suggestion */
+async function geocodeOne(l){
+  const csz = [l.city, [l.state, l.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  const full = [l.address, csz].filter(Boolean).join(", ");
+  const same = p => (!l.zip || !p.zip || p.zip === l.zip.slice(0, 5)) && (!l.state || !p.state || p.state === l.state);
+  if (l.address && /^\d/.test(l.address)) { const c = await censusSearch(full); const h = c && c.find(same); if (h) return h; }
+  try { const p = await placeSearch(full); const h = p.find(x => (l.address ? x.street : true) && same(x) && isFinite(x.lat)); if (h) return h; } catch (e) {}
+  if (!l.address && l.zip && /^\d{5}/.test(l.zip)) { try { const p = await placeSearch(l.zip.slice(0, 5)); const h = p.find(x => isFinite(x.lat)); if (h) return { ...h, street: "" }; } catch (e) {} }
+  return null;
 }
 
 function attachSuggest(input, fetcher, onPick){
@@ -2248,7 +2321,7 @@ function attachSuggest(input, fetcher, onPick){
       if (my !== seq) return;
       if (res === null) { box.innerHTML = '<div class="sugg-note">Address lookup isn\'t reachable right now. You can still type it in.</div>'; return; }
       items = res;
-      if (!res.length) { box.innerHTML = '<div class="sugg-note">No matching places found.</div>'; return; }
+      if (!res.length) { box.innerHTML = '<div class="sugg-note">No matches yet. Try adding the city or ZIP.</div>'; return; }
       box.innerHTML = res.map((r, i) => `<button type="button" role="option" data-i="${i}"><b>${esc(r.main)}</b><small>${esc(r.sub || "")}</small></button>`).join("")
         + '<div class="attr">Address search © OpenStreetMap contributors</div>';
     }, 350);
@@ -2266,8 +2339,9 @@ attachSuggest($("q"), async q => {
   if (/^\d{5}$/.test(q)) { const z = await zipLookup(q); renderList(); if (z === undefined) return null; return z ? [{ main: q, sub: z.city + ", " + z.state, zip: q, city: z.city, state: z.state }] : []; }
   return placeSearch(q);
 }, p => { $("q").value = p.zip || [p.city, p.state].filter(Boolean).join(" ") || p.main; if (p.zip && p.city && !(p.zip in window.zipCache)) window.zipCache[p.zip] = { city: p.city, state: p.state }; renderList(); updateSaveRow(); });
-attachSuggest($("f-addr"), async q => (await placeSearch(q)).filter(p => p.street), p => {
+attachSuggest($("f-addr"), addrSearch, p => {
   $("f-addr").value = p.street; if (p.city) $("f-city").value = p.city; if (p.state) $("f-state").value = p.state; if (p.zip) $("f-zip").value = p.zip;
+  FORM_GEO = isFinite(p.lat) && isFinite(p.lng) && p.lat != null ? { lat: p.lat, lng: p.lng, key: geoKey() } : null;
   if (p.venue && !$("f-place").value) $("f-place").value = p.venue; $("f-err").textContent = ""; updateNav();
 });
 $("f-zip").addEventListener("input", async () => { const z = $("f-zip").value.trim(); if (!/^\d{5}$/.test(z)) return; const r = await zipLookup(z); if (r && $("f-zip").value.trim() === z) { if (!$("f-city").value) $("f-city").value = r.city; if (!$("f-state").value) $("f-state").value = r.state; updateNav(); } });
